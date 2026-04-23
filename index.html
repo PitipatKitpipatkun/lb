@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>บันทึก Log Book สำหรับนักศึกษา</title>
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
     <style>
         * {
             margin: 0;
@@ -24,6 +26,60 @@
         .container {
             width: 100%;
             max-width: 500px;
+        }
+
+        /* ===== Loading Spinner ===== */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===== Alert Messages ===== */
+        .alert {
+            display: none;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        .alert.active {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
         /* ===== Main Menu Screen ===== */
@@ -215,6 +271,11 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .back-btn {
             width: 100%;
             padding: 12px;
@@ -378,6 +439,15 @@
 </head>
 <body>
     <div class="container">
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>กำลังโหลด...</p>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertBox" class="alert"></div>
+
         <!-- Main Menu Screen -->
         <div id="menuScreen" class="screen active menu-screen">
             <div class="logo-section">
@@ -410,10 +480,12 @@
                 <p class="login-subtitle">กรุณากรอกข้อมูลของคุณ</p>
             </div>
 
+            <div id="studentAlert" class="alert"></div>
+
             <form onsubmit="handleStudentLogin(event)">
                 <div class="form-group">
-                    <label class="form-label">รหัสนักศึกษา</label>
-                    <input type="text" class="form-input" id="studentId" placeholder="เช่น 6310000001" required>
+                    <label class="form-label">อีเมล</label>
+                    <input type="email" class="form-input" id="studentEmail" placeholder="เช่น student@example.com" required>
                 </div>
 
                 <div class="form-group">
@@ -421,7 +493,7 @@
                     <input type="password" class="form-input" id="studentPassword" placeholder="กรุณากรอกรหัสผ่าน" required>
                 </div>
 
-                <button type="submit" class="login-btn">เข้าระบบ</button>
+                <button type="submit" class="login-btn" id="studentLoginBtn">เข้าระบบ</button>
             </form>
 
             <button class="back-btn" onclick="goToMenu()">← กลับหน้าหลัก</button>
@@ -435,10 +507,12 @@
                 <p class="login-subtitle">กรุณากรอกข้อมูลของคุณ</p>
             </div>
 
+            <div id="teacherAlert" class="alert"></div>
+
             <form onsubmit="handleTeacherLogin(event)">
                 <div class="form-group">
-                    <label class="form-label">รหัสประจำตัว</label>
-                    <input type="text" class="form-input" id="teacherId" placeholder="เช่น T001" required>
+                    <label class="form-label">อีเมล</label>
+                    <input type="email" class="form-input" id="teacherEmail" placeholder="เช่น teacher@example.com" required>
                 </div>
 
                 <div class="form-group">
@@ -446,7 +520,7 @@
                     <input type="password" class="form-input" id="teacherPassword" placeholder="กรุณากรอกรหัสผ่าน" required>
                 </div>
 
-                <button type="submit" class="login-btn">เข้าระบบ</button>
+                <button type="submit" class="login-btn" id="teacherLoginBtn">เข้าระบบ</button>
             </form>
 
             <button class="back-btn" onclick="goToMenu()">← กลับหน้าหลัก</button>
@@ -460,7 +534,7 @@
             </div>
 
             <div class="version-info">
-                <p>เวอร์ชั่น: 1.0.0</p>
+                <p>เวอร์ชั่น: 2.0.0 (Supabase)</p>
                 <p>พัฒนาขึ้นเพื่อการศึกษา</p>
             </div>
 
@@ -495,7 +569,15 @@
     </div>
 
     <script>
-        // Navigation Functions
+        // ===== Supabase Configuration =====
+        const SUPABASE_URL = 'https://mxnsngomamxtvlbzrqqd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+
+        // Initialize Supabase Client
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ===== UI Functions =====
         function goToMenu() {
             showScreen('menuScreen');
         }
@@ -518,36 +600,148 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        // Login Handlers
-        function handleStudentLogin(event) {
+        function showAlert(message, type = 'success', screenId = 'alertBox') {
+            const alertBox = document.getElementById(screenId);
+            alertBox.textContent = message;
+            alertBox.className = `alert active alert-${type}`;
+            setTimeout(() => {
+                alertBox.classList.remove('active');
+            }, 5000);
+        }
+
+        function showLoading(show = true) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('active');
+            } else {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ===== Login Functions =====
+        async function handleStudentLogin(event) {
             event.preventDefault();
-            const studentId = document.getElementById('studentId').value;
+            const email = document.getElementById('studentEmail').value;
             const password = document.getElementById('studentPassword').value;
-            
-            if (studentId && password) {
-                // ที่นี่สามารถส่งข้อมูลไปยังเซิร์ฟเวอร์
-                alert(`เข้าระบบสำเร็จ: ${studentId}`);
-                // เปลี่ยนหน้าไปยังแดชบอร์ดนักศึกษา
-                document.getElementById('studentId').value = '';
+            const btn = document.getElementById('studentLoginBtn');
+
+            try {
+                btn.disabled = true;
+                showLoading(true);
+
+                // Login with Supabase Auth
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'studentAlert');
+                    return;
+                }
+
+                if (data.user) {
+                    // Get user data from students table
+                    const { data: studentData, error: fetchError } = await supabase
+                        .from('students')
+                        .select('*')
+                        .eq('user_id', data.user.id)
+                        .single();
+
+                    if (fetchError) {
+                        showAlert('❌ ไม่สามารถดึงข้อมูลนักศึกษาได้', 'error', 'studentAlert');
+                        return;
+                    }
+
+                    showAlert(`✅ เข้าระบบสำเร็จ! ยินดีต้อนรับ ${studentData.full_name}`, 'success', 'studentAlert');
+                    
+                    // Save to localStorage
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: data.user.id,
+                        email: data.user.email,
+                        type: 'student',
+                        fullName: studentData.full_name,
+                        studentId: studentData.student_id
+                    }));
+
+                    setTimeout(() => {
+                        // เปลี่ยนหน้าไปยังแดชบอร์ดนักศึกษา
+                        alert('กำลังเปลี่ยนไปยังแดชบอร์ด...');
+                        goToMenu();
+                    }, 2000);
+                }
+            } catch (error) {
+                showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'studentAlert');
+            } finally {
+                btn.disabled = false;
+                showLoading(false);
+                document.getElementById('studentEmail').value = '';
                 document.getElementById('studentPassword').value = '';
             }
         }
 
-        function handleTeacherLogin(event) {
+        async function handleTeacherLogin(event) {
             event.preventDefault();
-            const teacherId = document.getElementById('teacherId').value;
+            const email = document.getElementById('teacherEmail').value;
             const password = document.getElementById('teacherPassword').value;
-            
-            if (teacherId && password) {
-                // ที่นี่สามารถส่งข้อมูลไปยังเซิร์ฟเวอร์
-                alert(`เข้าระบบสำเร็จ: ${teacherId}`);
-                // เปลี่ยนหน้าไปยังแดชบอร์ดอาจารย์
-                document.getElementById('teacherId').value = '';
+            const btn = document.getElementById('teacherLoginBtn');
+
+            try {
+                btn.disabled = true;
+                showLoading(true);
+
+                // Login with Supabase Auth
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'teacherAlert');
+                    return;
+                }
+
+                if (data.user) {
+                    // Get user data from teachers table
+                    const { data: teacherData, error: fetchError } = await supabase
+                        .from('teachers')
+                        .select('*')
+                        .eq('user_id', data.user.id)
+                        .single();
+
+                    if (fetchError) {
+                        showAlert('❌ ไม่สามารถดึงข้อมูลอาจารย์ได้', 'error', 'teacherAlert');
+                        return;
+                    }
+
+                    showAlert(`✅ เข้าระบบสำเร็จ! ยินดีต้อนรับ ${teacherData.full_name}`, 'success', 'teacherAlert');
+                    
+                    // Save to localStorage
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: data.user.id,
+                        email: data.user.email,
+                        type: 'teacher',
+                        fullName: teacherData.full_name,
+                        teacherId: teacherData.teacher_id
+                    }));
+
+                    setTimeout(() => {
+                        // เปลี่ยนหน้าไปยังแดชบอร์ดอาจารย์
+                        alert('กำลังเปลี่ยนไปยังแดชบอร์ด...');
+                        goToMenu();
+                    }, 2000);
+                }
+            } catch (error) {
+                showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'teacherAlert');
+            } finally {
+                btn.disabled = false;
+                showLoading(false);
+                document.getElementById('teacherEmail').value = '';
                 document.getElementById('teacherPassword').value = '';
             }
         }
 
-        // Settings Functions
+        // ===== Settings Functions =====
         function toggleNotification() {
             const toggle = document.getElementById('notificationToggle');
             toggle.classList.toggle('active');
@@ -560,11 +754,10 @@
             toggle.classList.toggle('active');
             const isDarkMode = toggle.classList.contains('active');
             localStorage.setItem('darkModeEnabled', isDarkMode);
-            // ที่นี่สามารถใช้ dark mode
             if (isDarkMode) {
-                alert('โหมดมืดเปิดใช้งานแล้ว');
+                alert('✅ โหมดมืดเปิดใช้งานแล้ว');
             } else {
-                alert('โหมดมืดปิดใช้งานแล้ว');
+                alert('✅ โหมดมืดปิดใช้งานแล้ว');
             }
         }
 
@@ -573,10 +766,10 @@
         }
 
         function showAbout() {
-            alert('บันทึก Log Book สำหรับนักศึกษา\nเวอร์ชั่น: 1.0.0\nพัฒนาเพื่อช่วยในการบันทึกและการประเมินผล');
+            alert('บันทึก Log Book สำหรับนักศึกษา\nเวอร์ชั่น: 2.0.0\nพัฒนาเพื่อช่วยในการบันทึกและการประเมินผล\n\nใช้ Supabase สำหรับการจัดการฐานข้อมูล');
         }
 
-        // Load settings on page load
+        // ===== Initialize on page load =====
         window.addEventListener('load', function() {
             const notificationEnabled = localStorage.getItem('notificationEnabled') === 'true';
             const darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
@@ -587,7 +780,26 @@
             if (darkModeEnabled) {
                 document.getElementById('darkModeToggle').classList.add('active');
             }
+
+            // Check if user already logged in
+            checkCurrentUser();
         });
+
+        // ===== Check Current User =====
+        async function checkCurrentUser() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const storedUser = localStorage.getItem('currentUser');
+                    if (storedUser) {
+                        const userInfo = JSON.parse(storedUser);
+                        alert(`👋 ยินดีต้อนรับกลับ, ${userInfo.fullName}`);
+                    }
+                }
+            } catch (error) {
+                console.log('User not logged in');
+            }
+        }
     </script>
 </body>
 </html>
