@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตั้งค่าระบบ - Log Book</title>
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* ===== Loading Spinner ===== */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===== Alert Messages ===== */
+        .alert {
+            display: none;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        .alert.active {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* ===== Screen ===== */
+        .screen {
+            display: none;
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== Login Screen ===== */
+        .login-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .login-header {
+            margin-bottom: 30px;
+        }
+
+        .login-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ===== Admin Panel ===== */
+        .admin-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .admin-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #f5576c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #d63447;
+            transform: translateY(-2px);
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .menu-item {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: #e8eef5;
+            border-left-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .menu-icon {
+            font-size: 24px;
+        }
+
+        .menu-text {
+            flex: 1;
+        }
+
+        .menu-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .menu-subtitle {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        /* ===== Content Screen ===== */
+        .content-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .content-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .back-btn-small {
+            width: 40px;
+            height: 40px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn-small:hover {
+            background: #e0e0e0;
+        }
+
+        .content-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* ===== Change Password Form ===== */
+        .password-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .password-section {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .password-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+            font-size: 14px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* ===== Database Management ===== */
+        .database-info {
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .database-label {
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 5px;
+        }
+
+        .database-value {
+            font-size: 12px;
+            color: #0d47a1;
+            word-break: break-all;
+            font-family: monospace;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .action-btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .action-btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .action-btn-secondary:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+        }
+
+        /* ===== Add Users Form ===== */
+        .add-user-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .user-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .type-btn {
+            padding: 12px;
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .type-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .users-table th {
+            background: #f0f0f0;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .users-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .delete-btn {
+            padding: 4px 8px;
+            background: #f5576c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #d63447;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .login-screen,
+            .admin-panel,
+            .content-screen {
+                padding: 20px;
+                border-radius: 15px;
+            }
+
+            .login-title {
+                font-size: 20px;
+            }
+
+            .admin-title {
+                font-size: 20px;
+            }
+
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+
+            .user-type-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>กำลังโหลด...</p>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertBox" class="alert"></div>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen active login-screen">
+            <div class="login-header">
+                <div class="login-icon">🔐</div>
+                <h1 class="login-title">Admin Settings</h1>
+                <p class="login-subtitle">กรุณาเข้าสู่ระบบเพื่อจัดการตั้งค่า</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="adminUsername" placeholder="กรอก username" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="adminPassword" placeholder="กรอก password" required>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">เข้าระบบ</button>
+            </form>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="screen admin-panel">
+            <div class="admin-header">
+                <h1 class="admin-title">⚙️ ตั้งค่าระบบ</h1>
+                <button class="logout-btn" onclick="handleLogout()">🚪 ออกจากระบบ</button>
+            </div>
+
+            <div class="menu-list">
+                <div class="menu-item" onclick="goToChangePassword()">
+                    <span class="menu-icon">🔑</span>
+                    <div class="menu-text">
+                        <div class="menu-title">เปลี่ยนรหัสผ่าน</div>
+                        <div class="menu-subtitle">อัปเดตรหัสผ่าน Admin</div>
+                    </div>
+                </div>
+
+                <div class="menu-item" onclick="goToDatabaseManagement()">
+                    <span class="menu-icon">🗄️</span>
+                    <div class="menu-text">
+                        <div class="menu-title">จัดการฐานข้อมูล Supabase</div>
+                        <div class="menu-subtitle">ตรวจสอบข้อมูลและการใช้งาน</div>
+                    </div>
+                </div>
+
+                <div class="menu-item" onclick="goToAddUsers()">
+                    <span class="menu-icon">👥</span>
+                    <div class="menu-text">
+                        <div class="menu-title">เพิ่มรายชื่อนักศึกษา/อาจารย์</div>
+                        <div class="menu-subtitle">จัดการข้อมูลผู้ใช้ในระบบ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Screen -->
+        <div id="changePasswordScreen" class="screen content-screen">
+            <div class="content-header">
+                <button class="back-btn-small" onclick="goToAdminPanel()">←</button>
+                <h2 class="content-title">🔑 เปลี่ยนรหัสผ่าน</h2>
+            </div>
+
+            <div id="changePasswordAlert" class="alert"></div>
+
+            <div class="password-form">
+                <div class="password-section">
+                    <label class="password-label">รหัสผ่านปัจจุบัน</label>
+                    <input type="password" class="password-input" id="currentPassword" placeholder="กรอกรหัสผ่านปัจจุบัน" required>
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">รหัสผ่านใหม่</label>
+                    <input type="password" class="password-input" id="newPassword" placeholder="กรอกรหัสผ่านใหม่" required>
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">ยืนยันรหัสผ่านใหม่</label>
+                    <input type="password" class="password-input" id="confirmPassword" placeholder="ยืนยันรหัสผ่าน" required>
+                </div>
+
+                <button class="submit-btn" onclick="handleChangePassword()">💾 บันทึกรหัสผ่านใหม่</button>
+            </div>
+        </div>
+
+        <!-- Database Management Screen -->
+        <div id="databaseManagementScreen" class="screen content-screen">
+            <div class="content-header">
+                <button class="back-btn-small" onclick="goToAdminPanel()">←</button>
+                <h2 class="content-title">🗄️ จัดการฐานข้อมูล</h2>
+            </div>
+
+            <div id="databaseAlert" class="alert"></div>
+
+            <div class="database-info">
+                <div class="database-label">Supabase URL</div>
+                <div class="database-value">https://mxnsngomamxtvlbzrqqd.supabase.co</div>
+            </div>
+
+            <div class="database-info">
+                <div class="database-label">Project Name</div>
+                <div class="database-value">mxnsngomamxtvlbzrqqd</div>
+            </div>
+
+            <div style="margin-bottom: 20px; padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #FF9800;">
+                <div style="font-weight: 600; color: #E65100; margin-bottom: 5px;">📊 สถิติฐานข้อมูล</div>
+                <div style="font-size: 12px; color: #BF360C;">
+                    <p>จำนวนนักศึกษา: <span id="studentCount">0</span></p>
+                    <p>จำนวนอาจารย์: <span id="teacherCount">0</span></p>
+                    <p>จำนวน Log Books: <span id="logBookCount">0</span></p>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="action-btn action-btn-primary" onclick="refreshDatabaseStats()">🔄 รีเฟรช</button>
+                <button class="action-btn action-btn-secondary" onclick="backupDatabase()">💾 สำรองข้อมูล</button>
+            </div>
+
+            <div style="padding: 15px; background: #f0f0f0; border-radius: 8px; font-size: 12px; color: #666; line-height: 1.6;">
+                <strong>ℹ️ ข้อมูลจำเป็น:</strong>
+                <p>สำหรับการสำรองข้อมูล ให้เข้าไปที่ Supabase Dashboard → Database → Backups</p>
+                <p style="margin-top: 10px;">สำหรับการจัดการตัวแปร ให้เข้า Supabase SQL Editor เพื่อเขียน Query</p>
+            </div>
+        </div>
+
+        <!-- Add Users Screen -->
+        <div id="addUsersScreen" class="screen content-screen">
+            <div class="content-header">
+                <button class="back-btn-small" onclick="goToAdminPanel()">←</button>
+                <h2 class="content-title">👥 เพิ่มผู้ใช้</h2>
+            </div>
+
+            <div id="addUsersAlert" class="alert"></div>
+
+            <div class="add-user-form">
+                <div>
+                    <label class="password-label">เลือกประเภทผู้ใช้</label>
+                    <div class="user-type-selector">
+                        <button class="type-btn active" onclick="selectUserType('student')">👨‍🎓 นักศึกษา</button>
+                        <button class="type-btn" onclick="selectUserType('teacher')">👨‍🏫 อาจารย์</button>
+                    </div>
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">อีเมล</label>
+                    <input type="email" class="password-input" id="userEmail" placeholder="เช่น user@example.com" required>
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">รหัสผ่าน</label>
+                    <input type="password" class="password-input" id="userPassword" placeholder="กรอกรหัสผ่าน" required>
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">ชื่อ-สกุล</label>
+                    <input type="text" class="password-input" id="userFullName" placeholder="เช่น นายปิติพัฒน์" required>
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">รหัสประจำตัว</label>
+                    <input type="text" class="password-input" id="userId" placeholder="เช่น STU001 หรือ T001" required>
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">โทรศัพท์</label>
+                    <input type="tel" class="password-input" id="userPhone" placeholder="เช่น 0801234567">
+                </div>
+
+                <div class="password-section">
+                    <label class="password-label">แผนก</label>
+                    <input type="text" class="password-input" id="userDepartment" placeholder="เช่น วิทยาการคอมพิวเตอร์">
+                </div>
+
+                <button class="submit-btn" onclick="handleAddUser()">➕ เพิ่มผู้ใช้</button>
+            </div>
+
+            <div class="table-container">
+                <h3 style="margin: 20px 0 10px 0; font-size: 14px; font-weight: 600; color: #333;">
+                    📋 รายชื่อผู้ใช้ที่มีอยู่
+                </h3>
+                <table class="users-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ชื่อ-สกุล</th>
+                            <th>รหัส</th>
+                            <th>อีเมล</th>
+                            <th>การจัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #999;">กำลังโหลดข้อมูล...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== Supabase Configuration =====
+        const SUPABASE_URL = 'https://mxnsngomamxtvlbzrqqd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+
+        // Initialize Supabase Client
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ===== Admin Credentials =====
+        const DEFAULT_ADMIN_USERNAME = 'admin';
+        const DEFAULT_ADMIN_PASSWORD = '123456';
+        let currentUserType = 'student';
+
+        // ===== UI Functions =====
+        function showScreen(screenId) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showAlert(message, type = 'success', screenId = 'alertBox') {
+            const alertBox = document.getElementById(screenId);
+            alertBox.textContent = message;
+            alertBox.className = `alert active alert-${type}`;
+            setTimeout(() => {
+                alertBox.classList.remove('active');
+            }, 5000);
+        }
+
+        function showLoading(show = true) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('active');
+            } else {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ===== Navigation =====
+        function goToAdminPanel() {
+            showScreen('adminPanel');
+        }
+
+        function goToChangePassword() {
+            showScreen('changePasswordScreen');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        function goToDatabaseManagement() {
+            showScreen('databaseManagementScreen');
+            refreshDatabaseStats();
+        }
+
+        function goToAddUsers() {
+            showScreen('addUsersScreen');
+            loadUsersList();
+        }
+
+        // ===== Login Function =====
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (username === DEFAULT_ADMIN_USERNAME && password === DEFAULT_ADMIN_PASSWORD) {
+                btn.disabled = true;
+                localStorage.setItem('adminLoggedIn', 'true');
+                showAlert('✅ เข้าระบบสำเร็จ!', 'success');
+                setTimeout(() => {
+                    showScreen('adminPanel');
+                    document.getElementById('adminUsername').value = '';
+                    document.getElementById('adminPassword').value = '';
+                }, 500);
+                setTimeout(() => {
+                    btn.disabled = false;
+                }, 1000);
+            } else {
+                showAlert('❌ Username หรือ Password ไม่ถูกต้อง', 'error');
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+                localStorage.removeItem('adminLoggedIn');
+                showAlert('✅ ออกจากระบบสำเร็จ', 'success');
+                setTimeout(() => {
+                    showScreen('loginScreen');
+                }, 500);
+            }
+        }
+
+        // ===== Change Password =====
+        function handleChangePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (current !== DEFAULT_ADMIN_PASSWORD) {
+                showAlert('❌ รหัสผ่านปัจจุบันไม่ถูกต้อง', 'error', 'changePasswordAlert');
+                return;
+            }
+
+            if (newPwd.length < 6) {
+                showAlert('❌ รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error', 'changePasswordAlert');
+                return;
+            }
+
+            if (newPwd !== confirm) {
+                showAlert('❌ รหัสผ่านใหม่ไม่ตรงกัน', 'error', 'changePasswordAlert');
+                return;
+            }
+
+            // In production, you would hash this and store securely
+            localStorage.setItem('adminPassword', newPwd);
+            showAlert('✅ เปลี่ยนรหัสผ่านสำเร็จ!', 'success', 'changePasswordAlert');
+            setTimeout(() => {
+                goToAdminPanel();
+            }, 1500);
+        }
+
+        // ===== Database Management =====
+        async function refreshDatabaseStats() {
+            showLoading(true);
+            try {
+                const [studentData, teacherData, logBookData] = await Promise.all([
+                    supabase.from('students').select('count', { count: 'exact' }),
+                    supabase.from('teachers').select('count', { count: 'exact' }),
+                    supabase.from('log_books').select('count', { count: 'exact' })
+                ]);
+
+                document.getElementById('studentCount').textContent = studentData.count || 0;
+                document.getElementById('teacherCount').textContent = teacherData.count || 0;
+                document.getElementById('logBookCount').textContent = logBookData.count || 0;
+
+                showAlert('✅ รีเฟรชข้อมูลสำเร็จ', 'success', 'databaseAlert');
+            } catch (error) {
+                showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'databaseAlert');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function backupDatabase() {
+            const message = `สำหรับการสำรองข้อมูล:
+1. เข้าไปที่ Supabase Dashboard
+2. ไปที่ Database → Backups
+3. คลิก "Create Backup"
+
+ระบบจะสร้างสำเนาข้อมูลอัตโนมัติ`;
+            alert(message);
+        }
+
+        // ===== Add Users =====
+        function selectUserType(type) {
+            currentUserType = type;
+            const btns = document.querySelectorAll('.type-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        async function handleAddUser() {
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const fullName = document.getElementById('userFullName').value;
+            const userId = document.getElementById('userId').value;
+            const phone = document.getElementById('userPhone').value;
+            const department = document.getElementById('userDepartment').value;
+
+            if (!email || !password || !fullName || !userId) {
+                showAlert('❌ กรุณากรอกข้อมูลที่จำเป็น', 'error', 'addUsersAlert');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                // Sign up user
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                });
+
+                if (authError) {
+                    showAlert(`❌ ข้อผิดพลาด: ${authError.message}`, 'error', 'addUsersAlert');
+                    return;
+                }
+
+                const userId_uuid = authData.user.id;
+
+                // Add to respective table
+                if (currentUserType === 'student') {
+                    const { error } = await supabase.from('students').insert([{
+                        user_id: userId_uuid,
+                        student_id: userId,
+                        full_name: fullName,
+                        email: email,
+                        phone: phone,
+                        department: department
+                    }]);
+
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabase.from('teachers').insert([{
+                        user_id: userId_uuid,
+                        teacher_id: userId,
+                        full_name: fullName,
+                        email: email,
+                        phone: phone,
+                        department: department
+                    }]);
+
+                    if (error) throw error;
+                }
+
+                showAlert(`✅ เพิ่มผู้ใช้สำเร็จ!`, 'success', 'addUsersAlert');
+                
+                // Clear form
+                document.getElementById('userEmail').value = '';
+                document.getElementById('userPassword').value = '';
+                document.getElementById('userFullName').value = '';
+                document.getElementById('userId').value = '';
+                document.getElementById('userPhone').value = '';
+                document.getElementById('userDepartment').value = '';
+
+                // Reload users list
+                setTimeout(() => {
+                    loadUsersList();
+                }, 1000);
+            } catch (error) {
+                showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'addUsersAlert');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadUsersList() {
+            showLoading(true);
+            try {
+                const { data: students } = await supabase.from('students').select('*');
+                const { data: teachers } = await supabase.from('teachers').select('*');
+
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+
+                if (!students && !teachers) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">ไม่มีข้อมูลผู้ใช้</td></tr>';
+                    return;
+                }
+
+                const allUsers = [
+                    ...(students || []).map(s => ({ ...s, type: 'student' })),
+                    ...(teachers || []).map(t => ({ ...t, type: 'teacher' }))
+                ];
+
+                allUsers.forEach(user => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${user.full_name}</td>
+                        <td>${user.student_id || user.teacher_id}</td>
+                        <td>${user.email}</td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteUser('${user.id}', '${user.type}')">
+                                🗑️ ลบ
+                            </button>
+                        </td>
+                    `;
+                });
+            } catch (error) {
+                showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'addUsersAlert');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteUser(userId, type) {
+            if (confirm('คุณต้องการลบผู้ใช้นี้หรือไม่?')) {
+                showLoading(true);
+                try {
+                    const table = type === 'student' ? 'students' : 'teachers';
+                    const { error } = await supabase.from(table).delete().eq('id', userId);
+
+                    if (error) throw error;
+
+                    showAlert('✅ ลบผู้ใช้สำเร็จ', 'success', 'addUsersAlert');
+                    loadUsersList();
+                } catch (error) {
+                    showAlert(`❌ ข้อผิดพลาด: ${error.message}`, 'error', 'addUsersAlert');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        // ===== Initialize =====
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('adminLoggedIn');
+            if (isLoggedIn === 'true') {
+                showScreen('adminPanel');
+            } else {
+                showScreen('loginScreen');
+            }
+        });
+    </script>
+</body>
+</html>
