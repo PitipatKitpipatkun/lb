@@ -115,9 +115,16 @@
             margin-bottom: 10px;
         }
 
-        .logo-icon {
-            font-size: 60px;
+        .logo-container {
+            display: flex;
+            justify-content: center;
             margin-bottom: 15px;
+        }
+
+        .logo-image {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
             animation: float 3s ease-in-out infinite;
         }
 
@@ -140,7 +147,14 @@
         .app-subtitle {
             font-size: 14px;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 3px;
+        }
+
+        .university-info {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+            line-height: 1.4;
         }
 
         .menu-buttons {
@@ -208,9 +222,16 @@
             margin-bottom: 30px;
         }
 
-        .login-icon {
-            font-size: 50px;
+        .login-logo-container {
+            display: flex;
+            justify-content: center;
             margin-bottom: 15px;
+        }
+
+        .login-logo-image {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
         }
 
         .login-title {
@@ -293,20 +314,12 @@
             background: #e0e0e0;
         }
 
-        .student-login .login-icon {
-            color: #667eea;
-        }
-
         .student-login .login-title {
             color: #667eea;
         }
 
         .student-login .login-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .teacher-login .login-icon {
-            color: #f5576c;
         }
 
         .teacher-login .login-title {
@@ -330,10 +343,16 @@
             margin-bottom: 30px;
         }
 
-        .settings-icon {
-            font-size: 50px;
-            color: #00d4ff;
+        .settings-logo-container {
+            display: flex;
+            justify-content: center;
             margin-bottom: 15px;
+        }
+
+        .settings-logo-image {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
         }
 
         .settings-title {
@@ -408,6 +427,7 @@
             margin-bottom: 20px;
             font-size: 12px;
             color: #666;
+            line-height: 1.5;
         }
 
         /* ===== Responsive ===== */
@@ -418,6 +438,11 @@
 
             .app-title {
                 font-size: 20px;
+            }
+
+            .logo-image {
+                width: 70px;
+                height: 70px;
             }
 
             .menu-btn {
@@ -433,6 +458,12 @@
             .login-title,
             .settings-title {
                 font-size: 18px;
+            }
+
+            .login-logo-image,
+            .settings-logo-image {
+                width: 50px;
+                height: 50px;
             }
         }
     </style>
@@ -451,9 +482,15 @@
         <!-- Main Menu Screen -->
         <div id="menuScreen" class="screen active menu-screen">
             <div class="logo-section">
-                <div class="logo-icon">📚</div>
+                <div class="logo-container">
+                    <img src="fac.png" alt="Logo" class="logo-image">
+                </div>
                 <h1 class="app-title">บันทึก Log Book</h1>
                 <p class="app-subtitle">สำหรับนักศึกษา</p>
+                <div class="university-info">
+                    <p>คณะสัตวแพทยศาสตร์</p>
+                    <p>มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
+                </div>
             </div>
 
             <div class="menu-buttons">
@@ -475,7 +512,9 @@
         <!-- Student Login Screen -->
         <div id="studentLoginScreen" class="screen login-screen student-login">
             <div class="login-header">
-                <div class="login-icon">👨‍🎓</div>
+                <div class="login-logo-container">
+                    <img src="fac.png" alt="Logo" class="login-logo-image">
+                </div>
                 <h2 class="login-title">เข้าระบบนักศึกษา</h2>
                 <p class="login-subtitle">กรุณากรอกข้อมูลของคุณ</p>
             </div>
@@ -502,7 +541,9 @@
         <!-- Teacher Login Screen -->
         <div id="teacherLoginScreen" class="screen login-screen teacher-login">
             <div class="login-header">
-                <div class="login-icon">👨‍🏫</div>
+                <div class="login-logo-container">
+                    <img src="fac.png" alt="Logo" class="login-logo-image">
+                </div>
                 <h2 class="login-title">เข้าระบบอาจารย์</h2>
                 <p class="login-subtitle">กรุณากรอกข้อมูลของคุณ</p>
             </div>
@@ -529,13 +570,17 @@
         <!-- Settings Screen -->
         <div id="settingsScreen" class="screen settings-screen">
             <div class="settings-header">
-                <div class="settings-icon">⚙️</div>
+                <div class="settings-logo-container">
+                    <img src="fac.png" alt="Logo" class="settings-logo-image">
+                </div>
                 <h2 class="settings-title">ตั้งค่า</h2>
             </div>
 
             <div class="version-info">
+                <p><strong>บันทึก Log Book สำหรับนักศึกษา</strong></p>
                 <p>เวอร์ชั่น: 2.0.0 (Supabase)</p>
-                <p>พัฒนาขึ้นเพื่อการศึกษา</p>
+                <p>คณะสัตวแพทยศาสตร์</p>
+                <p>มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
             </div>
 
             <div class="settings-list">
@@ -766,7 +811,7 @@
         }
 
         function showAbout() {
-            alert('บันทึก Log Book สำหรับนักศึกษา\nเวอร์ชั่น: 2.0.0\nพัฒนาเพื่อช่วยในการบันทึกและการประเมินผล\n\nใช้ Supabase สำหรับการจัดการฐานข้อมูล');
+            alert('บันทึก Log Book สำหรับนักศึกษา\nเวอร์ชั่น: 2.0.0\nพัฒนาเพื่อช่วยในการบันทึกและการประเมินผล\n\nคณะสัตวแพทยศาสตร์\nมหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก');
         }
 
         // ===== Initialize on page load =====
