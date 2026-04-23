@@ -324,106 +324,6 @@
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
-        /* ===== Settings Screen ===== */
-        .settings-screen {
-            background: white;
-            border-radius: 20px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .settings-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .settings-logo-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-
-        .settings-logo-image {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-        }
-
-        .settings-title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .settings-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .settings-item {
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .settings-item:hover {
-            background: #e8eef5;
-        }
-
-        .settings-item-label {
-            font-weight: 500;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .toggle-switch {
-            width: 50px;
-            height: 28px;
-            background: #ccc;
-            border-radius: 14px;
-            position: relative;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .toggle-switch.active {
-            background: #667eea;
-        }
-
-        .toggle-slider {
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            transition: left 0.3s;
-        }
-
-        .toggle-switch.active .toggle-slider {
-            left: 24px;
-        }
-
-        .version-info {
-            text-align: center;
-            padding: 15px;
-            background: #f0f0f0;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 12px;
-            color: #666;
-            line-height: 1.5;
-        }
-
         /* ===== Responsive ===== */
         @media (max-width: 480px) {
             body {
@@ -444,20 +344,12 @@
                 font-size: 15px;
             }
 
-            .login-screen,
-            .settings-screen {
+            .login-screen {
                 padding: 20px;
             }
 
-            .login-title,
-            .settings-title {
+            .login-title {
                 font-size: 18px;
-            }
-
-            .login-logo-image,
-            .settings-logo-image {
-                width: 50px;
-                height: 50px;
             }
         }
     </style>
@@ -559,51 +451,6 @@
 
             <button class="back-btn" onclick="goToMenu()">← กลับหน้าหลัก</button>
         </div>
-
-        <!-- Settings Screen -->
-        <div id="settingsScreen" class="screen settings-screen">
-            <div class="settings-header">
-                <div class="settings-logo-container">
-                    <img src="fac.png" alt="Logo" class="settings-logo-image">
-                </div>
-                <h2 class="settings-title">ตั้งค่า</h2>
-            </div>
-
-            <div class="version-info">
-                <p><strong>Log Book</strong></p>
-                <p>เวอร์ชั่น: 2.0.0 (Supabase)</p>
-                <p>คณะสัตวแพทยศาสตร์</p>
-                <p>มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
-            </div>
-
-            <div class="settings-list">
-                <div class="settings-item" onclick="toggleNotification()">
-                    <span class="settings-item-label">🔔 การแจ้งเตือน</span>
-                    <div class="toggle-switch" id="notificationToggle">
-                        <div class="toggle-slider"></div>
-                    </div>
-                </div>
-
-                <div class="settings-item" onclick="toggleDarkMode()">
-                    <span class="settings-item-label">🌙 โหมดมืด</span>
-                    <div class="toggle-switch" id="darkModeToggle">
-                        <div class="toggle-slider"></div>
-                    </div>
-                </div>
-
-                <div class="settings-item" onclick="changeLang()">
-                    <span class="settings-item-label">🌐 ภาษา</span>
-                    <span style="font-size: 12px; color: #999;">ไทย</span>
-                </div>
-
-                <div class="settings-item" onclick="showAbout()">
-                    <span class="settings-item-label">ℹ️ เกี่ยวกับแอป</span>
-                    <span style="font-size: 12px; color: #999;">ข้อมูล</span>
-                </div>
-            </div>
-
-            <button class="back-btn" onclick="goToMenu()">← กลับหน้าหลัก</button>
-        </div>
     </div>
 
     <script>
@@ -629,7 +476,8 @@
         }
 
         function goToSettings() {
-            showScreen('settingsScreen');
+            // Open setting.html in new window or redirect
+            window.location.href = 'setting.html';
         }
 
         function showScreen(screenId) {
@@ -779,46 +627,8 @@
             }
         }
 
-        // ===== Settings Functions =====
-        function toggleNotification() {
-            const toggle = document.getElementById('notificationToggle');
-            toggle.classList.toggle('active');
-            const isActive = toggle.classList.contains('active');
-            localStorage.setItem('notificationEnabled', isActive);
-        }
-
-        function toggleDarkMode() {
-            const toggle = document.getElementById('darkModeToggle');
-            toggle.classList.toggle('active');
-            const isDarkMode = toggle.classList.contains('active');
-            localStorage.setItem('darkModeEnabled', isDarkMode);
-            if (isDarkMode) {
-                alert('✅ โหมดมืดเปิดใช้งานแล้ว');
-            } else {
-                alert('✅ โหมดมืดปิดใช้งานแล้ว');
-            }
-        }
-
-        function changeLang() {
-            alert('ภาษาปัจจุบัน: ไทย\nตัวเลือกอื่น ๆ สามารถเพิ่มได้ในอนาคต');
-        }
-
-        function showAbout() {
-            alert('Log Book\nเวอร์ชั่น: 2.0.0\nพัฒนาเพื่อช่วยในการบันทึกและการประเมินผล\n\nคณะสัตวแพทยศาสตร์\nมหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก');
-        }
-
         // ===== Initialize on page load =====
         window.addEventListener('load', function() {
-            const notificationEnabled = localStorage.getItem('notificationEnabled') === 'true';
-            const darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
-
-            if (notificationEnabled) {
-                document.getElementById('notificationToggle').classList.add('active');
-            }
-            if (darkModeEnabled) {
-                document.getElementById('darkModeToggle').classList.add('active');
-            }
-
             // Check if user already logged in
             checkCurrentUser();
         });
@@ -831,7 +641,7 @@
                     const storedUser = localStorage.getItem('currentUser');
                     if (storedUser) {
                         const userInfo = JSON.parse(storedUser);
-                        alert(`👋 ยินดีต้อนรับกลับ, ${userInfo.fullName}`);
+                        alert(`👋 ยินดีต้อนรับ��ลับ, ${userInfo.fullName}`);
                     }
                 }
             } catch (error) {
