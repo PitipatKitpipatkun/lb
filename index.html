@@ -228,7 +228,7 @@ const { createClient } = window.supabase;
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // username → internal Supabase email
-function toEmail(username) { return username.trim().toLowerCase() + '@lb.local'; }
+function toEmail(username) { return username.trim().toLowerCase() + '@lbsys.com'; }
 
 function showMenu() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
