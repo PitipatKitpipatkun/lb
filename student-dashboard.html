@@ -2,342 +2,488 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Log Book — นักศึกษา</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --teal:#0d9488;--teal-dark:#0f766e;--teal-light:#ccfbf1;--teal-50:#f0fdfa;
-    --slate:#1e293b;--slate-mid:#475569;--slate-light:#94a3b8;
-    --border:#e2e8f0;--bg:#f8fafc;--white:#ffffff;
-    --pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;
-    --pending:#d97706;--pending-bg:#fef3c7;--sidebar:240px;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);}
-  .layout{display:flex;min-height:100vh;}
+:root{
+  --teal:#0d9488;--teal-d:#0f766e;--teal-l:#ccfbf1;--teal-50:#f0fdfa;
+  --slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;
+  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
+  --pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;
+  --pend:#d97706;--pend-bg:#fef3c7;
+  --nav-h:64px;--sidebar:260px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);overflow-x:hidden;}
 
-  /* SIDEBAR */
-  .sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;}
-  .sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
-  .sidebar-logo-img{width:44px;height:44px;border-radius:10px;object-fit:contain;background:var(--teal-50);padding:4px;border:1px solid var(--teal-light);flex-shrink:0;}
-  .sidebar-logo-text h2{font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--teal);line-height:1.2;}
-  .sidebar-logo-text p{font-size:10px;color:var(--slate-light);line-height:1.3;margin-top:1px;}
-  .sidebar-user{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--teal-50);}
-  .user-row{display:flex;align-items:center;gap:10px;}
-  .user-av{width:36px;height:36px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;flex-shrink:0;}
-  .user-name{font-size:13px;font-weight:600;color:var(--slate);}
-  .user-code{font-size:11px;color:var(--slate-light);}
-  .role-badge{display:inline-block;background:var(--teal-light);color:var(--teal-dark);font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-top:5px;}
-  .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--slate-mid);cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;}
-  .nav-item:hover{background:var(--bg);color:var(--teal);}
-  .nav-item.active{background:var(--teal-50);color:var(--teal);border-left-color:var(--teal);font-weight:600;}
-  .nav-icon{font-size:16px;width:20px;text-align:center;}
-  .sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);}
-  .logout-btn{width:100%;padding:9px;background:transparent;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate-mid);cursor:pointer;transition:all 0.2s;}
-  .logout-btn:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626;}
+/* ===== SIDEBAR (desktop) ===== */
+.sidebar{
+  width:var(--sidebar);background:white;border-right:1px solid var(--border);
+  position:fixed;top:0;left:0;height:100vh;
+  display:flex;flex-direction:column;z-index:100;
+  transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.sb-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.sb-logo-img{width:42px;height:42px;border-radius:10px;object-fit:contain;background:var(--teal-50);padding:4px;border:1px solid var(--teal-l);flex-shrink:0;}
+.sb-logo-txt h2{font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--teal);}
+.sb-logo-txt p{font-size:10px;color:var(--slate-l);line-height:1.4;}
+.sb-user{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--teal-50);}
+.sb-user-row{display:flex;align-items:center;gap:10px;}
+.sb-av{width:38px;height:38px;background:linear-gradient(135deg,var(--teal),var(--teal-d));border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;}
+.sb-name{font-size:13px;font-weight:600;color:var(--slate);}
+.sb-code{font-size:11px;color:var(--slate-l);}
+.sb-badge{display:inline-block;background:var(--teal-l);color:var(--teal-d);font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-top:4px;}
+.sb-nav{flex:1;padding:10px 0;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  font-size:13px;font-weight:500;color:var(--slate-m);cursor:pointer;
+  transition:all 0.15s;border-left:3px solid transparent;
+}
+.nav-item:hover{background:var(--teal-50);color:var(--teal);}
+.nav-item.active{background:var(--teal-50);color:var(--teal);border-left-color:var(--teal);font-weight:700;}
+.nav-icon{font-size:18px;width:22px;text-align:center;}
+.sb-foot{padding:14px 16px;border-top:1px solid var(--border);}
+.logout-btn{width:100%;padding:10px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate-m);cursor:pointer;transition:all 0.2s;}
+.logout-btn:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626;}
 
-  /* MAIN */
-  .main{margin-left:var(--sidebar);flex:1;padding:28px 32px;}
-  .tab-view{display:none;}
-  .tab-view.active{display:block;animation:fadeUp 0.25s ease;}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-  .page-header{margin-bottom:24px;}
-  .page-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;}
-  .page-subtitle{font-size:13px;color:var(--slate-light);margin-top:3px;}
+/* ===== MAIN ===== */
+.main{margin-left:var(--sidebar);flex:1;padding:24px 28px;min-height:100vh;}
+.tab-view{display:none;}
+.tab-view.active{display:block;}
 
-  /* STATS */
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
-  .stat-card{background:var(--white);border-radius:14px;padding:18px;border:1px solid var(--border);}
-  .stat-label{font-size:11px;font-weight:700;color:var(--slate-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
-  .stat-val{font-family:'Prompt',sans-serif;font-size:30px;font-weight:700;}
-  .stat-sub{font-size:12px;color:var(--slate-light);margin-top:2px;}
-  .sv-pass .stat-val{color:var(--pass);}
-  .sv-fail .stat-val{color:var(--fail);}
-  .sv-pending .stat-val{color:var(--pending);}
-  .sv-total .stat-val{color:var(--teal);}
+/* Stagger animation for tab content */
+.tab-view.active .stat-card{animation:cardIn 0.4s cubic-bezier(0.34,1.2,0.64,1) both;}
+.tab-view.active .stat-card:nth-child(1){animation-delay:0.05s;}
+.tab-view.active .stat-card:nth-child(2){animation-delay:0.1s;}
+.tab-view.active .stat-card:nth-child(3){animation-delay:0.15s;}
+.tab-view.active .stat-card:nth-child(4){animation-delay:0.2s;}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-  /* PROGRESS */
-  .progress-card{background:var(--white);border-radius:14px;padding:22px;border:1px solid var(--border);margin-bottom:22px;}
-  .progress-title{font-size:14px;font-weight:700;margin-bottom:4px;}
-  .progress-sub{font-size:12px;color:var(--slate-light);margin-bottom:12px;}
-  .progress-bar{height:10px;background:var(--border);border-radius:100px;overflow:hidden;}
-  .progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),#14b8a6);border-radius:100px;transition:width 0.7s ease;}
-  .progress-row{display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--slate-light);}
+/* ===== MOBILE HEADER ===== */
+.mob-header{
+  display:none;position:sticky;top:0;z-index:50;
+  background:white;border-bottom:1px solid var(--border);
+  padding:12px 16px;align-items:center;gap:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+.mob-hamburger{font-size:22px;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.2s;}
+.mob-hamburger:active{background:var(--bg);}
+.mob-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--teal);flex:1;}
+.mob-user-av{width:32px;height:32px;background:linear-gradient(135deg,var(--teal),var(--teal-d));border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;}
 
-  /* SKILLS */
-  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-  .section-title{font-size:15px;font-weight:700;}
-  .filter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
-  .filter-btn{padding:5px 12px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px solid var(--border);background:var(--white);color:var(--slate-mid);cursor:pointer;transition:all 0.15s;}
-  .filter-btn.active{background:var(--teal);border-color:var(--teal);color:white;}
-  .skill-list{display:flex;flex-direction:column;gap:9px;}
-  .skill-item{background:var(--white);border-radius:13px;padding:14px 16px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;transition:all 0.15s;}
-  .skill-item:hover{box-shadow:0 2px 12px rgba(0,0,0,0.05);transform:translateY(-1px);}
-  .skill-dot{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-  .dot-pass{background:var(--pass-bg);}
-  .dot-fail{background:var(--fail-bg);}
-  .dot-pending{background:var(--pending-bg);}
-  .skill-info{flex:1;}
-  .skill-name{font-size:13px;font-weight:600;}
-  .skill-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;display:inline-block;margin:3px 0;}
-  .type-m{background:#ede9fe;color:#5b21b6;}
-  .type-e{background:#e0f2fe;color:#0369a1;}
-  .skill-meta{font-size:11px;color:var(--slate-light);margin-top:1px;}
-  .skill-right{text-align:right;flex-shrink:0;}
-  .status-badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;}
-  .badge-pass{background:var(--pass-bg);color:var(--pass);}
-  .badge-fail{background:var(--fail-bg);color:var(--fail);}
-  .badge-pending{background:var(--pending-bg);color:var(--pending);}
-  .rubric-score{font-size:11px;color:var(--slate-light);margin-top:3px;}
+/* Sidebar overlay */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:90;backdrop-filter:blur(2px);}
+.sb-overlay.on{display:block;animation:fadeIn 0.2s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-  /* PRINT BUTTON */
-  .print-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
-  .print-btn:hover{background:var(--teal-dark);}
+/* ===== BOTTOM NAV (mobile) ===== */
+.bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:white;border-top:1px solid var(--border);
+  padding:8px 0;padding-bottom:calc(8px + var(--safe-b));
+  box-shadow:0 -4px 20px rgba(0,0,0,0.06);
+}
+.bn-items{display:flex;justify-content:space-around;}
+.bn-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:4px 12px;cursor:pointer;transition:all 0.2s;border-radius:12px;
+  min-width:60px;
+}
+.bn-item:active{transform:scale(0.92);}
+.bn-icon{font-size:22px;transition:transform 0.2s;}
+.bn-label{font-size:10px;font-weight:600;color:var(--slate-l);transition:color 0.2s;}
+.bn-item.active .bn-icon{transform:scale(1.15);}
+.bn-item.active .bn-label{color:var(--teal);}
+.bn-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);margin-top:2px;opacity:0;transition:opacity 0.2s;}
+.bn-item.active .bn-dot{opacity:1;}
 
-  /* REPORT COVER */
-  .report-cover{background:var(--white);border-radius:16px;padding:32px;text-align:center;border:1px solid var(--border);margin-bottom:18px;}
-  .report-cover img{width:60px;height:60px;object-fit:contain;margin-bottom:10px;}
-  .report-cover h2{font-family:'Prompt',sans-serif;font-size:18px;color:var(--teal);margin-bottom:4px;}
-  .report-cover p{font-size:13px;color:var(--slate-mid);}
-  .report-student{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
-  .report-student strong{font-size:15px;}
-  .report-student span{font-size:13px;color:var(--slate-light);}
+/* ===== STATS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{
+  background:white;border-radius:18px;padding:18px 16px;
+  border:1px solid var(--border);cursor:default;
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+.stat-lbl{font-size:11px;font-weight:700;color:var(--slate-l);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.stat-val{font-family:'Prompt',sans-serif;font-size:32px;font-weight:800;line-height:1;}
+.stat-sub{font-size:12px;color:var(--slate-l);margin-top:4px;}
+.sv-pass .stat-val{color:var(--pass);}
+.sv-fail .stat-val{color:var(--fail);}
+.sv-pend .stat-val{color:var(--pend);}
+.sv-total .stat-val{color:var(--teal);}
 
-  /* EMPTY / SPINNER */
-  .empty{text-align:center;padding:50px 20px;color:var(--slate-light);}
-  .empty-icon{font-size:40px;margin-bottom:10px;}
-  .spinner-wrap{text-align:center;padding:40px;}
-  .spinner{display:inline-block;width:26px;height:26px;border:3px solid var(--teal-light);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg)}}
+/* ===== PROGRESS ===== */
+.progress-card{
+  background:white;border-radius:18px;padding:20px;
+  border:1px solid var(--border);margin-bottom:20px;
+  animation:cardIn 0.4s 0.25s both;
+}
+.prog-label{font-size:14px;font-weight:700;margin-bottom:4px;}
+.prog-sub{font-size:12px;color:var(--slate-l);margin-bottom:14px;}
+.prog-bar{height:12px;background:#e2e8f0;border-radius:100px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--teal),#2dd4bf);border-radius:100px;transition:width 1s cubic-bezier(0.4,0,0.2,1);}
+.prog-row{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--slate-l);}
 
-  /* MOBILE */
-  .mobile-header{display:none;}
-  @media(max-width:768px){
-    .sidebar{transform:translateX(-100%);transition:transform 0.3s;}
-    .sidebar.open{transform:translateX(0);}
-    .main{margin-left:0;padding:14px;}
-    .stats-grid{grid-template-columns:1fr 1fr;}
-    .mobile-header{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--white);border-bottom:1px solid var(--border);margin:-14px -14px 14px;}
-    .hamburger{font-size:20px;cursor:pointer;}
-  }
+/* ===== SKILL LIST ===== */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-size:15px;font-weight:700;}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;}
+.filter-btn{
+  padding:6px 14px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;
+  border:1.5px solid var(--border);background:white;color:var(--slate-m);cursor:pointer;
+  transition:all 0.2s;white-space:nowrap;flex-shrink:0;
+}
+.filter-btn:active{transform:scale(0.95);}
+.filter-btn.active{background:var(--teal);border-color:var(--teal);color:white;}
 
-  @media print{
-    .sidebar,.no-print,.mobile-header{display:none!important;}
-    .main{margin-left:0!important;padding:16px!important;}
-    .skill-item:hover{box-shadow:none;transform:none;}
-  }
+.skill-list{display:flex;flex-direction:column;gap:8px;}
+.skill-item{
+  background:white;border-radius:16px;padding:14px 16px;
+  border:1px solid var(--border);display:flex;align-items:center;gap:12px;
+  transition:all 0.2s;animation:cardIn 0.4s both;
+}
+.skill-item:hover{box-shadow:0 4px 16px rgba(0,0,0,0.06);transform:translateY(-1px);}
+.skill-item:active{transform:scale(0.99);}
+.skill-dot{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.d-pass{background:var(--pass-bg);}
+.d-fail{background:var(--fail-bg);}
+.d-pend{background:var(--pend-bg);}
+.skill-info{flex:1;min-width:0;}
+.skill-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.skill-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;display:inline-block;margin:3px 0;}
+.t-m{background:#ede9fe;color:#5b21b6;}
+.t-e{background:#e0f2fe;color:#0369a1;}
+.skill-meta{font-size:11px;color:var(--slate-l);}
+.skill-right{text-align:right;flex-shrink:0;}
+.status-badge{display:inline-block;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;}
+.b-pass{background:var(--pass-bg);color:var(--pass);}
+.b-fail{background:var(--fail-bg);color:var(--fail);}
+.b-pend{background:var(--pend-bg);color:var(--pend);}
+
+/* ===== REPORT ===== */
+.report-cover{
+  background:linear-gradient(135deg,var(--teal),var(--teal-d));
+  border-radius:18px;padding:28px;text-align:center;margin-bottom:18px;
+  color:white;
+}
+.report-cover img{width:56px;height:56px;object-fit:contain;margin-bottom:10px;border-radius:12px;background:rgba(255,255,255,0.2);padding:6px;}
+.report-cover h2{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;}
+.report-cover p{font-size:12px;opacity:0.8;margin-top:4px;}
+.report-info{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.2);}
+.print-btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+  background:var(--teal);color:white;border:none;border-radius:12px;
+  font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;
+}
+.print-btn:hover{background:var(--teal-d);transform:translateY(-2px);}
+
+/* ===== EMPTY/SPINNER ===== */
+.empty{text-align:center;padding:48px 20px;color:var(--slate-l);}
+.empty-icon{font-size:48px;margin-bottom:12px;display:block;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.spinner-wrap{text-align:center;padding:40px;}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;bottom:calc(var(--nav-h) + 12px + var(--safe-b));right:16px;left:16px;
+  padding:14px 18px;border-radius:14px;font-size:14px;font-weight:600;z-index:999;
+  opacity:0;transform:translateY(16px);transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.12);
+}
+.toast.on{opacity:1;transform:translateY(0);}
+.toast-ok{background:#dcfce7;color:#166534;}
+.toast-err{background:#fee2e2;color:#991b1b;}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);box-shadow:0 0 40px rgba(0,0,0,0.2);}
+  .main{margin-left:0;padding:12px 14px;padding-bottom:calc(var(--nav-h) + 16px + var(--safe-b));}
+  .mob-header{display:flex;}
+  .bottom-nav{display:block;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .stat-val{font-size:26px;}
+  .toast{bottom:calc(var(--nav-h) + 8px + var(--safe-b));}
+}
+@media(min-width:769px){
+  .main{display:block;}
+  .toast{bottom:20px;right:24px;left:auto;width:320px;text-align:left;}
+}
+
+/* Print */
+@media print{
+  .sidebar,.mob-header,.bottom-nav,.no-print{display:none!important;}
+  .main{margin-left:0!important;padding:12px!important;}
+}
 </style>
 </head>
 <body>
-<div class="layout">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <img class="sidebar-logo-img" src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=width:44px;height:44px;background:var(--teal-50);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;>🏥</div>'">
-      <div class="sidebar-logo-text">
-        <h2>Log Book</h2>
-        <p>คณะสัตวแพทยศาสตร์<br>มทร.ตะวันออก</p>
-      </div>
-    </div>
-    <div class="sidebar-user">
-      <div class="user-row">
-        <div class="user-av">🎓</div>
-        <div>
-          <div class="user-name" id="sidebarName">—</div>
-          <div class="user-code" id="sidebarCode"></div>
-        </div>
-      </div>
-      <div class="role-badge">นักศึกษา</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-item active" onclick="showTab('overview')" id="nav-overview"><span class="nav-icon">📊</span> ภาพรวม</div>
-      <div class="nav-item" onclick="showTab('mandatory')" id="nav-mandatory"><span class="nav-icon">⭐</span> ทักษะบังคับ</div>
-      <div class="nav-item" onclick="showTab('elective')" id="nav-elective"><span class="nav-icon">📝</span> ทักษะเลือก</div>
-      <div class="nav-item" onclick="showTab('report')" id="nav-report"><span class="nav-icon">🖨️</span> พิมพ์รายงาน</div>
-    </nav>
-    <div class="sidebar-footer">
-      <button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button>
-    </div>
-  </aside>
+<div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
 
-  <main class="main">
-    <div class="mobile-header">
-      <span class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</span>
-      <img src="fac.png" alt="Logo" style="width:28px;height:28px;object-fit:contain;" onerror="this.outerHTML='🏥'">
-      <strong style="font-family:'Prompt',sans-serif;font-size:14px;color:var(--teal)">Log Book</strong>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <img class="sb-logo-img" src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=width:42px;height:42px;background:var(--teal-50);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;>🏥</div>'">
+    <div class="sb-logo-txt"><h2>Log Book</h2><p>คณะสัตวแพทยศาสตร์<br>มทร.ตะวันออก</p></div>
+  </div>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-av">🎓</div>
+      <div><div class="sb-name" id="sbName">—</div><div class="sb-code" id="sbCode"></div></div>
     </div>
+    <div class="sb-badge">นักศึกษา</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-item active" onclick="switchTab('overview')" id="ni-overview"><span class="nav-icon">📊</span> ภาพรวม</div>
+    <div class="nav-item" onclick="switchTab('mandatory')" id="ni-mandatory"><span class="nav-icon">⭐</span> ทักษะบังคับ</div>
+    <div class="nav-item" onclick="switchTab('elective')" id="ni-elective"><span class="nav-icon">📝</span> ทักษะเลือก</div>
+    <div class="nav-item" onclick="switchTab('report')" id="ni-report"><span class="nav-icon">🖨️</span> พิมพ์รายงาน</div>
+    <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
+  </nav>
+  <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
+</aside>
 
-    <!-- OVERVIEW -->
-    <div id="tab-overview" class="tab-view active">
-      <div class="page-header">
-        <h1 class="page-title" id="welcomeTitle">สวัสดี!</h1>
-        <p class="page-subtitle">ติดตามความคืบหน้าทักษะของคุณ</p>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card sv-pass"><div class="stat-label">✅ ผ่านแล้ว</div><div class="stat-val" id="statPass">—</div><div class="stat-sub">ทักษะ</div></div>
-        <div class="stat-card sv-fail"><div class="stat-label">❌ ไม่ผ่าน</div><div class="stat-val" id="statFail">—</div><div class="stat-sub">ทักษะ</div></div>
-        <div class="stat-card sv-pending"><div class="stat-label">⏳ ยังไม่ประเมิน</div><div class="stat-val" id="statPending">—</div><div class="stat-sub">ทักษะ</div></div>
-        <div class="stat-card sv-total"><div class="stat-label">📚 ทั้งหมด</div><div class="stat-val" id="statTotal">—</div><div class="stat-sub">ทักษะ</div></div>
-      </div>
-      <div class="progress-card">
-        <div class="progress-title">ความคืบหน้าทักษะบังคับ</div>
-        <div class="progress-sub" id="progressText">กำลังโหลด...</div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-        <div class="progress-row"><span>0%</span><span id="progressPct">0%</span><span>100%</span></div>
-      </div>
-      <div class="section-head"><div class="section-title">ทักษะล่าสุด</div></div>
-      <div id="recentList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
-    </div>
-
-    <!-- MANDATORY -->
-    <div id="tab-mandatory" class="tab-view">
-      <div class="page-header"><h1 class="page-title">⭐ ทักษะบังคับ</h1><p class="page-subtitle">ต้องผ่านทั้งหมด</p></div>
-      <div class="filter-row no-print">
-        <button class="filter-btn active" onclick="filterSkills('mandatory','all',this)">ทั้งหมด</button>
-        <button class="filter-btn" onclick="filterSkills('mandatory','pass',this)">✅ ผ่าน</button>
-        <button class="filter-btn" onclick="filterSkills('mandatory','fail',this)">❌ ไม่ผ่าน</button>
-        <button class="filter-btn" onclick="filterSkills('mandatory','pending',this)">⏳ ยังไม่ประเมิน</button>
-      </div>
-      <div id="mandatoryList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
-    </div>
-
-    <!-- ELECTIVE -->
-    <div id="tab-elective" class="tab-view">
-      <div class="page-header"><h1 class="page-title">📝 ทักษะเลือก</h1><p class="page-subtitle">ทักษะที่เลือกเพิ่มเติม</p></div>
-      <div class="filter-row no-print">
-        <button class="filter-btn active" onclick="filterSkills('elective','all',this)">ทั้งหมด</button>
-        <button class="filter-btn" onclick="filterSkills('elective','pass',this)">✅ ผ่าน</button>
-        <button class="filter-btn" onclick="filterSkills('elective','pending',this)">⏳ ยังไม่ประเมิน</button>
-      </div>
-      <div id="electiveList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
-    </div>
-
-    <!-- REPORT -->
-    <div id="tab-report" class="tab-view">
-      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-        <div><h1 class="page-title">🖨️ พิมพ์รายงาน</h1><p class="page-subtitle">สรุปทักษะสำหรับพิมพ์</p></div>
-        <button class="print-btn no-print" onclick="window.print()">🖨️ พิมพ์</button>
-      </div>
-      <div class="report-cover">
-        <img src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=font-size:48px;margin-bottom:10px>🏥</div>'">
-        <h2>รายงาน Log Book</h2>
-        <p>คณะสัตวแพทยศาสตร์ มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
-        <div class="report-student">
-          <div><strong id="reportName">—</strong></div>
-          <div><span id="reportCode">—</span></div>
-          <div style="margin-top:6px;font-size:12px;color:var(--slate-light);" id="reportDate"></div>
-        </div>
-      </div>
-      <div id="reportList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
-    </div>
-  </main>
+<div class="mob-header">
+  <span class="mob-hamburger" onclick="openSidebar()">☰</span>
+  <span class="mob-title">Log Book</span>
+  <div class="mob-user-av">🎓</div>
 </div>
 
+<main class="main">
+  <!-- OVERVIEW -->
+  <div id="tab-overview" class="tab-view active">
+    <div class="page-header" style="margin-bottom:18px;">
+      <h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;" id="welcomeTitle">สวัสดี!</h1>
+      <p style="font-size:13px;color:var(--slate-l);margin-top:2px;">ติดตามความคืบหน้าทักษะของคุณ</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card sv-pass"><div class="stat-lbl">✅ ผ่านแล้ว</div><div class="stat-val" id="stPass">—</div><div class="stat-sub">ทักษะ</div></div>
+      <div class="stat-card sv-fail"><div class="stat-lbl">❌ ไม่ผ่าน</div><div class="stat-val" id="stFail">—</div><div class="stat-sub">ทักษะ</div></div>
+      <div class="stat-card sv-pend"><div class="stat-lbl">⏳ รอประเมิน</div><div class="stat-val" id="stPend">—</div><div class="stat-sub">ทักษะ</div></div>
+      <div class="stat-card sv-total"><div class="stat-lbl">📚 ทั้งหมด</div><div class="stat-val" id="stTotal">—</div><div class="stat-sub">ทักษะ</div></div>
+    </div>
+    <div class="progress-card">
+      <div class="prog-label">ความคืบหน้าทักษะบังคับ</div>
+      <div class="prog-sub" id="progText">กำลังโหลด...</div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <div class="prog-row"><span>0%</span><span id="progPct" style="font-weight:700;color:var(--teal)">0%</span><span>100%</span></div>
+    </div>
+    <div class="section-head"><div class="section-title">ทักษะล่าสุด</div></div>
+    <div id="recentList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- MANDATORY -->
+  <div id="tab-mandatory" class="tab-view">
+    <div style="margin-bottom:18px;"><h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">⭐ ทักษะบังคับ</h1></div>
+    <div class="filter-row no-print">
+      <button class="filter-btn active" onclick="filterSkills('mandatory','all',this)">ทั้งหมด</button>
+      <button class="filter-btn" onclick="filterSkills('mandatory','pass',this)">✅ ผ่าน</button>
+      <button class="filter-btn" onclick="filterSkills('mandatory','fail',this)">❌ ไม่ผ่าน</button>
+      <button class="filter-btn" onclick="filterSkills('mandatory','pending',this)">⏳ รอประเมิน</button>
+    </div>
+    <div id="mandatoryList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ELECTIVE -->
+  <div id="tab-elective" class="tab-view">
+    <div style="margin-bottom:18px;"><h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">📝 ทักษะเลือก</h1></div>
+    <div class="filter-row no-print">
+      <button class="filter-btn active" onclick="filterSkills('elective','all',this)">ทั้งหมด</button>
+      <button class="filter-btn" onclick="filterSkills('elective','pass',this)">✅ ผ่าน</button>
+      <button class="filter-btn" onclick="filterSkills('elective','pending',this)">⏳ รอประเมิน</button>
+    </div>
+    <div id="electiveList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- REPORT -->
+  <div id="tab-report" class="tab-view">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+      <h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">🖨️ รายงาน</h1>
+      <button class="print-btn no-print" onclick="window.print()">🖨️ พิมพ์</button>
+    </div>
+    <div class="report-cover">
+      <img src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=font-size:40px;margin-bottom:10px>🏥</div>'">
+      <h2>รายงาน Log Book</h2>
+      <p>คณะสัตวแพทยศาสตร์ มทร.ตะวันออก</p>
+      <div class="report-info">
+        <div style="font-size:15px;font-weight:700;" id="repName">—</div>
+        <div style="font-size:12px;opacity:0.8;margin-top:2px;" id="repCode">—</div>
+        <div style="font-size:11px;opacity:0.6;margin-top:6px;" id="repDate"></div>
+      </div>
+    </div>
+    <div id="reportList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- PASSWORD -->
+  <div id="tab-password" class="tab-view">
+    <div style="margin-bottom:18px;"><h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">🔑 เปลี่ยนรหัสผ่าน</h1></div>
+    <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:22px;max-width:440px;">
+      <div id="pwAlert" style="display:none;padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;"></div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">รหัสผ่านปัจจุบัน</label>
+        <input class="fi" type="password" id="pwCurrent" placeholder="••••••" maxlength="6" inputmode="numeric" style="padding-left:14px;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">รหัสผ่านใหม่ (6 หลัก)</label>
+        <input class="fi" type="password" id="pwNew" placeholder="••••••" maxlength="6" inputmode="numeric" style="padding-left:14px;">
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ยืนยันรหัสผ่านใหม่</label>
+        <input class="fi" type="password" id="pwConfirm" placeholder="••••••" maxlength="6" inputmode="numeric" style="padding-left:14px;">
+      </div>
+      <button id="pwBtn" onclick="changePassword()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(13,148,136,0.3);">
+        🔑 เปลี่ยนรหัสผ่าน
+      </button>
+      <button onclick="logout()" style="width:100%;margin-top:12px;padding:12px;background:#fee2e2;color:#dc2626;border:2px solid #fca5a5;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+        🚪 ออกจากระบบ
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="bn-items">
+    <div class="bn-item active" onclick="switchTab('overview')" id="bn-overview">
+      <span class="bn-icon">📊</span><span class="bn-label">ภาพรวม</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('mandatory')" id="bn-mandatory">
+      <span class="bn-icon">⭐</span><span class="bn-label">บังคับ</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('elective')" id="bn-elective">
+      <span class="bn-icon">📝</span><span class="bn-label">เลือก</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('report')" id="bn-report">
+      <span class="bn-icon">🖨️</span><span class="bn-label">รายงาน</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('password')" id="bn-password">
+      <span class="bn-icon">🔑</span><span class="bn-label">รหัสผ่าน</span><div class="bn-dot"></div>
+    </div>
+  </div>
+</nav>
+
+<div id="toast" class="toast"></div>
+
 <script>
-const SUPABASE_URL = 'https://mxnsngomamxtvlbzrqqd.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_g0DgMBjGkpyBptQFPzv8pg_ztiINMRC';
-const { createClient } = window.supabase;
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
+let user=null,skills=[];
 
-let currentUser = null, allSkillData = [];
-
-async function init() {
-  const stored = localStorage.getItem('lb_user');
-  if (!stored) { window.location.href='index.html'; return; }
-  currentUser = JSON.parse(stored);
-  if (currentUser.role !== 'student') { window.location.href='index.html'; return; }
-
-  document.getElementById('sidebarName').textContent = currentUser.fullName;
-  document.getElementById('sidebarCode').textContent = currentUser.studentCode || currentUser.username || '';
-  document.getElementById('welcomeTitle').textContent = 'สวัสดี, ' + currentUser.fullName;
-  document.getElementById('reportName').textContent = currentUser.fullName;
-  document.getElementById('reportCode').textContent = 'รหัสนักศึกษา: ' + (currentUser.studentCode || '-');
-  document.getElementById('reportDate').textContent = 'วันที่พิมพ์: ' + new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-
+async function init(){
+  const s=localStorage.getItem('lb_user');
+  if(!s){window.location.href='index.html';return;}
+  user=JSON.parse(s);
+  if(user.role!=='student'){window.location.href='index.html';return;}
+  document.getElementById('sbName').textContent=user.fullName;
+  document.getElementById('sbCode').textContent=user.studentCode||user.username||'';
+  document.getElementById('welcomeTitle').textContent='สวัสดี, '+user.fullName;
+  document.getElementById('repName').textContent=user.fullName;
+  document.getElementById('repCode').textContent='รหัสนักศึกษา: '+(user.studentCode||'-');
+  document.getElementById('repDate').textContent='วันที่พิมพ์: '+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   await loadData();
 }
-
-async function loadData() {
-  const [compsRes, evalsRes] = await Promise.all([
-    supabase.from('competencies').select('*').order('type').order('name'),
-    supabase.from('evaluations').select('*,teachers(full_name)').eq('student_id', currentUser.profileId).order('evaluated_at',{ascending:false})
+async function loadData(){
+  const[cr,er]=await Promise.all([
+    sb.from('competencies').select('*').order('type').order('name'),
+    sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
   ]);
-  const comps = compsRes.data || [], evals = evalsRes.data || [];
-  allSkillData = comps.map(c => {
-    const e = evals.find(ev => ev.competency_id === c.id) || null;
-    return { ...c, evaluation:e, status: e ? e.status : 'pending' };
-  });
-  renderStats(); renderRecent(); renderMandatory(); renderElective(); renderReport();
+  const comps=cr.data||[],evals=er.data||[];
+  skills=comps.map(c=>{const e=evals.find(ev=>ev.competency_id===c.id)||null;return{...c,evaluation:e,status:e?e.status:'pending'};});
+  renderStats();renderRecent();renderMandatory();renderElective();renderReport();
 }
-
-function skillHTML(skill) {
-  const sm = { pass:{icon:'✅',cls:'dot-pass',badge:'badge-pass',text:'ผ่าน'}, fail:{icon:'❌',cls:'dot-fail',badge:'badge-fail',text:'ไม่ผ่าน'}, pending:{icon:'⏳',cls:'dot-pending',badge:'badge-pending',text:'ยังไม่ประเมิน'} };
-  const s = sm[skill.status]||sm.pending;
-  const date = skill.evaluation ? new Date(skill.evaluation.evaluated_at).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) : '';
-  const loc = skill.evaluation?.location ? ' | ' + skill.evaluation.location : '';
-  const teacher = skill.evaluation?.teachers?.full_name ? ' | อ.' + skill.evaluation.teachers.full_name : '';
-  return `<div class="skill-item">
+function skillHTML(sk,delay=0){
+  const sm={pass:{icon:'✅',cls:'d-pass',b:'b-pass',txt:'ผ่าน'},fail:{icon:'❌',cls:'d-fail',b:'b-fail',txt:'ไม่ผ่าน'},pending:{icon:'⏳',cls:'d-pend',b:'b-pend',txt:'รอประเมิน'}};
+  const s=sm[sk.status]||sm.pending;
+  const date=sk.evaluation?new Date(sk.evaluation.evaluated_at).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'}):'';
+  const loc=sk.evaluation?.location?' | '+sk.evaluation.location:'';
+  const tea=sk.evaluation?.teachers?.full_name?' | อ.'+sk.evaluation.teachers.full_name:'';
+  return `<div class="skill-item" style="animation-delay:${delay}s">
     <div class="skill-dot ${s.cls}">${s.icon}</div>
     <div class="skill-info">
-      <div class="skill-name">${skill.name}</div>
-      <span class="skill-type ${skill.type==='mandatory'?'type-m':'type-e'}">${skill.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>
-      ${date?`<div class="skill-meta">${date}${loc}${teacher}</div>`:''}
+      <div class="skill-name">${sk.name}</div>
+      <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>
+      ${date?`<div class="skill-meta">${date}${loc}${tea}</div>`:''}
     </div>
     <div class="skill-right">
-      <span class="status-badge ${s.badge}">${s.text}</span>
-      ${skill.evaluation?.rubric_score?`<div class="rubric-score">Rubric: ${skill.evaluation.rubric_score}</div>`:''}
+      <span class="status-badge ${s.b}">${s.txt}</span>
+      ${sk.evaluation?.rubric_score?`<div style="font-size:11px;color:var(--slate-l);margin-top:3px;">Rubric: ${sk.evaluation.rubric_score}</div>`:''}
     </div>
   </div>`;
 }
-
-function renderStats() {
-  const pass=allSkillData.filter(s=>s.status==='pass').length, fail=allSkillData.filter(s=>s.status==='fail').length;
-  const pending=allSkillData.filter(s=>s.status==='pending').length, total=allSkillData.length;
-  const mand=allSkillData.filter(s=>s.type==='mandatory'), mandPass=mand.filter(s=>s.status==='pass').length;
-  const pct=mand.length>0?Math.round(mandPass/mand.length*100):0;
-  document.getElementById('statPass').textContent=pass;
-  document.getElementById('statFail').textContent=fail;
-  document.getElementById('statPending').textContent=pending;
-  document.getElementById('statTotal').textContent=total;
-  document.getElementById('progressFill').style.width=pct+'%';
-  document.getElementById('progressPct').textContent=pct+'%';
-  document.getElementById('progressText').textContent=`ผ่านแล้ว ${mandPass} จาก ${mand.length} ทักษะบังคับ`;
+function renderStats(){
+  const pass=skills.filter(s=>s.status==='pass').length,fail=skills.filter(s=>s.status==='fail').length;
+  const pend=skills.filter(s=>s.status==='pending').length,total=skills.length;
+  const mand=skills.filter(s=>s.type==='mandatory'),mp=mand.filter(s=>s.status==='pass').length;
+  const pct=mand.length?Math.round(mp/mand.length*100):0;
+  document.getElementById('stPass').textContent=pass;
+  document.getElementById('stFail').textContent=fail;
+  document.getElementById('stPend').textContent=pend;
+  document.getElementById('stTotal').textContent=total;
+  setTimeout(()=>{document.getElementById('progFill').style.width=pct+'%';},100);
+  document.getElementById('progPct').textContent=pct+'%';
+  document.getElementById('progText').textContent=`ผ่านแล้ว ${mp} จาก ${mand.length} ทักษะบังคับ`;
 }
-function renderRecent() {
+function renderRecent(){
   const el=document.getElementById('recentList');
-  const items=[...allSkillData].filter(s=>s.status!=='pending').sort((a,b)=>new Date(b.evaluation?.evaluated_at)-new Date(a.evaluation?.evaluated_at)).slice(0,5);
-  el.innerHTML=items.length?items.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">📋</div><p>ยังไม่มีการประเมิน</p></div>`;
+  const items=[...skills].filter(s=>s.status!=='pending').sort((a,b)=>new Date(b.evaluation?.evaluated_at)-new Date(a.evaluation?.evaluated_at)).slice(0,5);
+  el.innerHTML=items.length?items.map((s,i)=>skillHTML(s,i*0.05)).join(''):
+    '<div class="empty"><span class="empty-icon">📋</span><p>ยังไม่มีการประเมิน</p></div>';
 }
-function renderMandatory(f='all') {
-  let items=allSkillData.filter(s=>s.type==='mandatory');
-  if(f!=='all') items=items.filter(s=>s.status===f);
-  document.getElementById('mandatoryList').innerHTML=items.length?items.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">🔍</div><p>ไม่พบทักษะ</p></div>`;
+function renderMandatory(f='all'){
+  let items=skills.filter(s=>s.type==='mandatory');
+  if(f!=='all')items=items.filter(s=>s.status===f);
+  document.getElementById('mandatoryList').innerHTML=items.length?items.map((s,i)=>skillHTML(s,i*0.04)).join(''):
+    '<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะ</p></div>';
 }
-function renderElective(f='all') {
-  let items=allSkillData.filter(s=>s.type==='elective');
-  if(f!=='all') items=items.filter(s=>s.status===f);
-  document.getElementById('electiveList').innerHTML=items.length?items.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">🔍</div><p>ไม่พบทักษะ</p></div>`;
+function renderElective(f='all'){
+  let items=skills.filter(s=>s.type==='elective');
+  if(f!=='all')items=items.filter(s=>s.status===f);
+  document.getElementById('electiveList').innerHTML=items.length?items.map((s,i)=>skillHTML(s,i*0.04)).join(''):
+    '<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะ</p></div>';
 }
-function renderReport() {
-  document.getElementById('reportList').innerHTML=allSkillData.length?allSkillData.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">📋</div><p>ไม่มีข้อมูล</p></div>`;
+function renderReport(){
+  document.getElementById('reportList').innerHTML=skills.length?skills.map((s,i)=>skillHTML(s,i*0.03)).join(''):
+    '<div class="empty"><span class="empty-icon">📋</span><p>ไม่มีข้อมูล</p></div>';
 }
-function filterSkills(type,f,btn) {
+function filterSkills(type,f,btn){
   btn.closest('.filter-row').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   type==='mandatory'?renderMandatory(f):renderElective(f);
 }
-function showTab(tab) {
+function switchTab(tab){
   document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  document.getElementById('nav-'+tab).classList.add('active');
+  document.getElementById('ni-'+tab)?.classList.add('active');
+  document.getElementById('bn-'+tab)?.classList.add('active');
+  closeSidebar();
 }
-async function logout() {
-  await supabase.auth.signOut();
-  localStorage.removeItem('lb_user');
-  window.location.href='index.html';
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('on');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('on');}
+async function logout(){await sb.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
+async function changePassword(){
+  const cur=document.getElementById('pwCurrent').value;
+  const nw=document.getElementById('pwNew').value;
+  const cf=document.getElementById('pwConfirm').value;
+  const al=document.getElementById('pwAlert');
+  const btn=document.getElementById('pwBtn');
+  function showAl(msg,ok){al.textContent=msg;al.style.display='block';al.style.background=ok?'#dcfce7':'#fee2e2';al.style.color=ok?'#166534':'#991b1b';al.style.border=ok?'1px solid #86efac':'1px solid #fca5a5';setTimeout(()=>al.style.display='none',5000);}
+  if(!cur||!nw||!cf){showAl('❌ กรุณากรอกให้ครบ');return;}
+  if(nw.length<6){showAl('❌ รหัสผ่านใหม่ต้องมี 6 ตัว');return;}
+  if(nw!==cf){showAl('❌ รหัสผ่านใหม่ไม่ตรงกัน');return;}
+  btn.disabled=true;btn.textContent='กำลังเปลี่ยน...';
+  const{data,error}=await sb.from('students').select('id').eq('id',user.profileId).eq('password',cur).single();
+  if(error||!data){showAl('❌ รหัสผ่านปัจจุบันไม่ถูกต้อง');btn.disabled=false;btn.textContent='🔑 เปลี่ยนรหัสผ่าน';return;}
+  const{error:upErr}=await sb.from('students').update({password:nw}).eq('id',user.profileId);
+  if(upErr){showAl('❌ '+upErr.message);}
+  else{showAl('✅ เปลี่ยนรหัสผ่านสำเร็จ!',true);['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');}
+  btn.disabled=false;btn.textContent='🔑 เปลี่ยนรหัสผ่าน';
 }
 init();
 </script>
