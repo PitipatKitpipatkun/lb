@@ -78,6 +78,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .st-code{font-size:11px;color:var(--slate-l);}
 .st-check{color:var(--rose);font-size:20px;margin-left:auto;}
 .comp-card{background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:10px;animation:fadeUp 0.3s ease both;}
+.comp-card.passed{background:var(--pass-bg);border-color:#86efac;cursor:pointer;transition:all 0.2s;}
+.comp-card.passed:hover{border-color:var(--pass);box-shadow:0 2px 8px rgba(22,163,74,0.12);}
+.comp-card.passed .comp-body{display:none;}
+.comp-card.passed.expanded .comp-body{display:block;}
+.comp-card.passed .comp-head::after{content:'▸';font-size:16px;color:var(--pass);margin-left:auto;transition:transform 0.2s;}
+.comp-card.passed.expanded .comp-head::after{transform:rotate(90deg);}
+.filter-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--bg);border-radius:12px;border:1px solid var(--border);}
+.filter-chip{padding:5px 12px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:white;color:var(--slate-m);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.filter-chip:active{transform:scale(0.95);}
+.filter-chip.active{background:var(--rose);border-color:var(--rose);color:white;}
+.sort-select{padding:5px 10px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px solid var(--border);background:white;color:var(--slate-m);cursor:pointer;outline:none;}
 .comp-head{padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
 .comp-name{font-size:13px;font-weight:600;flex:1;}
 .comp-type{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;flex-shrink:0;}
@@ -205,6 +216,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       <div class="card">
         <div class="card-head"><span class="card-title">📋 ขั้นตอนที่ 2 — ประเมินทักษะ</span></div>
         <div class="card-body">
+          <div class="filter-toolbar">
+            <span style="font-size:12px;font-weight:700;color:var(--slate-m);align-self:center;">แสดง:</span>
+            <button class="filter-chip active" onclick="setFilter('all',this)">ทั้งหมด</button>
+            <button class="filter-chip" onclick="setFilter('pending',this)">⏳ ยังไม่ประเมิน</button>
+            <button class="filter-chip" onclick="setFilter('fail',this)">❌ ไม่ผ่าน</button>
+            <button class="filter-chip" onclick="setFilter('pass',this)">✅ ผ่านแล้ว</button>
+            <select class="sort-select" onchange="setSort(this.value)" id="sortSelect">
+              <option value="alpha">เรียงตัวอักษร</option>
+              <option value="category">เรียงตามหมวดหมู่</option>
+              <option value="type">เรียงตามประเภท</option>
+              <option value="status">เรียงตามสถานะ</option>
+            </select>
+          </div>
           <div id="compList"></div>
           <div class="submit-bar">
             <div class="submit-info" id="submitInfo">เลือกผลสำหรับแต่ละทักษะ</div>
@@ -212,11 +236,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
           </div>
         </div>
       </div>
-      <!-- Summary of already evaluated skills -->
-      <div class="card" id="evalSummaryCard" style="display:none;">
-        <div class="card-head"><span class="card-title">📊 สรุปทักษะที่ประเมินแล้ว</span></div>
-        <div class="card-body" id="evalSummary"></div>
-      </div>
+
     </div>
   </div>
 
@@ -344,7 +364,7 @@ const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
 const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
 const DEF_RUBRIC=[{score:1,label:'ทำไม่ได้'},{score:2,label:'ทำได้โดยมีผู้ช่วย'},{score:3,label:'ทำได้โดยมีผู้ดูแล'},{score:4,label:'ทำได้อิสระ'},{score:5,label:'ทำได้และสอนผู้อื่น'}];
-let user=null,students=[],comps=[],selStudent=null,decisions={};
+let user=null,students=[],comps=[],selStudent=null,decisions={},currentFilter='all';
 
 async function init(){
   const s=localStorage.getItem('lb_user');
@@ -392,47 +412,153 @@ async function selectStudent(id){
 async function renderComps(){
   const el=document.getElementById('compList');
   el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
-  const{data:existing}=await sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',selStudent.id);
+  const{data:existing}=await sb.from('evaluations')
+    .select('*,teachers(full_name,teacher_code)')
+    .eq('student_id',selStudent.id);
   const eMap={};(existing||[]).forEach(e=>{eMap[e.competency_id]=e;});
-  el.innerHTML=comps.map((c,i)=>{
-    const prev=eMap[c.id];
-    const rubric=c.rubric_criteria||DEF_RUBRIC;
-    return `<div class="comp-card" style="animation-delay:${i*0.04}s" id="cc-${c.id}">
+
+  // Apply sort
+  let sorted=[...comps];
+  const sortVal=document.getElementById('sortSelect')?.value||'alpha';
+  if(sortVal==='category'){
+    sorted.sort((a,b)=>{
+      const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
+      if(ca!==0)return ca;
+      return (a.name||'').localeCompare(b.name||'','th');
+    });
+  } else if(sortVal==='type'){
+    sorted.sort((a,b)=>{
+      if(a.type!==b.type)return a.type==='mandatory'?-1:1;
+      return (a.name||'').localeCompare(b.name||'','th');
+    });
+  } else if(sortVal==='status'){
+    const order={pending:0,fail:1,pass:2};
+    sorted.sort((a,b)=>{
+      const sa=eMap[a.id]?.status||'pending';
+      const sb2=eMap[b.id]?.status||'pending';
+      if(order[sa]!==order[sb2])return order[sa]-order[sb2];
+      return (a.name||'').localeCompare(b.name||'','th');
+    });
+  } else {
+    sorted.sort((a,b)=>(a.name||'').localeCompare(b.name||'','th'));
+  }
+
+  // Apply filter
+  const filter=currentFilter||'all';
+  const filtered=sorted.filter(c=>{
+    const st=eMap[c.id]?.status||'pending';
+    if(filter==='pending')return st==='pending';
+    if(filter==='fail')return st==='fail';
+    if(filter==='pass')return st==='pass';
+    return true;
+  });
+
+  if(!filtered.length){
+    el.innerHTML='<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะในหมวดนี้</p></div>';
+    updateBar();return;
+  }
+
+  el.innerHTML=filtered.map((comp,i)=>{
+    const prev=eMap[comp.id];
+    const rubric=comp.rubric_criteria||DEF_RUBRIC;
+    const isPassed=prev?.status==='pass';
+    const teacherInfo=prev?.teachers?`อ.${prev.teachers.full_name||'-'}`:'';
+    const evalDate=prev?new Date(prev.evaluated_at).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'}):'';
+
+    // COLLAPSED card for passed skills
+    if(isPassed){
+      return `<div class="comp-card passed" id="cc-${comp.id}" onclick="toggleCard('${comp.id}')">
+        <div class="comp-head">
+          <div style="width:32px;height:32px;background:var(--pass-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${comp.name}</div>
+            <div style="font-size:11px;color:var(--pass);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap;">
+              <span>Rubric: ${prev.rubric_score||'-'}</span>
+              ${teacherInfo?`<span>👤 ${teacherInfo}</span>`:''}
+              ${evalDate?`<span>📅 ${evalDate}</span>`:''}
+              ${prev.location?`<span>📍 ${prev.location}</span>`:''}
+            </div>
+          </div>
+          <span class="comp-type ${comp.type==='mandatory'?'t-m':'t-e'}" style="flex-shrink:0;">${comp.type==='mandatory'?'⭐':'📝'}</span>
+        </div>
+        <div class="comp-body" style="padding-bottom:14px;">
+          <div style="background:var(--pass-bg);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+            <div style="font-size:12px;font-weight:700;color:var(--pass);">✅ ผ่านแล้ว — Rubric: ${prev.rubric_score||'-'}</div>
+            <div style="font-size:11px;color:var(--slate-m);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+              ${teacherInfo?`<span>👤 ${teacherInfo}${prev.teachers?.teacher_code?' ('+prev.teachers.teacher_code+')':''}</span>`:''}
+              ${evalDate?`<span>📅 ${evalDate}</span>`:''}
+              ${prev.location?`<span>📍 ${prev.location}</span>`:''}
+              ${prev.notes?`<span>📝 ${prev.notes}</span>`:''}
+            </div>
+            <div style="font-size:11px;color:var(--slate-l);margin-top:4px;">กดที่การ์ดนี้เพื่อยุบ | ประเมินใหม่ได้ด้านล่าง</div>
+          </div>
+          <div class="rubric-lbl">📊 Rubric (ประเมินใหม่)</div>
+          <div class="rubric-scale" id="rs-${comp.id}">
+            ${rubric.map(r=>`<button class="rubric-btn" onclick="event.stopPropagation();pickRubric('${comp.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('')}
+          </div>
+          <div class="eval-meta">
+            <div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-${comp.id}" placeholder="ห้องปฏิบัติการ" oninput="event.stopPropagation();updateMeta('${comp.id}')"></div>
+            <div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-${comp.id}" placeholder="(ถ้ามี)" oninput="event.stopPropagation();updateMeta('${comp.id}')"></div>
+          </div>
+          <div class="eval-actions">
+            <button class="eval-btn btn-pass" id="pb-${comp.id}" onclick="event.stopPropagation();setStatus('${comp.id}','pass',this)">✅ ผ่าน (ประเมินใหม่)</button>
+            <button class="eval-btn btn-fail" id="fb-${comp.id}" onclick="event.stopPropagation();setStatus('${comp.id}','fail',this)">❌ ไม่ผ่าน</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    // FULL card for pending/fail skills
+    return `<div class="comp-card" style="animation-delay:${i*0.04}s" id="cc-${comp.id}">
       <div class="comp-head">
-        <div class="comp-name">${c.name}</div>
-        <span class="comp-type ${c.type==='mandatory'?'t-m':'t-e'}">${c.type==='mandatory'?'⭐':'📝'}</span>
+        <div class="comp-name">${comp.name}</div>
+        <span class="comp-type ${comp.type==='mandatory'?'t-m':'t-e'}">${comp.type==='mandatory'?'⭐':'📝'}</span>
       </div>
       <div class="comp-body">
-        ${prev?`<div style="background:${prev.status==='pass'?'var(--pass-bg)':'var(--fail-bg)'};border-radius:10px;padding:8px 12px;margin-bottom:10px;">
+        ${prev?`<div style="background:var(--fail-bg);border-radius:10px;padding:8px 12px;margin-bottom:10px;">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-            <span class="prev-badge ${prev.status==='pass'?'prev-pass':'prev-fail'}">${prev.status==='pass'?'✅ ผ่านแล้ว':'❌ ไม่ผ่าน'} | Rubric: ${prev.rubric_score||'-'}</span>
-            ${prev.status==='fail'?`<button onclick="quickEditEval('${prev.id}','${c.id}','${prev.status}')"
+            <span class="prev-badge prev-fail">❌ ไม่ผ่าน | Rubric: ${prev.rubric_score||'-'}</span>
+            <button onclick="quickEditEval('${prev.id}','${comp.id}','fail')"
               style="padding:4px 10px;background:var(--pass-bg);color:var(--pass);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">
               ✏️ แก้เป็นผ่าน
-            </button>`:''}
+            </button>
           </div>
-          ${prev.location||prev.notes?`<div style="font-size:11px;color:var(--slate-m);margin-top:5px;display:flex;gap:12px;flex-wrap:wrap;">
+          <div style="font-size:11px;color:var(--slate-m);margin-top:5px;display:flex;gap:12px;flex-wrap:wrap;">
+            ${teacherInfo?`<span>👤 ${teacherInfo}${prev.teachers?.teacher_code?' ('+prev.teachers.teacher_code+')':''}</span>`:''}
+            ${evalDate?`<span>📅 ${evalDate}</span>`:''}
             ${prev.location?`<span>📍 ${prev.location}</span>`:''}
             ${prev.notes?`<span>📝 ${prev.notes}</span>`:''}
-          </div>`:''}
+          </div>
         </div>`:''}
         <div class="rubric-lbl">📊 Rubric</div>
-        <div class="rubric-scale" id="rs-${c.id}">
-          ${rubric.map(r=>`<button class="rubric-btn" onclick="pickRubric('${c.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('')}
+        <div class="rubric-scale" id="rs-${comp.id}">
+          ${rubric.map(r=>`<button class="rubric-btn" onclick="pickRubric('${comp.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('')}
         </div>
         <div class="eval-meta">
-          <div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-${c.id}" placeholder="ห้องปฏิบัติการ" oninput="updateMeta('${c.id}')"></div>
-          <div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-${c.id}" placeholder="(ถ้ามี)" oninput="updateMeta('${c.id}')"></div>
+          <div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-${comp.id}" placeholder="ห้องปฏิบัติการ" oninput="updateMeta('${comp.id}')"></div>
+          <div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-${comp.id}" placeholder="(ถ้ามี)" oninput="updateMeta('${comp.id}')"></div>
         </div>
         <div class="eval-actions">
-          <button class="eval-btn btn-pass" id="pb-${c.id}" onclick="setStatus('${c.id}','pass',this)">✅ ผ่าน</button>
-          <button class="eval-btn btn-fail" id="fb-${c.id}" onclick="setStatus('${c.id}','fail',this)">❌ ไม่ผ่าน</button>
+          <button class="eval-btn btn-pass" id="pb-${comp.id}" onclick="setStatus('${comp.id}','pass',this)">✅ ผ่าน</button>
+          <button class="eval-btn btn-fail" id="fb-${comp.id}" onclick="setStatus('${comp.id}','fail',this)">❌ ไม่ผ่าน</button>
         </div>
       </div>
     </div>`;
   }).join('') + '<div style="height:80px;"></div>';
   updateBar();
 }
+function toggleCard(id){
+  const card=document.getElementById('cc-'+id);
+  card.classList.toggle('expanded');
+}
+function setFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderComps();
+}
+function setSort(val){renderComps();}
+
 async function quickEditEval(evalId,compId,currentStatus){
   const newStatus=currentStatus==='pass'?'fail':'pass';
   const compName=comps.find(c=>c.id===compId)?.name||'ทักษะนี้';

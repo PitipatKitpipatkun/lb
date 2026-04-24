@@ -322,23 +322,34 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   <div id="tab-password" class="tab-view">
     <div style="margin-bottom:18px;"><h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">🔑 เปลี่ยนรหัสผ่าน</h1></div>
     <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:22px;max-width:440px;">
-      <div id="pwAlert" style="display:none;padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;"></div>
+      <div id="pwAlert" style="display:none;padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;font-weight:500;"></div>
       <div style="margin-bottom:16px;">
         <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">รหัสผ่านปัจจุบัน</label>
-        <input class="fi" type="password" id="pwCurrent" placeholder="••••••" maxlength="6" inputmode="numeric" style="padding-left:14px;">
+        <input type="password" id="pwCurrent" placeholder="••••••" maxlength="6" inputmode="numeric"
+          style="width:100%;padding:12px 13px;border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--slate);background:var(--bg);outline:none;transition:all 0.2s;letter-spacing:3px;"
+          onfocus="this.style.borderColor='var(--teal)';this.style.boxShadow='0 0 0 4px rgba(13,148,136,0.1)'"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
       </div>
       <div style="margin-bottom:16px;">
         <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">รหัสผ่านใหม่ (6 หลัก)</label>
-        <input class="fi" type="password" id="pwNew" placeholder="••••••" maxlength="6" inputmode="numeric" style="padding-left:14px;">
+        <input type="password" id="pwNew" placeholder="••••••" maxlength="6" inputmode="numeric"
+          style="width:100%;padding:12px 13px;border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--slate);background:var(--bg);outline:none;transition:all 0.2s;letter-spacing:3px;"
+          onfocus="this.style.borderColor='var(--teal)';this.style.boxShadow='0 0 0 4px rgba(13,148,136,0.1)'"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
       </div>
       <div style="margin-bottom:20px;">
         <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ยืนยันรหัสผ่านใหม่</label>
-        <input class="fi" type="password" id="pwConfirm" placeholder="••••••" maxlength="6" inputmode="numeric" style="padding-left:14px;">
+        <input type="password" id="pwConfirm" placeholder="••••••" maxlength="6" inputmode="numeric"
+          style="width:100%;padding:12px 13px;border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--slate);background:var(--bg);outline:none;transition:all 0.2s;letter-spacing:3px;"
+          onfocus="this.style.borderColor='var(--teal)';this.style.boxShadow='0 0 0 4px rgba(13,148,136,0.1)'"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
       </div>
-      <button id="pwBtn" onclick="changePassword()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(13,148,136,0.3);">
+      <button id="pwBtn" onclick="changePassword()"
+        style="width:100%;padding:13px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(13,148,136,0.3);transition:all 0.2s;">
         🔑 เปลี่ยนรหัสผ่าน
       </button>
-      <button onclick="logout()" style="width:100%;margin-top:12px;padding:12px;background:#fee2e2;color:#dc2626;border:2px solid #fca5a5;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+      <button onclick="logout()"
+        style="width:100%;margin-top:12px;padding:12px;background:#fee2e2;color:#dc2626;border:2px solid #fca5a5;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;">
         🚪 ออกจากระบบ
       </button>
     </div>
