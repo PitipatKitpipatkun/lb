@@ -383,7 +383,7 @@ async function saveTeacher(){
   if(!name||!code){toast('❌ กรุณากรอกชื่อและเลขตำแหน่ง','error');return;}
   if(!pw||pw.length<6){toast('❌ รหัสผ่านต้องมี 6 ตัว','error');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const{error}=await supabase.from('teachers').insert({full_name:name,teacher_code:code,password:pw});
+  const{error}=await supabase.from('teachers').insert({full_name:name,teacher_code:code,teacher_id:code,email:code+'@teacher.lb',password:pw});
   if(error){toast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'error');}
   else{toast('✅ เพิ่มอาจารย์สำเร็จ');closeM('teacherModal');loadTeachers();loadOverview();}
   btn.disabled=false;btn.textContent='💾 บันทึก';
