@@ -142,7 +142,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 @media(max-width:768px){
   .sidebar{transform:translateX(-100%);}
   .sidebar.open{transform:translateX(0);box-shadow:0 0 40px rgba(0,0,0,0.2);}
-  .main{margin-left:0;padding:12px 14px;padding-bottom:calc(var(--nav-h)+16px+var(--safe-b));}
+  .main{margin-left:0;padding:12px 14px;padding-bottom:calc(var(--nav-h) + 48px + var(--safe-b));}
   .mob-header{display:flex;}
   .bottom-nav{display:block;}
   .eval-meta{grid-template-columns:1fr;}
@@ -270,6 +270,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
           style="width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(225,29,72,0.3);">
           💾 บันทึกกลุ่ม
         </button>
+        <div style="height:16px;"></div><!-- spacer -->
       </div>
     </div>
 
@@ -425,7 +426,7 @@ async function quickEditEval(evalId,compId,currentStatus){
   if(!confirm(`เปลี่ยน "${compName}" จาก "${currentStatus==='pass'?'ผ่าน':'ไม่ผ่าน'}" เป็น "${newStatus==='pass'?'ผ่าน':'ไม่ผ่าน'}"?`))return;
   const{error}=await sb.from('evaluations').update({status:newStatus,evaluated_at:new Date().toISOString()}).eq('id',evalId);
   if(error){showToast('❌ '+error.message,'err');}
-  else{showToast('✅ แก้ไขสำเร็จ','ok');await renderComps();}
+  else{showToast('✅ แก้ไขสำเร็จ','ok');logActivity('แก้ไขผลประเมิน',`${selStudent?.full_name||'-'} | ${compName} → ${newStatus==='pass'?'ผ่าน':'ไม่ผ่าน'}`);await renderComps();}
 }
 function pickRubric(id,score,btn){
   btn.closest('.rubric-scale').querySelectorAll('.rubric-btn').forEach(b=>b.classList.remove('selected'));
@@ -448,6 +449,11 @@ function updateBar(){
   document.getElementById('submitInfo').textContent=`ประเมินแล้ว ${done} / ${comps.length} ทักษะ`;
   document.getElementById('submitBtn').disabled=done===0;
 }
+async function logActivity(action,details){
+  if(!user)return;
+  sb.from('activity_logs').insert({user_role:user.role,user_name:user.fullName,user_code:user.teacherCode||user.username||'-',action,details}).then(()=>{});
+}
+
 async function submitAll(){
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
@@ -459,7 +465,13 @@ async function submitAll(){
   if(!rows.length){showToast('ไม่มีการประเมิน','err');return;}
   const{error}=await sb.from('evaluations').upsert(rows,{onConflict:'student_id,competency_id'});
   if(error){showToast('❌ '+error.message,'err');}
-  else{showToast('✅ บันทึกสำเร็จ '+rows.length+' ทักษะ','ok');decisions={};await renderComps();loadHistory();}
+  else{
+    showToast('✅ บันทึกสำเร็จ '+rows.length+' ทักษะ','ok');
+    const passCount=Object.values(decisions).filter(d=>d.status==='pass').length;
+    const failCount=Object.values(decisions).filter(d=>d.status==='fail').length;
+    logActivity('ประเมินทักษะ',`นศ. ${selStudent.full_name} (${selStudent.student_code||'-'}) | ผ่าน ${passCount} | ไม่ผ่าน ${failCount} | รวม ${rows.length} ทักษะ`);
+    decisions={};await renderComps();loadHistory();
+  }
   btn.disabled=false;btn.textContent='💾 บันทึก';
 }
 async function loadHistory(){
@@ -676,7 +688,11 @@ async function submitGroupEval(){
   const{error}=await sb.from('evaluations').upsert(rows,{onConflict:'student_id,competency_id'});
   if(error){showToast('❌ '+error.message,'err');}
   else{
+    const groupLabel=document.getElementById('gGroupLabel').textContent;
+    const passCount=Object.values(gDecisions).filter(d=>d.status==='pass').length;
+    const failCount=Object.values(gDecisions).filter(d=>d.status==='fail').length;
     showToast(`✅ บันทึกสำเร็จ ${gSelectedIds.size} คน × ${Object.values(gDecisions).filter(d=>d.status).length} ทักษะ`,'ok');
+    logActivity('ประเมินเป็นกลุ่ม',`${groupLabel} | ผ่าน ${passCount} | ไม่ผ่าน ${failCount} | รวม ${rows.length} รายการ`);
     gDecisions={};document.getElementById('gEvalSection').style.display='none';
     renderSavedGroups();
   }
