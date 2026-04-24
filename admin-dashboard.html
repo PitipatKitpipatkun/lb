@@ -198,6 +198,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="modal-bd">
       <input type="hidden" id="c_id">
       <div class="fg"><label class="fl">ชื่อทักษะ *</label><input class="fi" id="c_name" placeholder="เช่น การสอดเข็ม IV Catheter เข้าหลอดเลือดขาหน้าสุนัข"></div>
+      <div class="fg"><label class="fl">หมวดหมู่</label><input class="fi" id="c_cat" placeholder="เช่น ศัลยกรรม, อายุรกรรม, ห้องปฏิบัติการ"><p class="fhint">ใช้จัดกลุ่มทักษะ ช่วยให้ค้นหาง่ายขึ้น</p></div>
       <div class="fg"><label class="fl">คำอธิบาย</label><textarea class="ft" id="c_desc" placeholder="รายละเอียด (ถ้ามี)"></textarea></div>
       <div class="fg"><label class="fl">ประเภท *</label>
         <select class="fs" id="c_type"><option value="mandatory">⭐ ทักษะบังคับ</option><option value="elective">📝 ทักษะเลือก</option></select>
@@ -283,7 +284,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="table-wrap">
       <div class="table-head"><span class="table-title" id="cCount">ทักษะ</span><input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('cTbl',this.value)"></div>
       <div class="tbl-scroll">
-        <table id="cTbl"><thead><tr><th>ชื่อทักษะ</th><th>ประเภท</th><th>จัดการ</th></tr></thead>
+        <table id="cTbl"><thead><tr><th>ชื่อทักษะ</th><th>หมวดหมู่</th><th>ประเภท</th><th>จัดการ</th></tr></thead>
         <tbody id="cTbody"></tbody></table>
       </div>
     </div>
@@ -533,23 +534,29 @@ async function delTeacher(id){
 }
 
 async function loadComps(){
-  const{data}=await sb.from('competencies').select('*').order('type').order('name');
-  cData=data||[];
+  const{data}=await sb.from('competencies').select('*');
+  cData=(data||[]).sort((a,b)=>{
+    const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
+    if(ca!==0)return ca;
+    return (a.name||'').localeCompare(b.name||'','th');
+  });
   document.getElementById('cCount').textContent=`ทักษะ (${cData.length} รายการ)`;
   document.getElementById('cTbody').innerHTML=cData.length?cData.map(c=>`
     <tr>
-      <td style="max-width:220px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</td>
+      <td style="max-width:180px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</td>
+      <td style="font-size:12px;color:var(--slate-m);white-space:nowrap">${c.category||'—'}</td>
       <td><span class="type-badge ${c.type==='mandatory'?'tb-m':'tb-e'}">${c.type==='mandatory'?'⭐':'📝'}</span></td>
       <td style="display:flex;gap:5px;">
         <button class="act-btn ab-edit" onclick="openEditC('${c.id}')">✏️</button>
         <button class="act-btn ab-del" onclick="delComp('${c.id}')">🗑️</button>
       </td>
     </tr>`).join(''):
-    '<tr><td colspan="3"><div class="empty"><span class="empty-icon">📋</span><p>ยังไม่มีทักษะ</p></div></td></tr>';
+    '<tr><td colspan="4"><div class="empty"><span class="empty-icon">📋</span><p>ยังไม่มีทักษะ</p></div></td></tr>';
 }
+
 function openAddC(){
-  document.getElementById('cmTitle').textContent='เพิ่มทักษะ';
-  ['c_id','c_name','c_desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cmTitle').textContent='เพิ่มทักษะใหม่';
+  ['c_id','c_name','c_cat','c_desc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('c_type').value='mandatory';
   rbRows=JSON.parse(JSON.stringify(DEF_RB));renderRB();openM('compModal');
 }
@@ -558,6 +565,7 @@ function openEditC(id){
   document.getElementById('cmTitle').textContent='แก้ไขทักษะ';
   document.getElementById('c_id').value=id;
   document.getElementById('c_name').value=c.name;
+  document.getElementById('c_cat').value=c.category||'';
   document.getElementById('c_desc').value=c.description||'';
   document.getElementById('c_type').value=c.type;
   rbRows=JSON.parse(JSON.stringify(c.rubric_criteria||DEF_RB));
@@ -579,7 +587,7 @@ async function saveComp(){
   const editId=document.getElementById('c_id').value;
   if(!name){showToast('❌ กรุณากรอกชื่อทักษะ','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const payload={name,description:document.getElementById('c_desc').value.trim(),type:document.getElementById('c_type').value,rubric_criteria:rbRows};
+  const payload={name,category:document.getElementById('c_cat').value.trim(),description:document.getElementById('c_desc').value.trim(),type:document.getElementById('c_type').value,rubric_criteria:rbRows};
   const{error}=editId?await sb.from('competencies').update(payload).eq('id',editId):await sb.from('competencies').insert(payload);
   if(error){showToast('❌ '+error.message,'err');}
   else{showToast('✅ บันทึกสำเร็จ','ok');closeM('compModal');loadComps();loadOverview();}

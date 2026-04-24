@@ -389,11 +389,16 @@ async function init(){
 }
 async function loadData(){
   const[cr,er]=await Promise.all([
-    sb.from('competencies').select('*').order('type').order('name'),
+    sb.from('competencies').select('*'),
     sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
   ]);
   const comps=cr.data||[],evals=er.data||[];
-  skills=comps.map(c=>{const e=evals.find(ev=>ev.competency_id===c.id)||null;return{...c,evaluation:e,status:e?e.status:'pending'};});
+  const sortedComps=(comps||[]).sort((a,b)=>{
+    const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
+    if(ca!==0)return ca;
+    return (a.name||'').localeCompare(b.name||'','th');
+  });
+  skills=sortedComps.map(c=>{const e=evals.find(ev=>ev.competency_id===c.id)||null;return{...c,evaluation:e,status:e?e.status:'pending'};});
   renderStats();renderRecent();renderMandatory();renderElective();renderReport();
 }
 function skillHTML(sk,delay=0){
@@ -406,7 +411,7 @@ function skillHTML(sk,delay=0){
     <div class="skill-dot ${s.cls}">${s.icon}</div>
     <div class="skill-info">
       <div class="skill-name">${sk.name}</div>
-      <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>
+      <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>${sk.category?` <span class="skill-type" style="background:#f1f5f9;color:var(--slate-m)">${sk.category}</span>`:''}
       ${date?`<div class="skill-meta">${date}${loc}${tea}</div>`:''}
     </div>
     <div class="skill-right">
