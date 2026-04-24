@@ -205,6 +205,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
           </div>
         </div>
       </div>
+      <!-- Summary of already evaluated skills -->
+      <div class="card" id="evalSummaryCard" style="display:none;">
+        <div class="card-head"><span class="card-title">📊 สรุปทักษะที่ประเมินแล้ว</span></div>
+        <div class="card-body" id="evalSummary"></div>
+      </div>
     </div>
   </div>
 
@@ -374,7 +379,13 @@ async function renderComps(){
         <span class="comp-type ${c.type==='mandatory'?'t-m':'t-e'}">${c.type==='mandatory'?'⭐':'📝'}</span>
       </div>
       <div class="comp-body">
-        ${prev?`<div><span class="prev-badge ${prev.status==='pass'?'prev-pass':'prev-fail'}">${prev.status==='pass'?'✅ ผ่านแล้ว':'❌ ไม่ผ่าน'} (R:${prev.rubric_score||'-'})</span></div>`:''}
+        ${prev?`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+          <span class="prev-badge ${prev.status==='pass'?'prev-pass':'prev-fail'}">${prev.status==='pass'?'✅ ผ่านแล้ว':'❌ ไม่ผ่าน'} (R:${prev.rubric_score||'-'})</span>
+          <button onclick="quickEditEval('${prev.id}','${c.id}','${prev.status}')"
+            style="padding:4px 10px;background:${prev.status==='pass'?'var(--fail-bg)':'var(--pass-bg)'};color:${prev.status==='pass'?'var(--fail)':'var(--pass)'};border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">
+            ✏️ ${prev.status==='pass'?'แก้เป็นไม่ผ่าน':'แก้เป็นผ่าน'}
+          </button>
+        </div>`:''}
         <div class="rubric-lbl">📊 Rubric</div>
         <div class="rubric-scale" id="rs-${c.id}">
           ${rubric.map(r=>`<button class="rubric-btn" onclick="pickRubric('${c.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('')}
@@ -391,6 +402,14 @@ async function renderComps(){
     </div>`;
   }).join('');
   updateBar();
+}
+async function quickEditEval(evalId,compId,currentStatus){
+  const newStatus=currentStatus==='pass'?'fail':'pass';
+  const compName=comps.find(c=>c.id===compId)?.name||'ทักษะนี้';
+  if(!confirm(`เปลี่ยน "${compName}" จาก "${currentStatus==='pass'?'ผ่าน':'ไม่ผ่าน'}" เป็น "${newStatus==='pass'?'ผ่าน':'ไม่ผ่าน'}"?`))return;
+  const{error}=await sb.from('evaluations').update({status:newStatus,evaluated_at:new Date().toISOString()}).eq('id',evalId);
+  if(error){showToast('❌ '+error.message,'err');}
+  else{showToast('✅ แก้ไขสำเร็จ','ok');await renderComps();}
 }
 function pickRubric(id,score,btn){
   btn.closest('.rubric-scale').querySelectorAll('.rubric-btn').forEach(b=>b.classList.remove('selected'));

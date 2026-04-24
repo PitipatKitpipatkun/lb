@@ -303,7 +303,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   <div id="tab-report" class="tab-view">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
       <h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">🖨️ รายงาน</h1>
-      <button class="print-btn no-print" onclick="window.print()">🖨️ พิมพ์</button>
+      <button class="print-btn no-print" onclick="openPDF()">📄 สร้าง PDF</button>
     </div>
     <div class="report-cover">
       <img src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=font-size:40px;margin-bottom:10px>🏥</div>'">
@@ -467,6 +467,148 @@ function switchTab(tab){
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('on');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('on');}
 async function logout(){await sb.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
+
+function openPDF(){
+  const pass=skills.filter(s=>s.status==='pass');
+  const fail=skills.filter(s=>s.status==='fail');
+  const mand=skills.filter(s=>s.type==='mandatory');
+  const mandPass=mand.filter(s=>s.status==='pass').length;
+  const pct=mand.length?Math.round(mandPass/mand.length*100):0;
+  const today=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+
+  function skillRows(list){
+    return list.map((s,i)=>`
+      <tr style="background:${i%2===0?'#f8fafb':'white'};">
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${i+1}</td>
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.name}</td>
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;text-align:center;">
+          <span style="background:${s.status==='pass'?'#dcfce7':s.status==='fail'?'#fee2e2':'#fef3c7'};color:${s.status==='pass'?'#166534':s.status==='fail'?'#991b1b':'#92400e'};padding:2px 8px;border-radius:100px;font-weight:700;font-size:10px;">
+            ${s.status==='pass'?'✓ ผ่าน':s.status==='fail'?'✗ ไม่ผ่าน':'— รอประเมิน'}
+          </span>
+        </td>
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;text-align:center;">${s.evaluation?.rubric_score||'-'}</td>
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.evaluation?.location||'-'}</td>
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.evaluation?.teachers?.full_name||'-'}</td>
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.evaluation?new Date(s.evaluation.evaluated_at).toLocaleDateString('th-TH',{year:'2-digit',month:'short',day:'numeric'}):'-'}</td>
+      </tr>`).join('');
+  }
+
+  const html=`<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Log Book — ${user.fullName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  @page{size:A4;margin:18mm 16mm 20mm;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Sarabun',sans-serif;font-size:12px;color:#1e293b;background:white;}
+  .header{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:3px solid #0d9488;margin-bottom:16px;}
+  .logo{width:64px;height:64px;object-fit:contain;}
+  .logo-placeholder{width:64px;height:64px;background:#e0f7f4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;}
+  .header-text h1{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;color:#0d9488;}
+  .header-text p{font-size:11px;color:#64748b;margin-top:2px;}
+  .header-text .doc-title{font-family:'Prompt',sans-serif;font-size:14px;font-weight:600;color:#1e293b;margin-top:4px;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .info-box{background:#f0fdfa;border:1px solid #ccfbf1;border-radius:8px;padding:10px 14px;}
+  .info-box label{font-size:10px;font-weight:700;color:#0d9488;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px;}
+  .info-box span{font-size:13px;font-weight:600;color:#1e293b;}
+  .summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+  .summary-box{border-radius:8px;padding:10px;text-align:center;}
+  .summary-box .num{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;}
+  .summary-box .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-top:2px;}
+  .s-pass{background:#dcfce7;}.s-pass .num{color:#16a34a;}.s-pass .lbl{color:#166534;}
+  .s-fail{background:#fee2e2;}.s-fail .num{color:#dc2626;}.s-fail .lbl{color:#991b1b;}
+  .s-pend{background:#fef3c7;}.s-pend .num{color:#d97706;}.s-pend .lbl{color:#92400e;}
+  .s-prog{background:#f0fdfa;}.s-prog .num{color:#0d9488;}.s-prog .lbl{color:#0f766e;}
+  .section-title{font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:#0d9488;padding:8px 12px;background:#f0fdfa;border-left:4px solid #0d9488;margin-bottom:8px;border-radius:0 6px 6px 0;}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+  thead tr{background:#0d9488;}
+  thead th{padding:7px 10px;font-size:10px;font-weight:700;color:white;text-align:left;letter-spacing:0.3px;}
+  .progress-bar{background:#e2e8f0;border-radius:100px;height:8px;margin-top:4px;overflow:hidden;}
+  .progress-fill{background:#0d9488;height:8px;border-radius:100px;width:${pct}%;}
+  .signature-area{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:40px;border-top:1px dashed #cbd5e1;padding-top:16px;}
+  .sig-box{text-align:center;}
+  .sig-line{border-bottom:1px solid #64748b;margin:40px 20px 6px;height:1px;}
+  .sig-label{font-size:11px;color:#64748b;}
+  .sig-name{font-size:12px;font-weight:600;margin-top:2px;}
+  .footer{margin-top:16px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px;}
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .no-print{display:none!important;}
+    button{display:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="no-print" style="background:#0d9488;color:white;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+  <span style="font-family:'Prompt',sans-serif;font-weight:700;">📄 พร้อมพิมพ์ — กด Ctrl+P หรือปุ่มด้านขวา</span>
+  <button onclick="window.print()" style="background:white;color:#0d9488;border:none;border-radius:8px;padding:8px 18px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🖨️ พิมพ์ / บันทึก PDF</button>
+</div>
+
+<div class="header">
+  <img src="fac.png" class="logo" onerror="this.outerHTML='<div class=logo-placeholder>🏥</div>'">
+  <div class="header-text">
+    <h1>Log Book สมรรถนะทางคลินิก</h1>
+    <p>คณะสัตวแพทยศาสตร์ มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
+    <div class="doc-title">เอกสารสรุปผลการฝึกทักษะ</div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-box"><label>ชื่อ-นามสกุล</label><span>${user.fullName}</span></div>
+  <div class="info-box"><label>รหัสนักศึกษา</label><span>${user.studentCode||'-'}</span></div>
+  <div class="info-box"><label>วันที่พิมพ์</label><span>${today}</span></div>
+  <div class="info-box">
+    <label>ความคืบหน้าทักษะบังคับ</label>
+    <span>${mandPass}/${mand.length} ทักษะ (${pct}%)</span>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+</div>
+
+<div class="summary-row">
+  <div class="summary-box s-pass"><div class="num">${pass.length}</div><div class="lbl">✓ ผ่าน</div></div>
+  <div class="summary-box s-fail"><div class="num">${fail.length}</div><div class="lbl">✗ ไม่ผ่าน</div></div>
+  <div class="summary-box s-pend"><div class="num">${skills.filter(s=>s.status==='pending').length}</div><div class="lbl">รอประเมิน</div></div>
+  <div class="summary-box s-prog"><div class="num">${skills.length}</div><div class="lbl">ทั้งหมด</div></div>
+</div>
+
+${mand.length?`
+<div class="section-title">⭐ ทักษะบังคับ</div>
+<table>
+  <thead><tr><th style="width:30px">#</th><th>ชื่อทักษะ</th><th style="width:80px;text-align:center">สถานะ</th><th style="width:50px;text-align:center">Rubric</th><th style="width:90px">สถานที่</th><th style="width:80px">อาจารย์</th><th style="width:70px">วันที่</th></tr></thead>
+  <tbody>${skillRows(mand)}</tbody>
+</table>`:''}
+
+${skills.filter(s=>s.type==='elective').length?`
+<div class="section-title">📝 ทักษะเลือก</div>
+<table>
+  <thead><tr><th style="width:30px">#</th><th>ชื่อทักษะ</th><th style="width:80px;text-align:center">สถานะ</th><th style="width:50px;text-align:center">Rubric</th><th style="width:90px">สถานที่</th><th style="width:80px">อาจารย์</th><th style="width:70px">วันที่</th></tr></thead>
+  <tbody>${skillRows(skills.filter(s=>s.type==='elective'))}</tbody>
+</table>`:''}
+
+<div class="signature-area">
+  <div class="sig-box">
+    <div class="sig-line"></div>
+    <div class="sig-label">อาจารย์ที่ปรึกษา / ผู้รับรอง</div>
+    <div class="sig-name" style="margin-top:4px;">(.......................................)</div>
+    <div class="sig-label" style="margin-top:3px;">วันที่ ............../............../.................</div>
+  </div>
+  <div class="sig-box">
+    <div class="sig-line"></div>
+    <div class="sig-label">นักศึกษา</div>
+    <div class="sig-name" style="margin-top:4px;">(${user.fullName})</div>
+    <div class="sig-label" style="margin-top:3px;">รหัส ${user.studentCode||'-'}</div>
+  </div>
+</div>
+
+<div class="footer">เอกสารนี้ออกโดยระบบ Log Book คณะสัตวแพทยศาสตร์ มทร.ตะวันออก | พิมพ์เมื่อ ${today}</div>
+</body></html>`;
+
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
 async function changePassword(){
   const cur=document.getElementById('pwCurrent').value;
   const nw=document.getElementById('pwNew').value;

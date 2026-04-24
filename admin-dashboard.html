@@ -171,7 +171,7 @@ tr:hover td{background:var(--amber-50);}
       <input type="hidden" id="s_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="s_name" placeholder="นายสมชาย ใจดี"></div>
       <div class="fg"><label class="fl">รหัสนักศึกษา * (ใช้เป็น Username)</label><input class="fi" id="s_code" placeholder="64010001" inputmode="text"><p class="fhint">นักศึกษาจะใช้รหัสนี้เข้าระบบ</p></div>
-      <div class="fg"><label class="fl">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="s_pw" placeholder="••••••" maxlength="6" inputmode="numeric"><p class="fhint">ตัวเลข 6 หลัก</p></div>
+      <div class="fg"><label class="fl" id="s_pwGrpLabel">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="s_pw" placeholder="••••••" maxlength="6" inputmode="numeric"><p class="fhint">ตัวเลข 6 หลัก</p></div>
     </div>
     <div class="modal-ft"><button class="cancel-btn" onclick="closeM('studentModal')">ยกเลิก</button><button class="save-btn" id="sBtn" onclick="saveStudent()">💾 บันทึก</button></div>
   </div>
@@ -185,7 +185,7 @@ tr:hover td{background:var(--amber-50);}
       <input type="hidden" id="t_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="t_name" placeholder="ผศ.ดร.วิภา สุขใส"></div>
       <div class="fg"><label class="fl">เลขตำแหน่ง * (ใช้เป็น Username)</label><input class="fi" id="t_code" placeholder="T001"><p class="fhint">อาจารย์จะใช้เลขนี้เข้าระบบ</p></div>
-      <div class="fg"><label class="fl">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="t_pw" placeholder="••••••" maxlength="6" inputmode="numeric"></div>
+      <div class="fg"><label class="fl" id="t_pwGrpLabel">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="t_pw" placeholder="••••••" maxlength="6" inputmode="numeric"></div>
     </div>
     <div class="modal-ft"><button class="cancel-btn" onclick="closeM('teacherModal')">ยกเลิก</button><button class="save-btn" id="tBtn" onclick="saveTeacher()">💾 บันทึก</button></div>
   </div>
@@ -227,6 +227,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="nav-item" onclick="showTab('students')" id="ni-students"><span class="nav-icon">👨‍🎓</span> นักศึกษา</div>
     <div class="nav-item" onclick="showTab('teachers')" id="ni-teachers"><span class="nav-icon">👩‍🏫</span> อาจารย์</div>
     <div class="nav-item" onclick="showTab('competencies')" id="ni-competencies"><span class="nav-icon">📋</span> ทักษะ</div>
+    <div class="nav-item" onclick="showTab('logs')" id="ni-logs"><span class="nav-icon">📜</span> บันทึกกิจกรรม</div>
     <div class="nav-item" onclick="showTab('settings')" id="ni-settings"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
   </nav>
   <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
@@ -288,6 +289,30 @@ tr:hover td{background:var(--amber-50);}
     </div>
   </div>
 
+  <!-- ACTIVITY LOGS -->
+  <div id="tab-logs" class="tab-view">
+    <div class="page-header">
+      <div><div class="page-title">📜 บันทึกกิจกรรม</div><div class="page-sub">ประวัติการใช้งานทั้งหมด</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <select id="logRoleFilter" onchange="loadLogs()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;outline:none;">
+          <option value="">ทุกบทบาท</option>
+          <option value="student">นักศึกษา</option>
+          <option value="teacher">อาจารย์</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button onclick="loadLogs()" class="add-btn ab-a" style="padding:8px 14px;">🔄 รีเฟรช</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="tbl-scroll">
+        <table id="logTbl">
+          <thead><tr><th>เวลา</th><th>ชื่อ</th><th>บทบาท</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead>
+          <tbody id="logTbody"><tr><td colspan="5"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div id="tab-settings" class="tab-view">
     <div class="page-header"><div><div class="page-title">🔑 เปลี่ยนรหัสผ่าน</div><div class="page-sub">Admin</div></div></div>
@@ -312,6 +337,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="bn-item" onclick="showTab('students')" id="bn-students"><span class="bn-icon">👨‍🎓</span><span class="bn-label">นักศึกษา</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('teachers')" id="bn-teachers"><span class="bn-icon">👩‍🏫</span><span class="bn-label">อาจารย์</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('competencies')" id="bn-competencies"><span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="showTab('logs')" id="bn-logs"><span class="bn-icon">📜</span><span class="bn-label">บันทึก</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('settings')" id="bn-settings"><span class="bn-icon">🔑</span><span class="bn-label">ตั้งค่า</span><div class="bn-dot"></div></div>
   </div>
 </nav>
@@ -364,38 +390,88 @@ async function loadOverview(){
   el.innerHTML=`<div class="tbl-scroll"><table><thead><tr><th>นักศึกษา</th><th>รหัส</th><th>ผ่าน</th><th>ความคืบหน้า</th><th>%</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
 }
 
+// ===== ACTIVITY LOG =====
+async function logActivity(action, details){
+  if(!user)return;
+  sb.from('activity_logs').insert({user_role:user.role,user_name:user.fullName,user_code:user.username||'-',action,details}).then(()=>{});
+}
+async function loadLogs(){
+  const role=document.getElementById('logRoleFilter')?.value||'';
+  let q=sb.from('activity_logs').select('*').order('created_at',{ascending:false}).limit(200);
+  if(role)q=q.eq('user_role',role);
+  const{data}=await q;
+  const tbody=document.getElementById('logTbody');
+  if(!data?.length){tbody.innerHTML='<tr><td colspan="5"><div class="empty"><span class="empty-icon">📜</span><p>ยังไม่มีบันทึก</p></div></td></tr>';return;}
+  const roleColor={student:'var(--teal)',teacher:'var(--rose)',admin:'var(--amber)'};
+  const roleLabel={student:'นักศึกษา',teacher:'อาจารย์',admin:'Admin'};
+  tbody.innerHTML=data.map(l=>`
+    <tr>
+      <td style="font-size:11px;color:var(--slate-m);white-space:nowrap">${new Date(l.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
+      <td style="font-size:13px;font-weight:600">${l.user_name}<br><span style="font-size:11px;font-weight:400;color:var(--slate-l);font-family:monospace">${l.user_code||''}</span></td>
+      <td><span style="background:${roleColor[l.user_role]}22;color:${roleColor[l.user_role]};font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;">${roleLabel[l.user_role]||l.user_role}</span></td>
+      <td style="font-size:13px;font-weight:600">${l.action}</td>
+      <td style="font-size:12px;color:var(--slate-m);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.details||'-'}</td>
+    </tr>`).join('');
+}
+
 async function loadStudents(){
   const{data}=await sb.from('students').select('*').order('full_name');
   sData=data||[];
   document.getElementById('sCount').textContent=`นักศึกษา (${sData.length} คน)`;
   document.getElementById('sTbody').innerHTML=sData.length?sData.map(s=>`
     <tr><td>${s.full_name}</td><td style="font-family:monospace;font-size:12px">${s.student_code||'-'}</td>
-    <td><button class="act-btn ab-del" onclick="delStudent('${s.id}')">🗑️ ลบ</button></td></tr>`).join(''):
+    <td style="display:flex;gap:5px;">
+      <button class="act-btn ab-edit" onclick="openEditS('${s.id}')">✏️ แก้ไข</button>
+      <button class="act-btn ab-del" onclick="delStudent('${s.id}')">🗑️ ลบ</button>
+    </td></tr>`).join(''):
     '<tr><td colspan="3"><div class="empty"><span class="empty-icon">👨‍🎓</span><p>ยังไม่มีนักศึกษา</p></div></td></tr>';
 }
 function openAddS(){
   document.getElementById('smTitle').textContent='เพิ่มนักศึกษา';
   ['s_id','s_name','s_code','s_pw'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('s_pwGrpLabel').textContent='รหัสผ่าน 6 หลัก *';
+  document.getElementById('s_pw').required=true;
+  openM('studentModal');
+}
+function openEditS(id){
+  const s=sData.find(x=>x.id===id);if(!s)return;
+  document.getElementById('smTitle').textContent='แก้ไขนักศึกษา';
+  document.getElementById('s_id').value=id;
+  document.getElementById('s_name').value=s.full_name;
+  document.getElementById('s_code').value=s.student_code||'';
+  document.getElementById('s_pw').value='';
+  document.getElementById('s_pwGrpLabel').textContent='รหัสผ่านใหม่ (ว่างไว้ = ไม่เปลี่ยน)';
+  document.getElementById('s_pw').required=false;
   openM('studentModal');
 }
 async function saveStudent(){
   const btn=document.getElementById('sBtn');
+  const editId=document.getElementById('s_id').value;
   const name=document.getElementById('s_name').value.trim();
   const code=document.getElementById('s_code').value.trim();
   const pw=document.getElementById('s_pw').value;
   if(!name||!code){showToast('❌ กรุณากรอกชื่อและรหัสนักศึกษา','err');return;}
-  if(!pw||pw.length<6){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
+  if(!editId&&(!pw||pw.length<6)){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const{error}=await sb.from('students').insert({full_name:name,student_code:code,student_id:code,email:code+'@student.lb',password:pw});
-  if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
-  else{showToast('✅ เพิ่มนักศึกษาสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();}
+  if(editId){
+    const payload={full_name:name,student_code:code,student_id:code};
+    if(pw&&pw.length>=6)payload.password=pw;
+    const{error}=await sb.from('students').update(payload).eq('id',editId);
+    if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
+    else{showToast('✅ แก้ไขสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('แก้ไขนักศึกษา',`${name} (${code})`);}
+  }else{
+    const{error}=await sb.from('students').insert({full_name:name,student_code:code,student_id:code,email:code+'@student.lb',password:pw});
+    if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
+    else{showToast('✅ เพิ่มนักศึกษาสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('เพิ่มนักศึกษา',`${name} (${code})`);}
+  }
   btn.disabled=false;btn.textContent='💾 บันทึก';
 }
 async function delStudent(id){
-  if(!confirm('ยืนยันการลบ?'))return;
+  const s=sData.find(x=>x.id===id);
+  if(!confirm(`ยืนยันการลบ ${s?.full_name||''}?`))return;
   const{error}=await sb.from('students').delete().eq('id',id);
   if(error){showToast('❌ '+error.message,'err');return;}
-  showToast('✅ ลบสำเร็จ','ok');loadStudents();loadOverview();
+  showToast('✅ ลบสำเร็จ','ok');logActivity('ลบนักศึกษา',s?.full_name||id);loadStudents();loadOverview();
 }
 
 async function loadTeachers(){
@@ -404,32 +480,56 @@ async function loadTeachers(){
   document.getElementById('tCount').textContent=`อาจารย์ (${tData.length} คน)`;
   document.getElementById('tTbody').innerHTML=tData.length?tData.map(t=>`
     <tr><td>${t.full_name}</td><td style="font-family:monospace;font-size:12px">${t.teacher_code||'-'}</td>
-    <td><button class="act-btn ab-del" onclick="delTeacher('${t.id}')">🗑️ ลบ</button></td></tr>`).join(''):
+    <td style="display:flex;gap:5px;">
+      <button class="act-btn ab-edit" onclick="openEditT('${t.id}')">✏️ แก้ไข</button>
+      <button class="act-btn ab-del" onclick="delTeacher('${t.id}')">🗑️ ลบ</button>
+    </td></tr>`).join(''):
     '<tr><td colspan="3"><div class="empty"><span class="empty-icon">👩‍🏫</span><p>ยังไม่มีอาจารย์</p></div></td></tr>';
 }
 function openAddT(){
   document.getElementById('tmTitle').textContent='เพิ่มอาจารย์';
   ['t_id','t_name','t_code','t_pw'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('t_pwGrpLabel').textContent='รหัสผ่าน 6 หลัก *';
+  openM('teacherModal');
+}
+function openEditT(id){
+  const t=tData.find(x=>x.id===id);if(!t)return;
+  document.getElementById('tmTitle').textContent='แก้ไขอาจารย์';
+  document.getElementById('t_id').value=id;
+  document.getElementById('t_name').value=t.full_name;
+  document.getElementById('t_code').value=t.teacher_code||'';
+  document.getElementById('t_pw').value='';
+  document.getElementById('t_pwGrpLabel').textContent='รหัสผ่านใหม่ (ว่างไว้ = ไม่เปลี่ยน)';
   openM('teacherModal');
 }
 async function saveTeacher(){
   const btn=document.getElementById('tBtn');
+  const editId=document.getElementById('t_id').value;
   const name=document.getElementById('t_name').value.trim();
   const code=document.getElementById('t_code').value.trim();
   const pw=document.getElementById('t_pw').value;
   if(!name||!code){showToast('❌ กรุณากรอกชื่อและเลขตำแหน่ง','err');return;}
-  if(!pw||pw.length<6){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
+  if(!editId&&(!pw||pw.length<6)){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const{error}=await sb.from('teachers').insert({full_name:name,teacher_code:code,teacher_id:code,email:code+'@teacher.lb',password:pw});
-  if(error){showToast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'err');}
-  else{showToast('✅ เพิ่มอาจารย์สำเร็จ','ok');closeM('teacherModal');loadTeachers();loadOverview();}
+  if(editId){
+    const payload={full_name:name,teacher_code:code,teacher_id:code};
+    if(pw&&pw.length>=6)payload.password=pw;
+    const{error}=await sb.from('teachers').update(payload).eq('id',editId);
+    if(error){showToast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'err');}
+    else{showToast('✅ แก้ไขสำเร็จ','ok');closeM('teacherModal');loadTeachers();logActivity('แก้ไขอาจารย์',`${name} (${code})`);}
+  }else{
+    const{error}=await sb.from('teachers').insert({full_name:name,teacher_code:code,teacher_id:code,email:code+'@teacher.lb',password:pw});
+    if(error){showToast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'err');}
+    else{showToast('✅ เพิ่มอาจารย์สำเร็จ','ok');closeM('teacherModal');loadTeachers();logActivity('เพิ่มอาจารย์',`${name} (${code})`);}
+  }
   btn.disabled=false;btn.textContent='💾 บันทึก';
 }
 async function delTeacher(id){
-  if(!confirm('ยืนยันการลบ?'))return;
+  const t=tData.find(x=>x.id===id);
+  if(!confirm(`ยืนยันการลบ ${t?.full_name||''}?`))return;
   const{error}=await sb.from('teachers').delete().eq('id',id);
   if(error){showToast('❌ '+error.message,'err');return;}
-  showToast('✅ ลบสำเร็จ','ok');loadTeachers();loadOverview();
+  showToast('✅ ลบสำเร็จ','ok');logActivity('ลบอาจารย์',t?.full_name||id);loadTeachers();
 }
 
 async function loadComps(){
@@ -522,6 +622,7 @@ function showTab(tab){
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('ni-'+tab)?.classList.add('active');
   document.getElementById('bn-'+tab)?.classList.add('active');
+  if(tab==='logs')loadLogs();
   closeSidebar();
 }
 function openM(id){document.getElementById(id).classList.add('open');}
