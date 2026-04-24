@@ -7,21 +7,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --teal:#0d9488; --teal-dark:#0f766e; --teal-light:#ccfbf1; --teal-50:#f0fdfa;
-    --rose:#e11d48; --rose-light:#ffe4e6;
-    --amber:#d97706; --amber-light:#fef3c7;
-    --slate:#1e293b; --slate-mid:#475569; --slate-light:#94a3b8;
-    --bg:#f8fafc; --white:#ffffff; --border:#e2e8f0;
-  }
+  :root{--teal:#0d9488;--teal-dark:#0f766e;--teal-light:#ccfbf1;--rose:#e11d48;--rose-light:#ffe4e6;--amber:#d97706;--amber-light:#fef3c7;--slate:#1e293b;--slate-mid:#475569;--slate-light:#94a3b8;--bg:#f8fafc;--white:#ffffff;--border:#e2e8f0;}
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{
-    font-family:'Sarabun',sans-serif; background:var(--bg);
-    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
-    background-image:
-      radial-gradient(ellipse at 20% 50%,rgba(13,148,136,0.08) 0%,transparent 60%),
-      radial-gradient(ellipse at 80% 20%,rgba(225,29,72,0.05) 0%,transparent 50%);
-  }
+  body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background-image:radial-gradient(ellipse at 20% 50%,rgba(13,148,136,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(225,29,72,0.05) 0%,transparent 50%);}
   .container{width:100%;max-width:420px;}
   .alert{display:none;padding:12px 16px;border-radius:10px;margin-bottom:14px;font-size:14px;}
   .alert.active{display:block;}
@@ -30,13 +18,10 @@
   .screen{display:none;}
   .screen.active{display:block;animation:fadeUp 0.3s ease;}
   @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-
-  /* MENU */
   .menu-card{background:var(--white);border-radius:24px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.06),0 20px 50px -10px rgba(0,0,0,0.1);border:1px solid var(--border);}
   .menu-header{background:linear-gradient(135deg,var(--teal) 0%,#0f766e 100%);padding:36px 30px;text-align:center;position:relative;overflow:hidden;}
   .menu-header::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,0.07);border-radius:50%;}
-  .menu-header::after{content:'';position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;background:rgba(255,255,255,0.05);border-radius:50%;}
-  .logo-box{width:88px;height:88px;background:rgba(255,255,255,0.18);border-radius:20px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.25);overflow:hidden;}
+  .logo-box{width:88px;height:88px;background:rgba(255,255,255,0.18);border-radius:20px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.25);overflow:hidden;}
   .logo-box img{width:72px;height:72px;object-fit:contain;}
   .menu-title{font-family:'Prompt',sans-serif;font-size:26px;font-weight:700;color:white;margin-bottom:6px;}
   .menu-subtitle{font-size:12px;color:rgba(255,255,255,0.75);line-height:1.6;}
@@ -47,34 +32,21 @@
   .menu-btn:hover::after{right:14px;opacity:1;}
   .menu-btn:hover{transform:translateY(-2px);}
   .btn-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-  .btn-label{display:flex;flex-direction:column;}
-  .btn-label span:first-child{font-size:15px;font-weight:600;}
-  .btn-label span:last-child{font-size:11px;font-weight:400;opacity:0.6;margin-top:2px;}
-  .btn-student{background:var(--teal-light);color:var(--teal-dark);}
-  .btn-student .btn-icon{background:var(--teal);}
-  .btn-student:hover{background:#a7f3d0;box-shadow:0 4px 20px rgba(13,148,136,0.2);}
-  .btn-teacher{background:var(--rose-light);color:#9f1239;}
-  .btn-teacher .btn-icon{background:var(--rose);}
-  .btn-teacher:hover{background:#fecdd3;box-shadow:0 4px 20px rgba(225,29,72,0.15);}
-  .btn-admin{background:var(--amber-light);color:#92400e;}
-  .btn-admin .btn-icon{background:var(--amber);}
-  .btn-admin:hover{background:#fde68a;box-shadow:0 4px 20px rgba(217,119,6,0.2);}
-
-  /* LOGIN */
+  .btn-label span:first-child{font-size:15px;font-weight:600;display:block;}
+  .btn-label span:last-child{font-size:11px;font-weight:400;opacity:0.6;}
+  .btn-student{background:var(--teal-light);color:var(--teal-dark);}.btn-student .btn-icon{background:var(--teal);}.btn-student:hover{background:#a7f3d0;}
+  .btn-teacher{background:var(--rose-light);color:#9f1239;}.btn-teacher .btn-icon{background:var(--rose);}.btn-teacher:hover{background:#fecdd3;}
+  .btn-admin{background:var(--amber-light);color:#92400e;}.btn-admin .btn-icon{background:var(--amber);}.btn-admin:hover{background:#fde68a;}
   .login-card{background:var(--white);border-radius:24px;padding:32px 28px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.06),0 20px 50px -10px rgba(0,0,0,0.1);border:1px solid var(--border);}
   .login-top{text-align:center;margin-bottom:26px;}
   .login-logo{width:72px;height:72px;border-radius:16px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--bg);border:1px solid var(--border);}
   .login-logo img{width:60px;height:60px;object-fit:contain;}
   .login-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;margin-bottom:10px;}
-  .badge-student{background:var(--teal-light);color:var(--teal-dark);}
-  .badge-teacher{background:var(--rose-light);color:#9f1239;}
-  .badge-admin{background:var(--amber-light);color:#92400e;}
+  .badge-student{background:var(--teal-light);color:var(--teal-dark);}.badge-teacher{background:var(--rose-light);color:#9f1239;}.badge-admin{background:var(--amber-light);color:#92400e;}
   .login-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;color:var(--slate);margin-bottom:4px;}
   .login-desc{font-size:13px;color:var(--slate-light);}
   .form-group{margin-bottom:18px;}
   .form-label{display:block;font-size:13px;font-weight:600;color:var(--slate-mid);margin-bottom:7px;}
-  .form-hint{font-size:11px;color:var(--slate-light);margin-top:5px;}
-  .form-hint strong{color:var(--slate-mid);}
   .input-wrap{position:relative;}
   .input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;}
   .form-input{width:100%;padding:12px 14px 12px 40px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Sarabun',sans-serif;color:var(--slate);background:var(--bg);transition:all 0.2s;}
@@ -91,21 +63,17 @@
   .btn-t{background:linear-gradient(135deg,#f43f5e 0%,#e11d48 100%);box-shadow:0 4px 12px rgba(225,29,72,0.3);}
   .btn-a{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);box-shadow:0 4px 12px rgba(217,119,6,0.3);}
   .back-btn{width:100%;padding:11px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;color:var(--slate-mid);cursor:pointer;transition:all 0.2s;}
-  .back-btn:hover{background:var(--bg);border-color:var(--slate-light);}
+  .back-btn:hover{background:var(--bg);}
   .footer{text-align:center;margin-top:16px;font-size:12px;color:var(--slate-light);}
 </style>
 </head>
 <body>
 <div class="container">
-  <div id="alertBox" class="alert"></div>
-
-  <!-- MAIN MENU -->
+  <!-- MENU -->
   <div id="menuScreen" class="screen active">
     <div class="menu-card">
       <div class="menu-header">
-        <div class="logo-box">
-          <img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:36px>🏥</span>'">
-        </div>
+        <div class="logo-box"><img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:36px>🏥</span>'"></div>
         <h1 class="menu-title">Log Book</h1>
         <p class="menu-subtitle">คณะสัตวแพทยศาสตร์<br>มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
       </div>
@@ -132,9 +100,7 @@
     <div class="login-card">
       <div id="studentAlert" class="alert"></div>
       <div class="login-top">
-        <div class="login-logo">
-          <img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:32px>🏥</span>'">
-        </div>
+        <div class="login-logo"><img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:32px>🏥</span>'"></div>
         <div class="login-badge badge-student">👨‍🎓 นักศึกษา</div>
         <h2 class="login-title">เข้าสู่ระบบ</h2>
         <p class="login-desc">ใช้รหัสนักศึกษาและรหัสผ่าน 6 หลัก</p>
@@ -143,7 +109,7 @@
         <label class="form-label">รหัสนักศึกษา</label>
         <div class="input-wrap">
           <span class="input-icon">🎓</span>
-          <input type="text" class="form-input input-s" id="studentUsername" placeholder="เช่น 64010001" autocomplete="username">
+          <input type="text" class="form-input input-s" id="studentUsername" placeholder="เช่น 64010001">
         </div>
       </div>
       <div class="form-group">
@@ -163,9 +129,7 @@
     <div class="login-card">
       <div id="teacherAlert" class="alert"></div>
       <div class="login-top">
-        <div class="login-logo">
-          <img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:32px>🏥</span>'">
-        </div>
+        <div class="login-logo"><img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:32px>🏥</span>'"></div>
         <div class="login-badge badge-teacher">👨‍🏫 อาจารย์</div>
         <h2 class="login-title">เข้าสู่ระบบ</h2>
         <p class="login-desc">ใช้เลขตำแหน่งอาจารย์และรหัสผ่าน 6 หลัก</p>
@@ -174,7 +138,7 @@
         <label class="form-label">เลขตำแหน่งอาจารย์</label>
         <div class="input-wrap">
           <span class="input-icon">🏫</span>
-          <input type="text" class="form-input input-t" id="teacherUsername" placeholder="เช่น T001" autocomplete="username">
+          <input type="text" class="form-input input-t" id="teacherUsername" placeholder="เช่น T001">
         </div>
       </div>
       <div class="form-group">
@@ -194,9 +158,7 @@
     <div class="login-card">
       <div id="adminAlert" class="alert"></div>
       <div class="login-top">
-        <div class="login-logo">
-          <img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:32px>🏥</span>'">
-        </div>
+        <div class="login-logo"><img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:32px>🏥</span>'"></div>
         <div class="login-badge badge-admin">⚙️ ผู้ดูแลระบบ</div>
         <h2 class="login-title">เข้าสู่ระบบ</h2>
         <p class="login-desc">สำหรับผู้ดูแลระบบเท่านั้น</p>
@@ -205,14 +167,14 @@
         <label class="form-label">ชื่อผู้ใช้</label>
         <div class="input-wrap">
           <span class="input-icon">⚙️</span>
-          <input type="text" class="form-input input-a" id="adminUsername" placeholder="ชื่อผู้ใช้" autocomplete="username">
+          <input type="text" class="form-input input-a" id="adminUsername" placeholder="ชื่อผู้ใช้">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">รหัสผ่าน</label>
         <div class="input-wrap">
           <span class="input-icon">🔒</span>
-          <input type="password" class="form-input input-a" id="adminPassword" placeholder="••••••" autocomplete="current-password">
+          <input type="password" class="form-input input-a" id="adminPassword" placeholder="••••••">
         </div>
       </div>
       <button class="submit-btn btn-a" id="adminBtn" onclick="handleLogin('admin')">เข้าสู่ระบบ</button>
@@ -227,87 +189,51 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const { createClient } = window.supabase;
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// username → internal Supabase email
-function toEmail(username) { return username.trim().toLowerCase() + '@lbsys.com'; }
+function showMenu(){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('menuScreen').classList.add('active');}
+function showLogin(role){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(role+'Login').classList.add('active');setTimeout(()=>document.getElementById(role+'Username')?.focus(),100);}
+function showAlert(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className=`alert active alert-${type}`;setTimeout(()=>el.classList.remove('active'),5000);}
 
-function showMenu() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('menuScreen').classList.add('active');
-}
-function showLogin(role) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(role + 'Login').classList.add('active');
-  setTimeout(() => document.getElementById(role + 'Username')?.focus(), 100);
-}
-function showAlert(id, msg, type) {
-  const el = document.getElementById(id);
-  el.textContent = msg;
-  el.className = `alert active alert-${type}`;
-  setTimeout(() => el.classList.remove('active'), 5000);
-}
+async function handleLogin(role){
+  const username=document.getElementById(role+'Username').value.trim();
+  const password=document.getElementById(role+'Password').value;
+  const alertId=role+'Alert';
+  const btn=document.getElementById(role+'Btn');
+  const labels={student:'รหัสนักศึกษา',teacher:'เลขตำแหน่งอาจารย์',admin:'ชื่อผู้ใช้'};
 
-async function handleLogin(role) {
-  const username = document.getElementById(role + 'Username').value.trim();
-  const password = document.getElementById(role + 'Password').value;
-  const alertId = role + 'Alert';
-  const btn = document.getElementById(role + 'Btn');
-  const labelMap = { student:'รหัสนักศึกษา', teacher:'เลขตำแหน่งอาจารย์', admin:'ชื่อผู้ใช้' };
+  if(!username){showAlert(alertId,'❌ กรุณากรอก'+labels[role],'error');return;}
+  if(!password||password.length<6){showAlert(alertId,'❌ รหัสผ่านต้องมีอย่างน้อย 6 ตัว','error');return;}
 
-  if (!username) { showAlert(alertId, '❌ กรุณากรอก' + labelMap[role], 'error'); return; }
-  if (!password || password.length < 6) { showAlert(alertId, '❌ รหัสผ่านต้องมีอย่างน้อย 6 ตัว', 'error'); return; }
+  btn.disabled=true;btn.textContent='กำลังเข้าสู่ระบบ...';
+  try{
+    if(role==='admin'){
+      const{data,error}=await supabase.auth.signInWithPassword({email:username.toLowerCase()+'@lbsys.com',password});
+      if(error){showAlert(alertId,'❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','error');return;}
+      const{data:profile}=await supabase.from('admins').select('*').eq('user_id',data.user.id).single();
+      if(!profile){showAlert(alertId,'❌ ไม่พบข้อมูล admin','error');await supabase.auth.signOut();return;}
+      localStorage.setItem('lb_user',JSON.stringify({role:'admin',fullName:profile.full_name,profileId:profile.id,username}));
+      showAlert(alertId,'✅ ยินดีต้อนรับ '+profile.full_name,'success');
+      setTimeout(()=>{window.location.href='admin-dashboard.html';},900);
 
-  btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email: toEmail(username), password });
-    if (error) { showAlert(alertId, '❌ ' + error.message, 'error'); return; }
+    }else if(role==='student'){
+      const{data,error}=await supabase.from('students').select('*').eq('student_code',username).eq('password',password).single();
+      if(error||!data){showAlert(alertId,'❌ รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง','error');return;}
+      localStorage.setItem('lb_user',JSON.stringify({role:'student',fullName:data.full_name,profileId:data.id,studentCode:data.student_code,username}));
+      showAlert(alertId,'✅ ยินดีต้อนรับ '+data.full_name,'success');
+      setTimeout(()=>{window.location.href='student-dashboard.html';},900);
 
-    const tableMap = { student:'students', teacher:'teachers', admin:'admins' };
-    const pageMap = { student:'student-dashboard.html', teacher:'teacher-dashboard.html', admin:'admin-dashboard.html' };
-
-    const { data: profile, error: pErr } = await supabase.from(tableMap[role]).select('*').eq('user_id', data.user.id).single();
-    if (pErr || !profile) {
-      showAlert(alertId, '❌ ไม่พบข้อมูลในระบบ กรุณาติดต่อผู้ดูแล', 'error');
-      await supabase.auth.signOut(); return;
+    }else if(role==='teacher'){
+      const{data,error}=await supabase.from('teachers').select('*').eq('teacher_code',username).eq('password',password).single();
+      if(error||!data){showAlert(alertId,'❌ เลขตำแหน่งหรือรหัสผ่านไม่ถูกต้อง','error');return;}
+      localStorage.setItem('lb_user',JSON.stringify({role:'teacher',fullName:data.full_name,profileId:data.id,teacherCode:data.teacher_code,username}));
+      showAlert(alertId,'✅ ยินดีต้อนรับ '+data.full_name,'success');
+      setTimeout(()=>{window.location.href='teacher-dashboard.html';},900);
     }
-
-    localStorage.setItem('lb_user', JSON.stringify({
-      id: data.user.id, role, username,
-      fullName: profile.full_name,
-      profileId: profile.id,
-      ...(role === 'student' && { studentCode: profile.student_code }),
-      ...(role === 'teacher' && { teacherCode: profile.teacher_code }),
-    }));
-
-    showAlert(alertId, '✅ ยินดีต้อนรับ ' + profile.full_name, 'success');
-    setTimeout(() => { window.location.href = pageMap[role]; }, 900);
-  } catch(err) {
-    showAlert(alertId, '❌ เกิดข้อผิดพลาด: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
-  }
+  }catch(err){showAlert(alertId,'❌ เกิดข้อผิดพลาด: '+err.message,'error');}
+  finally{btn.disabled=false;btn.textContent='เข้าสู่ระบบ';}
 }
 
-// Enter key
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Enter') return;
-  const active = document.querySelector('.screen.active');
-  if (active && active.id !== 'menuScreen') handleLogin(active.id.replace('Login',''));
-});
-
-// Auto-redirect if already logged in
-window.addEventListener('load', async () => {
-  const stored = localStorage.getItem('lb_user');
-  if (!stored) return;
-  try {
-    const { data:{ user } } = await supabase.auth.getUser();
-    if (user) {
-      const info = JSON.parse(stored);
-      const map = { student:'student-dashboard.html', teacher:'teacher-dashboard.html', admin:'admin-dashboard.html' };
-      if (map[info.role]) { window.location.href = map[info.role]; return; }
-    }
-  } catch(e) {}
-  localStorage.removeItem('lb_user');
-});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const active=document.querySelector('.screen.active');if(active&&active.id!=='menuScreen')handleLogin(active.id.replace('Login',''));});
+window.addEventListener('load',()=>{const stored=localStorage.getItem('lb_user');if(!stored)return;const info=JSON.parse(stored);const map={student:'student-dashboard.html',teacher:'teacher-dashboard.html',admin:'admin-dashboard.html'};if(map[info.role])window.location.href=map[info.role];});
 </script>
 </body>
 </html>

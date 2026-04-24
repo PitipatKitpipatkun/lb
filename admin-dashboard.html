@@ -7,18 +7,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --amber:#d97706;--amber-dark:#92400e;--amber-light:#fef3c7;--amber-50:#fffbeb;
-    --teal:#0d9488;--teal-light:#ccfbf1;--rose:#e11d48;
-    --slate:#1e293b;--slate-mid:#475569;--slate-light:#94a3b8;
-    --border:#e2e8f0;--bg:#f8fafc;--white:#ffffff;
-    --pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;
-    --sidebar:240px;
-  }
+  :root{--amber:#d97706;--amber-dark:#92400e;--amber-light:#fef3c7;--amber-50:#fffbeb;--teal:#0d9488;--teal-light:#ccfbf1;--rose:#e11d48;--slate:#1e293b;--slate-mid:#475569;--slate-light:#94a3b8;--border:#e2e8f0;--bg:#f8fafc;--white:#ffffff;--pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;--sidebar:240px;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);}
   .layout{display:flex;min-height:100vh;}
-
   .sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;}
   .sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
   .sidebar-logo-img{width:44px;height:44px;border-radius:10px;object-fit:contain;background:var(--amber-50);padding:4px;border:1px solid var(--amber-light);flex-shrink:0;}
@@ -28,7 +20,6 @@
   .user-row{display:flex;align-items:center;gap:10px;}
   .user-av{width:36px;height:36px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;flex-shrink:0;}
   .user-name{font-size:13px;font-weight:600;}
-  .user-uname{font-size:11px;color:var(--slate-light);}
   .role-badge{display:inline-block;background:var(--amber-light);color:var(--amber-dark);font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-top:5px;}
   .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto;}
   .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--slate-mid);cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;}
@@ -38,7 +29,6 @@
   .sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);}
   .logout-btn{width:100%;padding:9px;background:transparent;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate-mid);cursor:pointer;transition:all 0.2s;}
   .logout-btn:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626;}
-
   .main{margin-left:var(--sidebar);flex:1;padding:28px 32px;}
   .tab-view{display:none;}
   .tab-view.active{display:block;animation:fadeUp 0.25s ease;}
@@ -46,8 +36,6 @@
   .page-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;}
   .page-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;}
   .page-subtitle{font-size:13px;color:var(--slate-light);margin-top:3px;}
-
-  /* Stats */
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px;}
   .stat-card{background:var(--white);border-radius:13px;padding:16px;border:1px solid var(--border);}
   .stat-label{font-size:11px;font-weight:700;color:var(--slate-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
@@ -56,15 +44,11 @@
   .sv-r .stat-val{color:var(--rose);}
   .sv-t .stat-val{color:var(--teal);}
   .sv-s .stat-val{color:var(--slate-mid);}
-
-  /* Buttons */
   .add-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
   .add-btn:hover{filter:brightness(0.9);}
   .ab-amber{background:var(--amber);}
   .ab-teal{background:var(--teal);}
   .ab-rose{background:var(--rose);}
-
-  /* Table */
   .table-wrap{background:var(--white);border-radius:15px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px;}
   .table-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
   .table-title{font-size:14px;font-weight:700;}
@@ -76,12 +60,8 @@
   tr:last-child td{border-bottom:none;}
   tr:hover td{background:var(--amber-50);}
   .act-btn{padding:4px 10px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
-  .ab-edit{background:#dbeafe;color:#1d4ed8;}
-  .ab-edit:hover{background:#bfdbfe;}
-  .ab-del{background:var(--fail-bg);color:var(--fail);}
-  .ab-del:hover{background:#fecaca;}
-
-  /* Modal */
+  .ab-edit{background:#dbeafe;color:#1d4ed8;}.ab-edit:hover{background:#bfdbfe;}
+  .ab-del{background:var(--fail-bg);color:var(--fail);}.ab-del:hover{background:#fecaca;}
   .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
   .modal-ov.open{display:flex;}
   .modal{background:var(--white);border-radius:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:mIn 0.25s ease;}
@@ -94,6 +74,7 @@
   .modal-ft{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;}
   .fg{margin-bottom:16px;}
   .fl{display:block;font-size:12px;font-weight:600;color:var(--slate-mid);margin-bottom:6px;}
+  .fhint{font-size:11px;color:var(--slate-light);margin-top:4px;}
   .fi,.fs,.ft{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate);background:var(--bg);transition:all 0.2s;}
   .fi:focus,.fs:focus,.ft:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,0.1);background:white;}
   .ft{resize:vertical;min-height:70px;}
@@ -102,53 +83,37 @@
   .save-btn{padding:9px 22px;background:var(--amber);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
   .save-btn:hover{background:var(--amber-dark);}
   .save-btn:disabled{opacity:0.5;cursor:not-allowed;}
-
-  /* Type badges */
   .type-badge{display:inline-block;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:700;}
-  .tb-m{background:#ede9fe;color:#5b21b6;}
-  .tb-e{background:#e0f2fe;color:#0369a1;}
-
-  /* Rubric builder */
+  .tb-m{background:#ede9fe;color:#5b21b6;}.tb-e{background:#e0f2fe;color:#0369a1;}
   .rb-row{display:grid;grid-template-columns:54px 1fr 26px;gap:7px;align-items:center;margin-bottom:7px;}
   .rb-row input{padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'Sarabun',sans-serif;font-size:12px;}
   .rb-row input:focus{outline:none;border-color:var(--amber);}
   .rb-score{text-align:center;}
   .rb-del{background:var(--fail-bg);color:var(--fail);border:none;border-radius:5px;cursor:pointer;width:26px;height:26px;font-size:13px;}
-  .add-rb-btn{padding:6px 12px;background:var(--teal-light,#ccfbf1);color:var(--teal);border:none;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
-
-  /* Change password section */
+  .add-rb-btn{padding:6px 12px;background:var(--teal-light);color:var(--teal);border:none;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
   .pw-card{background:var(--white);border-radius:15px;border:1px solid var(--border);padding:22px;max-width:420px;}
-  .pw-title{font-size:15px;font-weight:700;margin-bottom:6px;}
-  .pw-sub{font-size:13px;color:var(--slate-light);margin-bottom:20px;}
-  .pw-btn{padding:11px 22px;background:var(--amber);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px;}
-  .pw-btn:hover{background:var(--amber-dark);}
-  .pw-btn:disabled{opacity:0.5;cursor:not-allowed;}
   .pw-alert{display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;}
   .pw-alert.active{display:block;}
   .pw-success{background:#dcfce7;color:#166534;border:1px solid #86efac;}
   .pw-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
-
-  /* Toast */
+  .pw-btn{padding:11px 22px;background:var(--amber);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .pw-btn:hover{background:var(--amber-dark);}
+  .pw-btn:disabled{opacity:0.5;cursor:not-allowed;}
   .toast{position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;z-index:999;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;}
   .toast.show{opacity:1;transform:translateY(0);}
   .toast-success{background:#dcfce7;color:#166534;border:1px solid #86efac;}
   .toast-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
-
   .empty{text-align:center;padding:44px 20px;color:var(--slate-light);}
   .empty-icon{font-size:36px;margin-bottom:9px;}
   .spinner-wrap{text-align:center;padding:36px;}
   .spinner{display:inline-block;width:26px;height:26px;border:3px solid var(--amber-light);border-top-color:var(--amber);border-radius:50%;animation:spin 0.7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
-
   .mobile-header{display:none;}
   @media(max-width:768px){
-    .sidebar{transform:translateX(-100%);transition:transform 0.3s;}
-    .sidebar.open{transform:translateX(0);}
-    .main{margin-left:0;padding:14px;}
-    .stats-grid{grid-template-columns:1fr 1fr;}
+    .sidebar{transform:translateX(-100%);transition:transform 0.3s;}.sidebar.open{transform:translateX(0);}
+    .main{margin-left:0;padding:14px;}.stats-grid{grid-template-columns:1fr 1fr;}
     .mobile-header{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--white);border-bottom:1px solid var(--border);margin:-14px -14px 14px;}
-    .hamburger{font-size:20px;cursor:pointer;}
-    .table-wrap{overflow-x:auto;}
+    .hamburger{font-size:20px;cursor:pointer;}.table-wrap{overflow-x:auto;}
   }
 </style>
 </head>
@@ -162,10 +127,15 @@
     <div class="modal-bd">
       <input type="hidden" id="s_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="s_name" placeholder="นายสมชาย ใจดี"></div>
-      <div class="fg"><label class="fl">รหัสนักศึกษา * (ใช้เป็น Username)</label><input class="fi" id="s_code" placeholder="เช่น 64010001"></div>
-      <div class="fg" id="s_pwGrp"><label class="fl">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="s_pw" placeholder="••••••" maxlength="6" inputmode="numeric"><p style="font-size:11px;color:var(--slate-light);margin-top:4px;">ตัวเลข 6 หลัก นักศึกษาจะใช้รหัสนี้เข้าระบบ</p></div>
-      <div class="fg"><label class="fl">ชั้นปี</label>
-        <select class="fs" id="s_year"><option value="1">ปีที่ 1</option><option value="2">ปีที่ 2</option><option value="3">ปีที่ 3</option><option value="4">ปีที่ 4</option><option value="5">ปีที่ 5</option><option value="6">ปีที่ 6</option></select>
+      <div class="fg">
+        <label class="fl">รหัสนักศึกษา * (ใช้เป็น Username)</label>
+        <input class="fi" id="s_code" placeholder="เช่น 64010001">
+        <p class="fhint">นักศึกษาจะใช้รหัสนี้ในการเข้าระบบ</p>
+      </div>
+      <div class="fg">
+        <label class="fl">รหัสผ่าน 6 หลัก *</label>
+        <input class="fi" type="password" id="s_pw" placeholder="••••••" maxlength="6" inputmode="numeric">
+        <p class="fhint">ตัวเลข 6 หลัก</p>
       </div>
     </div>
     <div class="modal-ft"><button class="cancel-btn" onclick="closeM('studentModal')">ยกเลิก</button><button class="save-btn" id="sBtn" onclick="saveStudent()">💾 บันทึก</button></div>
@@ -179,8 +149,15 @@
     <div class="modal-bd">
       <input type="hidden" id="t_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="t_name" placeholder="ผศ.ดร.วิภา สุขใส"></div>
-      <div class="fg"><label class="fl">เลขตำแหน่งอาจารย์ * (ใช้เป็น Username)</label><input class="fi" id="t_code" placeholder="เช่น T001"><p style="font-size:11px;color:var(--slate-light);margin-top:4px;">อาจารย์จะใช้เลขนี้เข้าระบบ</p></div>
-      <div class="fg" id="t_pwGrp"><label class="fl">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="t_pw" placeholder="••••••" maxlength="6" inputmode="numeric"></div>
+      <div class="fg">
+        <label class="fl">เลขตำแหน่งอาจารย์ * (ใช้เป็น Username)</label>
+        <input class="fi" id="t_code" placeholder="เช่น T001">
+        <p class="fhint">อาจารย์จะใช้เลขนี้เข้าระบบ</p>
+      </div>
+      <div class="fg">
+        <label class="fl">รหัสผ่าน 6 หลัก *</label>
+        <input class="fi" type="password" id="t_pw" placeholder="••••••" maxlength="6" inputmode="numeric">
+      </div>
     </div>
     <div class="modal-ft"><button class="cancel-btn" onclick="closeM('teacherModal')">ยกเลิก</button><button class="save-btn" id="tBtn" onclick="saveTeacher()">💾 บันทึก</button></div>
   </div>
@@ -210,16 +187,10 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <img class="sidebar-logo-img" src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=width:44px;height:44px;background:var(--amber-50);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;>🏥</div>'">
-      <div class="sidebar-logo-text">
-        <h2>Log Book</h2>
-        <p>คณะสัตวแพทยศาสตร์<br>มทร.ตะวันออก</p>
-      </div>
+      <div class="sidebar-logo-text"><h2>Log Book</h2><p>คณะสัตวแพทยศาสตร์<br>มทร.ตะวันออก</p></div>
     </div>
     <div class="sidebar-user">
-      <div class="user-row">
-        <div class="user-av">⚙️</div>
-        <div><div class="user-name" id="sidebarName">—</div><div class="user-uname" id="sidebarUname"></div></div>
-      </div>
+      <div class="user-row"><div class="user-av">⚙️</div><div><div class="user-name" id="sidebarName">—</div></div></div>
       <div class="role-badge">ผู้ดูแลระบบ</div>
     </div>
     <nav class="sidebar-nav">
@@ -229,40 +200,38 @@
       <div class="nav-item" onclick="showTab('competencies')" id="nav-competencies"><span class="nav-icon">📋</span> ทักษะ</div>
       <div class="nav-item" onclick="showTab('settings')" id="nav-settings"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
     </nav>
-    <div class="sidebar-footer">
-      <button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button>
-    </div>
+    <div class="sidebar-footer"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
   </aside>
 
   <main class="main">
     <div class="mobile-header">
       <span class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</span>
-      <img src="fac.png" alt="Logo" style="width:28px;height:28px;object-fit:contain;" onerror="this.outerHTML='🏥'">
+      <img src="fac.png" style="width:28px;height:28px;object-fit:contain;" onerror="this.outerHTML='🏥'">
       <strong style="font-family:'Prompt',sans-serif;font-size:14px;color:var(--amber)">Log Book — Admin</strong>
     </div>
 
     <!-- OVERVIEW -->
     <div id="tab-overview" class="tab-view active">
-      <div class="page-header"><div><h1 class="page-title">📊 ภาพรวมระบบ</h1><p class="page-subtitle">สถิติการใช้งาน Log Book</p></div></div>
+      <div class="page-header"><div><h1 class="page-title">📊 ภาพรวมระบบ</h1><p class="page-subtitle">สถิติการใช้งาน</p></div></div>
       <div class="stats-grid">
         <div class="stat-card sv-a"><div class="stat-label">👨‍🎓 นักศึกษา</div><div class="stat-val" id="stS">—</div></div>
         <div class="stat-card sv-r"><div class="stat-label">👨‍🏫 อาจารย์</div><div class="stat-val" id="stT">—</div></div>
         <div class="stat-card sv-t"><div class="stat-label">📋 ทักษะ</div><div class="stat-val" id="stC">—</div></div>
-        <div class="stat-card sv-s"><div class="stat-label">✅ ประเมินแล้ว</div><div class="stat-val" id="stE">—</div></div>
+        <div class="stat-card sv-s"><div class="stat-label">✅ ประเมิน</div><div class="stat-val" id="stE">—</div></div>
       </div>
-      <div class="table-wrap"><div class="table-head"><span class="table-title">ความคืบหน้านักศึกษา (ทักษะบังคับ)</span></div>
+      <div class="table-wrap"><div class="table-head"><span class="table-title">ความคืบหน้า (ทักษะบังคับ)</span></div>
       <div id="overviewContent"><div class="spinner-wrap"><div class="spinner"></div></div></div></div>
     </div>
 
     <!-- STUDENTS -->
     <div id="tab-students" class="tab-view">
       <div class="page-header">
-        <div><h1 class="page-title">👨‍🎓 จัดการนักศึกษา</h1><p class="page-subtitle">เพิ่ม ลบ ข้อมูลนักศึกษา</p></div>
+        <div><h1 class="page-title">👨‍🎓 จัดการนักศึกษา</h1></div>
         <button class="add-btn ab-teal" onclick="openAddS()">+ เพิ่มนักศึกษา</button>
       </div>
       <div class="table-wrap">
         <div class="table-head"><span class="table-title" id="sCount">นักศึกษา</span><input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('sTbl',this.value)"></div>
-        <table id="sTbl"><thead><tr><th>ชื่อ-นามสกุล</th><th>รหัส (Username)</th><th>ชั้นปี</th><th>จัดการ</th></tr></thead>
+        <table id="sTbl"><thead><tr><th>ชื่อ-นามสกุล</th><th>รหัส (Username)</th><th>จัดการ</th></tr></thead>
         <tbody id="sTbody"></tbody></table>
       </div>
     </div>
@@ -270,7 +239,7 @@
     <!-- TEACHERS -->
     <div id="tab-teachers" class="tab-view">
       <div class="page-header">
-        <div><h1 class="page-title">👨‍🏫 จัดการอาจารย์</h1><p class="page-subtitle">เพิ่ม ลบ ข้อมูลอาจารย์</p></div>
+        <div><h1 class="page-title">👨‍🏫 จัดการอาจารย์</h1></div>
         <button class="add-btn ab-rose" onclick="openAddT()">+ เพิ่มอาจารย์</button>
       </div>
       <div class="table-wrap">
@@ -283,7 +252,7 @@
     <!-- COMPETENCIES -->
     <div id="tab-competencies" class="tab-view">
       <div class="page-header">
-        <div><h1 class="page-title">📋 จัดการทักษะ</h1><p class="page-subtitle">เพิ่ม แก้ไข Competency / Skill</p></div>
+        <div><h1 class="page-title">📋 จัดการทักษะ</h1></div>
         <button class="add-btn ab-amber" onclick="openAddC()">+ เพิ่มทักษะ</button>
       </div>
       <div class="table-wrap">
@@ -293,15 +262,13 @@
       </div>
     </div>
 
-    <!-- SETTINGS / CHANGE PASSWORD -->
+    <!-- SETTINGS -->
     <div id="tab-settings" class="tab-view">
-      <div class="page-header"><div><h1 class="page-title">🔑 เปลี่ยนรหัสผ่าน</h1><p class="page-subtitle">เปลี่ยนรหัสผ่านสำหรับบัญชีผู้ดูแลระบบ</p></div></div>
+      <div class="page-header"><div><h1 class="page-title">🔑 เปลี่ยนรหัสผ่าน</h1><p class="page-subtitle">เปลี่ยนรหัสผ่าน Admin</p></div></div>
       <div class="pw-card">
-        <div class="pw-title">เปลี่ยนรหัสผ่าน Admin</div>
-        <div class="pw-sub">รหัสผ่านใหม่จะมีผลครั้งถัดไปที่เข้าระบบ</div>
         <div id="pwAlert" class="pw-alert"></div>
         <div class="fg"><label class="fl">รหัสผ่านปัจจุบัน</label><input class="fi" type="password" id="pwCurrent" placeholder="••••••"></div>
-        <div class="fg"><label class="fl">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label><input class="fi" type="password" id="pwNew" placeholder="••••••"></div>
+        <div class="fg"><label class="fl">รหัสผ่านใหม่</label><input class="fi" type="password" id="pwNew" placeholder="••••••"></div>
         <div class="fg"><label class="fl">ยืนยันรหัสผ่านใหม่</label><input class="fi" type="password" id="pwConfirm" placeholder="••••••"></div>
         <button class="pw-btn" id="pwBtn" onclick="changePassword()">🔑 เปลี่ยนรหัสผ่าน</button>
       </div>
@@ -310,14 +277,12 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://mxnsngomamxtvlbzrqqd.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_g0DgMBjGkpyBptQFPzv8pg_ztiINMRC';
-const { createClient } = window.supabase;
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-function toEmail(u){return u.trim().toLowerCase()+'@lbsys.com';}
-
+const SUPABASE_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const{createClient}=window.supabase;
+const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const DEFAULT_RUBRIC=[{score:1,label:'ทำไม่ได้'},{score:2,label:'ทำได้โดยมีผู้ช่วย'},{score:3,label:'ทำได้โดยมีผู้ดูแล'},{score:4,label:'ทำได้อิสระ'},{score:5,label:'ทำได้และสอนผู้อื่น'}];
-let currentUser=null, studentsData=[], teachersData=[], compsData=[], rbRows=[];
+let currentUser=null,studentsData=[],teachersData=[],compsData=[],rbRows=[];
 
 async function init(){
   const stored=localStorage.getItem('lb_user');
@@ -325,11 +290,9 @@ async function init(){
   currentUser=JSON.parse(stored);
   if(currentUser.role!=='admin'){window.location.href='index.html';return;}
   document.getElementById('sidebarName').textContent=currentUser.fullName;
-  document.getElementById('sidebarUname').textContent='@'+currentUser.username;
   await Promise.all([loadOverview(),loadStudents(),loadTeachers(),loadComps()]);
 }
 
-// OVERVIEW
 async function loadOverview(){
   const[s,t,c,e]=await Promise.all([
     supabase.from('students').select('id',{count:'exact',head:true}),
@@ -358,7 +321,8 @@ async function loadOverview(){
       <td style="width:160px"><div style="background:var(--border);border-radius:100px;height:7px"><div style="background:var(--teal);height:7px;border-radius:100px;width:${pct}%"></div></div></td>
       <td style="font-weight:700;color:${pct===100?'var(--pass)':'var(--amber)'}">${pct}%</td></tr>`;
   });
-  el.innerHTML=`<table><thead><tr><th>นักศึกษา</th><th>รหัส</th><th>ผ่าน</th><th>ความคืบหน้า</th><th>%</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+  el.innerHTML=rows.length?`<table><thead><tr><th>นักศึกษา</th><th>รหัส</th><th>ผ่าน</th><th>ความคืบหน้า</th><th>%</th></tr></thead><tbody>${rows.join('')}</tbody></table>`:
+    '<div class="empty"><div class="empty-icon">👨‍🎓</div><p>ยังไม่มีนักศึกษา</p></div>';
 }
 
 // STUDENTS
@@ -367,15 +331,13 @@ async function loadStudents(){
   studentsData=data||[];
   document.getElementById('sCount').textContent=`นักศึกษา (${studentsData.length} คน)`;
   document.getElementById('sTbody').innerHTML=studentsData.length?studentsData.map(s=>`
-    <tr><td>${s.full_name}</td><td style="font-family:monospace;font-size:13px">${s.student_code||'-'}</td>
-    <td>ปี ${s.year||'-'}</td>
+    <tr><td>${s.full_name}</td><td style="font-family:monospace">${s.student_code||'-'}</td>
     <td><button class="act-btn ab-del" onclick="delStudent('${s.id}')">🗑️ ลบ</button></td></tr>`).join(''):
-    '<tr><td colspan="4"><div class="empty"><div class="empty-icon">👨‍🎓</div><p>ยังไม่มีนักศึกษา</p></div></td></tr>';
+    '<tr><td colspan="3"><div class="empty"><div class="empty-icon">👨‍🎓</div><p>ยังไม่มีนักศึกษา</p></div></td></tr>';
 }
 function openAddS(){
   document.getElementById('smTitle').textContent='เพิ่มนักศึกษา';
   ['s_id','s_name','s_code','s_pw'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('s_pwGrp').style.display='block';
   openM('studentModal');
 }
 async function saveStudent(){
@@ -385,25 +347,17 @@ async function saveStudent(){
   const pw=document.getElementById('s_pw').value;
   if(!name||!code){toast('❌ กรุณากรอกชื่อและรหัสนักศึกษา','error');return;}
   if(!pw||pw.length<6){toast('❌ รหัสผ่านต้องมี 6 ตัว','error');return;}
-  btn.disabled=true; btn.textContent='กำลังบันทึก...';
-  try{
-    const email=toEmail(code);
-    const{data:auth,error:aErr}=await supabase.auth.signUp({email,password:pw});
-    if(aErr){toast('❌ '+aErr.message,'error');return;}
-    const uid=auth.user?.id;
-    if(!uid){toast('❌ ไม่สามารถสร้างบัญชีได้','error');return;}
-    const{error:dErr}=await supabase.from('students').insert({user_id:uid,full_name:name,student_code:code,year:parseInt(document.getElementById('s_year').value)});
-    if(dErr){toast('❌ '+dErr.message,'error');return;}
-    toast('✅ เพิ่มนักศึกษาสำเร็จ');
-    closeM('studentModal'); loadStudents(); loadOverview();
-  }catch(e){toast('❌ '+e.message,'error');}
-  finally{btn.disabled=false;btn.textContent='💾 บันทึก';}
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  const{error}=await supabase.from('students').insert({full_name:name,student_code:code,password:pw});
+  if(error){toast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'error');}
+  else{toast('✅ เพิ่มนักศึกษาสำเร็จ');closeM('studentModal');loadStudents();loadOverview();}
+  btn.disabled=false;btn.textContent='💾 บันทึก';
 }
 async function delStudent(id){
   if(!confirm('ยืนยันการลบนักศึกษารายนี้?'))return;
   const{error}=await supabase.from('students').delete().eq('id',id);
   if(error){toast('❌ '+error.message,'error');return;}
-  toast('✅ ลบสำเร็จ'); loadStudents(); loadOverview();
+  toast('✅ ลบสำเร็จ');loadStudents();loadOverview();
 }
 
 // TEACHERS
@@ -412,7 +366,7 @@ async function loadTeachers(){
   teachersData=data||[];
   document.getElementById('tCount').textContent=`อาจารย์ (${teachersData.length} คน)`;
   document.getElementById('tTbody').innerHTML=teachersData.length?teachersData.map(t=>`
-    <tr><td>${t.full_name}</td><td style="font-family:monospace;font-size:13px">${t.teacher_code||'-'}</td>
+    <tr><td>${t.full_name}</td><td style="font-family:monospace">${t.teacher_code||'-'}</td>
     <td><button class="act-btn ab-del" onclick="delTeacher('${t.id}')">🗑️ ลบ</button></td></tr>`).join(''):
     '<tr><td colspan="3"><div class="empty"><div class="empty-icon">👨‍🏫</div><p>ยังไม่มีอาจารย์</p></div></td></tr>';
 }
@@ -428,25 +382,17 @@ async function saveTeacher(){
   const pw=document.getElementById('t_pw').value;
   if(!name||!code){toast('❌ กรุณากรอกชื่อและเลขตำแหน่ง','error');return;}
   if(!pw||pw.length<6){toast('❌ รหัสผ่านต้องมี 6 ตัว','error');return;}
-  btn.disabled=true; btn.textContent='กำลังบันทึก...';
-  try{
-    const email=toEmail(code);
-    const{data:auth,error:aErr}=await supabase.auth.signUp({email,password:pw});
-    if(aErr){toast('❌ '+aErr.message,'error');return;}
-    const uid=auth.user?.id;
-    if(!uid){toast('❌ ไม่สามารถสร้างบัญชีได้','error');return;}
-    const{error:dErr}=await supabase.from('teachers').insert({user_id:uid,full_name:name,teacher_code:code});
-    if(dErr){toast('❌ '+dErr.message,'error');return;}
-    toast('✅ เพิ่มอาจารย์สำเร็จ');
-    closeM('teacherModal'); loadTeachers(); loadOverview();
-  }catch(e){toast('❌ '+e.message,'error');}
-  finally{btn.disabled=false;btn.textContent='💾 บันทึก';}
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  const{error}=await supabase.from('teachers').insert({full_name:name,teacher_code:code,password:pw});
+  if(error){toast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'error');}
+  else{toast('✅ เพิ่มอาจารย์สำเร็จ');closeM('teacherModal');loadTeachers();loadOverview();}
+  btn.disabled=false;btn.textContent='💾 บันทึก';
 }
 async function delTeacher(id){
   if(!confirm('ยืนยันการลบอาจารย์?'))return;
   const{error}=await supabase.from('teachers').delete().eq('id',id);
   if(error){toast('❌ '+error.message,'error');return;}
-  toast('✅ ลบสำเร็จ'); loadTeachers(); loadOverview();
+  toast('✅ ลบสำเร็จ');loadTeachers();loadOverview();
 }
 
 // COMPETENCIES
@@ -469,17 +415,17 @@ function openAddC(){
   ['c_id','c_name','c_desc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('c_type').value='mandatory';
   rbRows=JSON.parse(JSON.stringify(DEFAULT_RUBRIC));
-  renderRB(); openM('compModal');
+  renderRB();openM('compModal');
 }
 function openEditC(id){
-  const c=compsData.find(x=>x.id===id); if(!c)return;
+  const c=compsData.find(x=>x.id===id);if(!c)return;
   document.getElementById('cmTitle').textContent='แก้ไขทักษะ';
   document.getElementById('c_id').value=id;
   document.getElementById('c_name').value=c.name;
   document.getElementById('c_desc').value=c.description||'';
   document.getElementById('c_type').value=c.type;
   rbRows=JSON.parse(JSON.stringify(c.rubric_criteria||DEFAULT_RUBRIC));
-  renderRB(); openM('compModal');
+  renderRB();openM('compModal');
 }
 function renderRB(){
   document.getElementById('rbBuilder').innerHTML=rbRows.map((r,i)=>`
@@ -496,7 +442,7 @@ async function saveComp(){
   const name=document.getElementById('c_name').value.trim();
   const editId=document.getElementById('c_id').value;
   if(!name){toast('❌ กรุณากรอกชื่อทักษะ','error');return;}
-  btn.disabled=true; btn.textContent='กำลังบันทึก...';
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
   const payload={name,description:document.getElementById('c_desc').value.trim(),type:document.getElementById('c_type').value,rubric_criteria:rbRows};
   const{error}=editId?await supabase.from('competencies').update(payload).eq('id',editId):await supabase.from('competencies').insert(payload);
   if(error){toast('❌ '+error.message,'error');}
@@ -517,24 +463,15 @@ async function changePassword(){
   const confirm_=document.getElementById('pwConfirm').value;
   const alertEl=document.getElementById('pwAlert');
   const btn=document.getElementById('pwBtn');
-
-  function showPwAlert(msg,type){
-    alertEl.textContent=msg;
-    alertEl.className='pw-alert active pw-'+(type==='success'?'success':'error');
-    setTimeout(()=>alertEl.classList.remove('active'),5000);
-  }
-  if(!current||!newPw||!confirm_){showPwAlert('❌ กรุณากรอกให้ครบทุกช่อง','error');return;}
-  if(newPw.length<6){showPwAlert('❌ รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัว','error');return;}
+  function showPwAlert(msg,type){alertEl.textContent=msg;alertEl.className='pw-alert active pw-'+(type==='success'?'success':'error');setTimeout(()=>alertEl.classList.remove('active'),5000);}
+  if(!current||!newPw||!confirm_){showPwAlert('❌ กรุณากรอกให้ครบ','error');return;}
+  if(newPw.length<6){showPwAlert('❌ รหัสผ่านใหม่ต้องอย่างน้อย 6 ตัว','error');return;}
   if(newPw!==confirm_){showPwAlert('❌ รหัสผ่านใหม่ไม่ตรงกัน','error');return;}
-
-  btn.disabled=true; btn.textContent='กำลังเปลี่ยน...';
+  btn.disabled=true;btn.textContent='กำลังเปลี่ยน...';
   try{
-    // Re-authenticate first with current password
     const{data:{user}}=await supabase.auth.getUser();
-    const email=user.email;
-    const{error:reErr}=await supabase.auth.signInWithPassword({email,password:current});
+    const{error:reErr}=await supabase.auth.signInWithPassword({email:user.email,password:current});
     if(reErr){showPwAlert('❌ รหัสผ่านปัจจุบันไม่ถูกต้อง','error');return;}
-    // Update password
     const{error:upErr}=await supabase.auth.updateUser({password:newPw});
     if(upErr){showPwAlert('❌ '+upErr.message,'error');return;}
     showPwAlert('✅ เปลี่ยนรหัสผ่านสำเร็จ!','success');
@@ -544,24 +481,11 @@ async function changePassword(){
 }
 
 // UTILS
-function filterTbl(tblId,q){
-  document.getElementById(tblId).querySelectorAll('tbody tr').forEach(r=>{
-    r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';
-  });
-}
-function showTab(tab){
-  document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  document.getElementById('nav-'+tab).classList.add('active');
-}
+function filterTbl(tblId,q){document.getElementById(tblId).querySelectorAll('tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';});}
+function showTab(tab){document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');document.getElementById('nav-'+tab).classList.add('active');}
 function openM(id){document.getElementById(id).classList.add('open');}
 function closeM(id){document.getElementById(id).classList.remove('open');}
-function toast(msg,type='success'){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className=`toast toast-${type} show`;
-  setTimeout(()=>el.classList.remove('show'),3500);
-}
+function toast(msg,type='success'){const el=document.getElementById('toast');el.textContent=msg;el.className=`toast toast-${type} show`;setTimeout(()=>el.classList.remove('show'),3500);}
 async function logout(){await supabase.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
 document.querySelectorAll('.modal-ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 init();
