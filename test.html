@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ทดสอบการเชื่อมต่อ Supabase</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<style>
+  body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f8fafc; }
+  h2 { color: #1e293b; margin-bottom: 20px; }
+  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+  .result { padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 14px; display: none; word-break: break-all; }
+  .ok  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  button { padding: 10px 20px; background: #0d9488; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; width: 100%; margin-top: 10px; }
+  button:hover { background: #0f766e; }
+  label { font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; }
+  input { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
+  .step { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h2>🔧 ทดสอบการเชื่อมต่อ Supabase</h2>
+
+<!-- TEST 1: Connectivity -->
+<div class="card">
+  <strong>ขั้นตอนที่ 1 — ทดสอบการเชื่อมต่อ</strong>
+  <p class="step">กดปุ่มเพื่อดูว่าเชื่อมต่อ Supabase ได้หรือไม่</p>
+  <button onclick="testConnection()">ทดสอบการเชื่อมต่อ</button>
+  <div id="r1" class="result"></div>
+</div>
+
+<!-- TEST 2: Login -->
+<div class="card">
+  <strong>ขั้นตอนที่ 2 — ทดสอบ Login</strong>
+  <p class="step">กรอก email และ password แล้วกดทดสอบ</p>
+  <label>Email (ที่สร้างใน Supabase Auth)</label>
+  <input id="testEmail" type="email" value="admin@lbsys.com" placeholder="admin@lbsys.com">
+  <label>Password</label>
+  <input id="testPassword" type="text" value="123456" placeholder="123456">
+  <button onclick="testLogin()" style="background:#e11d48;">ทดสอบ Login</button>
+  <div id="r2" class="result"></div>
+</div>
+
+<!-- TEST 3: Check admins table -->
+<div class="card">
+  <strong>ขั้นตอนที่ 3 — ตรวจสอบตาราง admins</strong>
+  <p class="step">กดเพื่อดูว่ามีข้อมูลใน admins table หรือไม่</p>
+  <button onclick="checkAdmins()" style="background:#d97706;">ตรวจสอบตาราง admins</button>
+  <div id="r3" class="result"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const { createClient } = window.supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function show(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'result ' + type;
+  el.style.display = 'block';
+}
+
+async function testConnection() {
+  show('r1', '⏳ กำลังทดสอบ...', 'info');
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/', {
+      headers: { 'apikey': SUPABASE_ANON_KEY }
+    });
+    if (res.ok || res.status === 200 || res.status === 404) {
+      show('r1', '✅ เชื่อมต่อ Supabase ได้แล้ว! (status: ' + res.status + ')', 'ok');
+    } else {
+      show('r1', '❌ เชื่อมต่อไม่ได้ status: ' + res.status, 'err');
+    }
+  } catch(e) {
+    show('r1', '❌ ไม่สามารถเชื่อมต่อได้: ' + e.message, 'err');
+  }
+}
+
+async function testLogin() {
+  const email = document.getElementById('testEmail').value.trim();
+  const password = document.getElementById('testPassword').value;
+  show('r2', '⏳ กำลัง Login...', 'info');
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      show('r2',
+        '❌ Login ล้มเหลว\n' +
+        'Error: ' + error.message + '\n' +
+        'Status: ' + error.status + '\n' +
+        'Code: ' + (error.code || '-'),
+        'err'
+      );
+    } else {
+      show('r2',
+        '✅ Login สำเร็จ!\n' +
+        'User ID: ' + data.user.id + '\n' +
+        'Email: ' + data.user.email + '\n' +
+        'Confirmed: ' + (data.user.email_confirmed_at ? 'ใช่' : 'ยังไม่ยืนยัน'),
+        'ok'
+      );
+      await sb.auth.signOut();
+    }
+  } catch(e) {
+    show('r2', '❌ Error: ' + e.message, 'err');
+  }
+}
+
+async function checkAdmins() {
+  show('r3', '⏳ กำลังตรวจสอบ...', 'info');
+  try {
+    const { data, error } = await sb.from('admins').select('id, username, full_name, user_id');
+    if (error) {
+      show('r3', '❌ ดึงข้อมูลไม่ได้: ' + error.message, 'err');
+    } else if (!data || data.length === 0) {
+      show('r3', '⚠️ ตาราง admins ว่างเปล่า — ยังไม่มีข้อมูล admin', 'err');
+    } else {
+      const info = data.map(a =>
+        'username: ' + (a.username || '-') +
+        ' | name: ' + a.full_name +
+        ' | user_id: ' + (a.user_id ? a.user_id.substring(0,8) + '...' : 'NULL ❌')
+      ).join('\n');
+      show('r3', '✅ พบข้อมูลใน admins:\n' + info, 'ok');
+    }
+  } catch(e) {
+    show('r3', '❌ Error: ' + e.message, 'err');
+  }
+}
+</script>
+</body>
+</html>
