@@ -147,6 +147,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   .bottom-nav{display:block;}
   .eval-meta{grid-template-columns:1fr;}
   .toast{bottom:calc(var(--nav-h)+8px+var(--safe-b));}
+  .submit-bar{
+    position:sticky;
+    bottom:calc(var(--nav-h) + var(--safe-b));
+    border-radius:0 0 18px 18px;
+    z-index:10;
+  }
 }
 @media(min-width:769px){.toast{bottom:20px;right:24px;left:auto;width:320px;text-align:left;}}
 </style>
@@ -226,42 +232,52 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   <div id="tab-group" class="tab-view">
     <div style="margin-bottom:18px;">
       <div class="page-title">👥 ประเมินเป็นกลุ่ม</div>
-      <div class="page-sub">เลือกนักศึกษาหลายคน ประเมินพร้อมกัน</div>
+      <div class="page-sub">กลุ่มบันทึกเฉพาะในอุปกรณ์นี้ ไม่กระทบอาจารย์ท่านอื่น</div>
     </div>
 
-    <!-- Step 1: Group name + select students -->
-    <div class="card">
-      <div class="card-head"><span class="card-title">👥 ขั้นตอนที่ 1 — ตั้งชื่อกลุ่มและเลือกนักศึกษา</span></div>
+    <!-- Saved groups -->
+    <div class="card" id="savedGroupsCard">
+      <div class="card-head">
+        <span class="card-title">📁 กลุ่มที่บันทึกไว้</span>
+        <button onclick="openNewGroup()" style="padding:6px 14px;background:var(--rose);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">+ สร้างกลุ่มใหม่</button>
+      </div>
+      <div class="card-body">
+        <div id="savedGroupsList"></div>
+      </div>
+    </div>
+
+    <!-- Create/Edit group (hidden by default) -->
+    <div class="card" id="editGroupCard" style="display:none;">
+      <div class="card-head">
+        <span class="card-title" id="editGroupTitle">สร้างกลุ่มใหม่</span>
+        <button onclick="cancelEditGroup()" style="padding:5px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">✕ ยกเลิก</button>
+      </div>
       <div class="card-body">
         <div style="margin-bottom:14px;">
-          <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ชื่อกลุ่ม (ไม่บังคับ)</label>
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ชื่อกลุ่ม *</label>
           <input class="search-input" id="groupName" placeholder="เช่น กลุ่ม A, กลุ่มฝึกงานเช้า..." style="margin-bottom:0;">
         </div>
-        <div style="margin-bottom:10px;">
-          <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ค้นหานักศึกษา</label>
-          <input class="search-input" id="gStSearch" placeholder="ค้นหาชื่อหรือรหัส..." oninput="filterGroupStudents()" style="margin-bottom:8px;">
-        </div>
+        <input class="search-input" id="gStSearch" placeholder="ค้นหานักศึกษา..." oninput="filterGroupStudents()" style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-size:12px;color:var(--slate-m);" id="gSelCount">ยังไม่ได้เลือก</span>
-          <div style="display:flex;gap:8px;">
+          <span style="font-size:12px;color:var(--slate-m);font-weight:600;" id="gSelCount">ยังไม่ได้เลือก</span>
+          <div style="display:flex;gap:7px;">
             <button onclick="selectAllStudents()" style="padding:5px 12px;background:var(--teal-l);color:var(--teal);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">เลือกทั้งหมด</button>
             <button onclick="clearAllStudents()" style="padding:5px 12px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ล้าง</button>
           </div>
         </div>
-        <div id="gStList" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
-        <button onclick="confirmGroupStudents()" id="gNextBtn"
-          style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(225,29,72,0.3);opacity:0.5;"
-          disabled>
-          ถัดไป — ประเมินทักษะ →
+        <div id="gStList" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;margin-bottom:12px;"></div>
+        <button onclick="saveGroupLocal()" id="saveGroupBtn"
+          style="width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(225,29,72,0.3);">
+          💾 บันทึกกลุ่ม
         </button>
       </div>
     </div>
 
-    <!-- Step 2: Evaluate (hidden until students selected) -->
+    <!-- Evaluate group (hidden until group selected) -->
     <div id="gEvalSection" style="display:none;">
       <div class="card">
         <div class="card-head">
-          <span class="card-title">📋 ขั้นตอนที่ 2 — ประเมินทักษะ</span>
+          <span class="card-title">📋 ประเมินทักษะ</span>
           <span id="gGroupLabel" style="font-size:12px;color:var(--rose);font-weight:700;"></span>
         </div>
         <div class="card-body">
@@ -467,19 +483,113 @@ function switchTab(tab){
   document.getElementById('ni-'+tab)?.classList.add('active');
   document.getElementById('bn-'+tab)?.classList.add('active');
   if(tab==='history')loadHistory();
-  if(tab==='group')initGroup();
+  if(tab==='group'){gSelectedIds=new Set();gDecisions={};document.getElementById('editGroupCard').style.display='none';document.getElementById('gEvalSection').style.display='none';renderSavedGroups();}
   closeSidebar();
 }
 
-// ===== GROUP EVALUATION =====
+// ===== GROUP EVALUATION (localStorage-based) =====
 let gSelectedIds=new Set();let gDecisions={};
+let editingGroupIdx=-1; // -1 = new group
+
+function groupStorageKey(){return 'lb_groups_'+user.profileId;}
+function loadSavedGroups(){return JSON.parse(localStorage.getItem(groupStorageKey())||'[]');}
+function saveSavedGroups(groups){localStorage.setItem(groupStorageKey(),JSON.stringify(groups));}
 
 function initGroup(){
-  gSelectedIds=new Set();gDecisions={};
+  gSelectedIds=new Set();gDecisions={};editingGroupIdx=-1;
+  document.getElementById('editGroupCard').style.display='none';
   document.getElementById('gEvalSection').style.display='none';
-  renderGroupStudents(students);
-  updateGSelCount();
+  renderSavedGroups();
 }
+
+function renderSavedGroups(){
+  const groups=loadSavedGroups();
+  const el=document.getElementById('savedGroupsList');
+  if(!groups.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--slate-l);"><div style="font-size:32px;margin-bottom:8px;">📁</div><div style="font-size:13px;">ยังไม่มีกลุ่ม<br>กด "+ สร้างกลุ่มใหม่" เพื่อเริ่ม</div></div>';
+    return;
+  }
+  el.innerHTML=groups.map((g,i)=>{
+    const memberNames=g.studentIds.map(id=>students.find(s=>s.id===id)?.full_name||'?').slice(0,3).join(', ')+(g.studentIds.length>3?` +${g.studentIds.length-3} คน`:'');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;">${g.name}</div>
+        <div style="font-size:11px;color:var(--slate-l);margin-top:2px;">${g.studentIds.length} คน: ${memberNames}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button onclick="startGroupEval(${i})"
+          style="padding:6px 12px;background:var(--rose);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+          ✍️ ประเมิน
+        </button>
+        <button onclick="editGroupLocal(${i})"
+          style="padding:6px 10px;background:#dbeafe;color:#1d4ed8;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+          ✏️
+        </button>
+        <button onclick="deleteGroupLocal(${i})"
+          style="padding:6px 10px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+          🗑️
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNewGroup(){
+  editingGroupIdx=-1;
+  gSelectedIds=new Set();
+  document.getElementById('groupName').value='';
+  document.getElementById('gStSearch').value='';
+  document.getElementById('editGroupTitle').textContent='สร้างกลุ่มใหม่';
+  document.getElementById('editGroupCard').style.display='block';
+  document.getElementById('gEvalSection').style.display='none';
+  renderGroupStudents(students);updateGSelCount();
+  document.getElementById('editGroupCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function editGroupLocal(idx){
+  editingGroupIdx=idx;
+  const g=loadSavedGroups()[idx];
+  gSelectedIds=new Set(g.studentIds);
+  document.getElementById('groupName').value=g.name;
+  document.getElementById('gStSearch').value='';
+  document.getElementById('editGroupTitle').textContent='แก้ไขกลุ่ม: '+g.name;
+  document.getElementById('editGroupCard').style.display='block';
+  document.getElementById('gEvalSection').style.display='none';
+  renderGroupStudents(students);updateGSelCount();
+  document.getElementById('editGroupCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cancelEditGroup(){
+  document.getElementById('editGroupCard').style.display='none';
+  gSelectedIds=new Set();editingGroupIdx=-1;
+}
+function deleteGroupLocal(idx){
+  const groups=loadSavedGroups();
+  if(!confirm(`ลบกลุ่ม "${groups[idx].name}"?`))return;
+  groups.splice(idx,1);saveSavedGroups(groups);
+  renderSavedGroups();showToast('✅ ลบกลุ่มสำเร็จ','ok');
+}
+function saveGroupLocal(){
+  const name=document.getElementById('groupName').value.trim();
+  if(!name){showToast('❌ กรุณากรอกชื่อกลุ่ม','err');return;}
+  if(gSelectedIds.size===0){showToast('❌ กรุณาเลือกนักศึกษาอย่างน้อย 1 คน','err');return;}
+  const groups=loadSavedGroups();
+  const groupData={name,studentIds:[...gSelectedIds],updatedAt:new Date().toISOString()};
+  if(editingGroupIdx>=0){groups[editingGroupIdx]=groupData;}
+  else{groups.push(groupData);}
+  saveSavedGroups(groups);
+  showToast(`✅ บันทึกกลุ่ม "${name}" (${gSelectedIds.size} คน) สำเร็จ`,'ok');
+  cancelEditGroup();renderSavedGroups();
+}
+function startGroupEval(idx){
+  const g=loadSavedGroups()[idx];
+  gSelectedIds=new Set(g.studentIds);
+  gDecisions={};
+  document.getElementById('editGroupCard').style.display='none';
+  document.getElementById('gGroupLabel').textContent=`👥 ${g.name} (${g.studentIds.length} คน)`;
+  document.getElementById('gEvalSection').style.display='block';
+  document.getElementById('gEvalSection').scrollIntoView({behavior:'smooth',block:'start'});
+  renderGComps();
+}
+
 function renderGroupStudents(list){
   document.getElementById('gStList').innerHTML=list.map(s=>`
     <label style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:${gSelectedIds.has(s.id)?'var(--rose-50)':'var(--bg)'};border:2px solid ${gSelectedIds.has(s.id)?'var(--rose)':'var(--border)'};border-radius:12px;cursor:pointer;transition:all 0.15s;">
@@ -496,25 +606,13 @@ function filterGroupStudents(){
 }
 function toggleGStudent(id,cb){
   if(cb.checked)gSelectedIds.add(id);else gSelectedIds.delete(id);
-  updateGSelCount();
-  filterGroupStudents();
+  updateGSelCount();filterGroupStudents();
 }
 function selectAllStudents(){students.forEach(s=>gSelectedIds.add(s.id));filterGroupStudents();updateGSelCount();}
 function clearAllStudents(){gSelectedIds.clear();filterGroupStudents();updateGSelCount();}
 function updateGSelCount(){
   const n=gSelectedIds.size;
   document.getElementById('gSelCount').textContent=n>0?`เลือกแล้ว ${n} คน`:'ยังไม่ได้เลือก';
-  const btn=document.getElementById('gNextBtn');
-  btn.disabled=n===0;btn.style.opacity=n>0?'1':'0.5';
-}
-function confirmGroupStudents(){
-  if(gSelectedIds.size===0)return;
-  gDecisions={};
-  const gName=document.getElementById('groupName').value.trim()||`กลุ่ม ${gSelectedIds.size} คน`;
-  document.getElementById('gGroupLabel').textContent=`👥 ${gName} (${gSelectedIds.size} คน)`;
-  document.getElementById('gEvalSection').style.display='block';
-  document.getElementById('gEvalSection').scrollIntoView({behavior:'smooth',block:'start'});
-  renderGComps();
 }
 function renderGComps(){
   const el=document.getElementById('gCompList');
@@ -567,8 +665,7 @@ function updateGBar(){
 async function submitGroupEval(){
   const btn=document.getElementById('gSubmitBtn');
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const rows=[];
-  const now=new Date().toISOString();
+  const rows=[];const now=new Date().toISOString();
   for(const sid of gSelectedIds){
     for(const[cid,d]of Object.entries(gDecisions)){
       if(!d.status)continue;
@@ -580,10 +677,8 @@ async function submitGroupEval(){
   if(error){showToast('❌ '+error.message,'err');}
   else{
     showToast(`✅ บันทึกสำเร็จ ${gSelectedIds.size} คน × ${Object.values(gDecisions).filter(d=>d.status).length} ทักษะ`,'ok');
-    gDecisions={};gSelectedIds=new Set();
-    document.getElementById('gEvalSection').style.display='none';
-    document.getElementById('groupName').value='';
-    initGroup();
+    gDecisions={};document.getElementById('gEvalSection').style.display='none';
+    renderSavedGroups();
   }
   btn.disabled=false;btn.textContent='💾 บันทึกทั้งกลุ่ม';
 }
