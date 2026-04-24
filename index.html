@@ -205,9 +205,8 @@
         <label class="form-label">ชื่อผู้ใช้</label>
         <div class="input-wrap">
           <span class="input-icon">⚙️</span>
-          <input type="text" class="form-input input-a" id="adminUsername" placeholder="admin" autocomplete="username">
+          <input type="text" class="form-input input-a" id="adminUsername" placeholder="ชื่อผู้ใช้" autocomplete="username">
         </div>
-        <p class="form-hint">ค่าเริ่มต้น: <strong>admin</strong></p>
       </div>
       <div class="form-group">
         <label class="form-label">รหัสผ่าน</label>
@@ -215,7 +214,6 @@
           <span class="input-icon">🔒</span>
           <input type="password" class="form-input input-a" id="adminPassword" placeholder="••••••" autocomplete="current-password">
         </div>
-        <p class="form-hint">ค่าเริ่มต้น: <strong>123456</strong></p>
       </div>
       <button class="submit-btn btn-a" id="adminBtn" onclick="handleLogin('admin')">เข้าสู่ระบบ</button>
       <button class="back-btn" onclick="showMenu()">← กลับหน้าหลัก</button>
@@ -261,7 +259,7 @@ async function handleLogin(role) {
   btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email: toEmail(username), password });
-    if (error) { showAlert(alertId, '❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error'); return; }
+    if (error) { showAlert(alertId, '❌ ' + error.message, 'error'); return; }
 
     const tableMap = { student:'students', teacher:'teachers', admin:'admins' };
     const pageMap = { student:'student-dashboard.html', teacher:'teacher-dashboard.html', admin:'admin-dashboard.html' };
