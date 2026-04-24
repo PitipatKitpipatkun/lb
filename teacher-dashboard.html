@@ -90,7 +90,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .filter-chip.active{background:var(--rose);border-color:var(--rose);color:white;}
 .sort-select{padding:5px 10px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px solid var(--border);background:white;color:var(--slate-m);cursor:pointer;outline:none;}
 .comp-head{padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
-.comp-name{font-size:13px;font-weight:600;flex:1;}
+.comp-name{font-size:15px;font-weight:700;flex:1;line-height:1.4;}
 .comp-type{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;flex-shrink:0;}
 .t-m{background:#ede9fe;color:#5b21b6;}.t-e{background:#e0f2fe;color:#0369a1;}
 .comp-body{padding:0 16px 14px;}
@@ -895,7 +895,7 @@ function renderGComps(){
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + '<div style="height:80px;"></div>';
   updateGBar();
 }
 function pickGRubric(id,score,btn){
