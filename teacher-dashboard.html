@@ -593,6 +593,7 @@ ${skillData.filter(s=>s.type==='elective').length?`<div class="section-title">�
   win.document.write(html);
   win.document.close();
 }
+async function loadHistory(){
   const el=document.getElementById('histList');
   const{data}=await sb.from('evaluations').select('*,students(full_name,student_code),competencies(name,type)').eq('teacher_id',user.profileId).order('evaluated_at',{ascending:false}).limit(50);
   if(!data?.length){el.innerHTML='<div class="empty"><span class="empty-icon">📋</span><p>ยังไม่มีประวัติ</p></div>';return;}
