@@ -348,7 +348,7 @@ async function saveStudent(){
   if(!name||!code){toast('❌ กรุณากรอกชื่อและรหัสนักศึกษา','error');return;}
   if(!pw||pw.length<6){toast('❌ รหัสผ่านต้องมี 6 ตัว','error');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const{error}=await supabase.from('students').insert({full_name:name,student_code:code,student_id:code,password:pw});
+  const{error}=await supabase.from('students').insert({full_name:name,student_code:code,student_id:code,email:code+'@student.lb',password:pw});
   if(error){toast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'error');}
   else{toast('✅ เพิ่มนักศึกษาสำเร็จ');closeM('studentModal');loadStudents();loadOverview();}
   btn.disabled=false;btn.textContent='💾 บันทึก';
