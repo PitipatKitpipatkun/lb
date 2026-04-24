@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log Book — อาจารย์</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rose:#e11d48;--rose-dark:#9f1239;--rose-light:#ffe4e6;--rose-50:#fff1f2;
+    --teal:#0d9488;--teal-light:#ccfbf1;
+    --slate:#1e293b;--slate-mid:#475569;--slate-light:#94a3b8;
+    --border:#e2e8f0;--bg:#f8fafc;--white:#ffffff;
+    --pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;
+    --sidebar:240px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);}
+  .layout{display:flex;min-height:100vh;}
+
+  .sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;}
+  .sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+  .sidebar-logo-img{width:44px;height:44px;border-radius:10px;object-fit:contain;background:var(--rose-50);padding:4px;border:1px solid var(--rose-light);flex-shrink:0;}
+  .sidebar-logo-text h2{font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--rose);line-height:1.2;}
+  .sidebar-logo-text p{font-size:10px;color:var(--slate-light);line-height:1.3;margin-top:1px;}
+  .sidebar-user{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--rose-50);}
+  .user-row{display:flex;align-items:center;gap:10px;}
+  .user-av{width:36px;height:36px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;flex-shrink:0;}
+  .user-name{font-size:13px;font-weight:600;}
+  .user-code{font-size:11px;color:var(--slate-light);}
+  .role-badge{display:inline-block;background:var(--rose-light);color:var(--rose-dark);font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-top:5px;}
+  .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--slate-mid);cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;}
+  .nav-item:hover{background:var(--bg);color:var(--rose);}
+  .nav-item.active{background:var(--rose-50);color:var(--rose);border-left-color:var(--rose);font-weight:600;}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);}
+  .logout-btn{width:100%;padding:9px;background:transparent;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate-mid);cursor:pointer;transition:all 0.2s;}
+  .logout-btn:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626;}
+
+  .main{margin-left:var(--sidebar);flex:1;padding:28px 32px;}
+  .tab-view{display:none;}
+  .tab-view.active{display:block;animation:fadeUp 0.25s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .page-header{margin-bottom:22px;}
+  .page-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;}
+  .page-subtitle{font-size:13px;color:var(--slate-light);margin-top:3px;}
+
+  .card{background:var(--white);border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:18px;}
+  .card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .card-title{font-size:14px;font-weight:700;}
+  .card-body{padding:18px 20px;}
+
+  /* Student selector */
+  .search-box{display:flex;gap:9px;margin-bottom:16px;}
+  .search-input{flex:1;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;transition:all 0.2s;}
+  .search-input:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 3px rgba(225,29,72,0.1);}
+  .student-list{display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto;}
+  .student-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;cursor:pointer;transition:all 0.15s;}
+  .student-card:hover{border-color:var(--rose);background:var(--rose-50);}
+  .student-card.selected{border-color:var(--rose);background:var(--rose-50);box-shadow:0 0 0 3px rgba(225,29,72,0.1);}
+  .st-av{width:38px;height:38px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:15px;flex-shrink:0;}
+  .st-info{flex:1;}
+  .st-name{font-size:13px;font-weight:600;}
+  .st-code{font-size:11px;color:var(--slate-light);margin-top:2px;}
+  .st-check{color:var(--rose);font-size:18px;}
+
+  /* Competency cards */
+  .comp-list{display:flex;flex-direction:column;gap:9px;}
+  .comp-card{background:var(--white);border:1px solid var(--border);border-radius:13px;overflow:hidden;}
+  .comp-header{padding:13px 16px;display:flex;align-items:flex-start;gap:10px;}
+  .comp-name{font-size:13px;font-weight:600;flex:1;}
+  .comp-type{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;flex-shrink:0;}
+  .type-m{background:#ede9fe;color:#5b21b6;}
+  .type-e{background:#e0f2fe;color:#0369a1;}
+  .comp-body{padding:0 16px 14px;}
+
+  /* Rubric */
+  .rubric-label-row{font-size:12px;font-weight:600;color:var(--slate-mid);margin-bottom:8px;}
+  .rubric-scale{display:flex;gap:6px;flex-wrap:wrap;}
+  .rubric-btn{flex:1;min-width:72px;padding:10px 6px;text-align:center;border:2px solid var(--border);border-radius:9px;font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;transition:all 0.15s;background:var(--bg);}
+  .rubric-btn:hover{border-color:var(--rose);background:var(--rose-50);}
+  .rubric-btn.selected{border-color:var(--rose);background:var(--rose-light);}
+  .rubric-num{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;color:var(--slate);margin-bottom:3px;}
+  .rubric-desc{color:var(--slate-mid);font-size:10px;line-height:1.3;}
+
+  .eval-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .meta-group{display:flex;flex-direction:column;gap:5px;}
+  .meta-label{font-size:11px;font-weight:600;color:var(--slate-light);}
+  .meta-input{padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;transition:all 0.2s;}
+  .meta-input:focus{outline:none;border-color:var(--rose);}
+
+  .eval-actions{display:flex;gap:8px;margin-top:10px;}
+  .eval-btn{flex:1;padding:10px;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+  .btn-pass{background:var(--pass-bg);color:var(--pass);border:2px solid #86efac;}
+  .btn-pass:hover{background:#bbf7d0;}
+  .btn-pass.confirmed{background:var(--pass);color:white;}
+  .btn-fail{background:var(--fail-bg);color:var(--fail);border:2px solid #fca5a5;}
+  .btn-fail:hover{background:#fecaca;}
+  .btn-fail.confirmed{background:var(--fail);color:white;}
+
+  .prev-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;margin-bottom:8px;}
+  .prev-pass{background:var(--pass-bg);color:var(--pass);}
+  .prev-fail{background:var(--fail-bg);color:var(--fail);}
+
+  .submit-sticky{position:sticky;bottom:0;background:white;border-top:1px solid var(--border);padding:14px 20px;display:flex;gap:10px;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,0.06);border-radius:0 0 16px 16px;margin-top:16px;}
+  .submit-info{flex:1;font-size:12px;color:var(--slate-mid);}
+  .submit-main{padding:11px 24px;background:var(--rose);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+  .submit-main:hover{background:var(--rose-dark);}
+  .submit-main:disabled{opacity:0.4;cursor:not-allowed;}
+
+  /* History */
+  .hist-list{display:flex;flex-direction:column;gap:9px;}
+  .hist-item{background:var(--white);border-radius:13px;padding:14px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;}
+  .hist-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .hi-pass{background:var(--pass-bg);}
+  .hi-fail{background:var(--fail-bg);}
+  .hist-info{flex:1;}
+  .hist-skill{font-size:13px;font-weight:600;}
+  .hist-student{font-size:12px;color:var(--slate-mid);margin-top:2px;}
+  .hist-meta{font-size:11px;color:var(--slate-light);margin-top:3px;}
+
+  .empty{text-align:center;padding:50px 20px;color:var(--slate-light);}
+  .empty-icon{font-size:40px;margin-bottom:10px;}
+  .spinner-wrap{text-align:center;padding:36px;}
+  .spinner{display:inline-block;width:26px;height:26px;border:3px solid var(--rose-light);border-top-color:var(--rose);border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .toast{position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;z-index:999;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast-success{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+  .toast-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+
+  .mobile-header{display:none;}
+  @media(max-width:768px){
+    .sidebar{transform:translateX(-100%);transition:transform 0.3s;}
+    .sidebar.open{transform:translateX(0);}
+    .main{margin-left:0;padding:14px;}
+    .eval-meta{grid-template-columns:1fr;}
+    .mobile-header{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--white);border-bottom:1px solid var(--border);margin:-14px -14px 14px;}
+    .hamburger{font-size:20px;cursor:pointer;}
+  }
+</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img class="sidebar-logo-img" src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=width:44px;height:44px;background:var(--rose-50);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;>🏥</div>'">
+      <div class="sidebar-logo-text">
+        <h2>Log Book</h2>
+        <p>คณะสัตวแพทยศาสตร์<br>มทร.ตะวันออก</p>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-av">🏫</div>
+        <div><div class="user-name" id="sidebarName">—</div><div class="user-code" id="sidebarCode"></div></div>
+      </div>
+      <div class="role-badge">อาจารย์</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showTab('evaluate')" id="nav-evaluate"><span class="nav-icon">✍️</span> ประเมินทักษะ</div>
+      <div class="nav-item" onclick="showTab('history')" id="nav-history"><span class="nav-icon">📋</span> ประวัติการประเมิน</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mobile-header">
+      <span class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</span>
+      <img src="fac.png" alt="Logo" style="width:28px;height:28px;object-fit:contain;" onerror="this.outerHTML='🏥'">
+      <strong style="font-family:'Prompt',sans-serif;font-size:14px;color:var(--rose)">Log Book — อาจารย์</strong>
+    </div>
+
+    <!-- EVALUATE -->
+    <div id="tab-evaluate" class="tab-view active">
+      <div class="page-header"><h1 class="page-title">✍️ ประเมินทักษะ</h1><p class="page-subtitle">เลือกนักศึกษา แล้วประเมินด้วย Rubric</p></div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">👨‍🎓 ขั้นตอนที่ 1 — เลือกนักศึกษา</span>
+          <span id="selBadge" style="font-size:12px;color:var(--rose);font-weight:600;display:none;"></span>
+        </div>
+        <div class="card-body">
+          <div class="search-box">
+            <input class="search-input" id="studentSearch" placeholder="ค้นหาชื่อหรือรหัสนักศึกษา..." oninput="filterStudents()">
+          </div>
+          <div id="studentList" class="student-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+      <div id="evalSection" style="display:none;">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📋 ขั้นตอนที่ 2 — ประเมินทักษะ</span></div>
+          <div class="card-body">
+            <div id="compList" class="comp-list"></div>
+            <div class="submit-sticky">
+              <div class="submit-info" id="submitInfo">เลือกผลสำหรับแต่ละทักษะ</div>
+              <button class="submit-main" id="submitBtn" onclick="submitAll()" disabled>💾 บันทึกการประเมิน</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="tab-history" class="tab-view">
+      <div class="page-header"><h1 class="page-title">📋 ประวัติการประเมิน</h1><p class="page-subtitle">รายการที่ประเมินไปแล้ว</p></div>
+      <div id="historyList" class="hist-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const DEFAULT_RUBRIC=[{score:1,label:'ทำไม่ได้'},{score:2,label:'ทำได้โดยมีผู้ช่วย'},{score:3,label:'ทำได้โดยมีผู้ดูแล'},{score:4,label:'ทำได้อิสระ'},{score:5,label:'ทำได้และสอนผู้อื่น'}];
+
+let currentUser=null,allStudents=[],allComps=[],selectedStudent=null,decisions={};
+
+async function init(){
+  const stored=localStorage.getItem('lb_user');
+  if(!stored){window.location.href='index.html';return;}
+  currentUser=JSON.parse(stored);
+  if(currentUser.role!=='teacher'){window.location.href='index.html';return;}
+  document.getElementById('sidebarName').textContent=currentUser.fullName;
+  document.getElementById('sidebarCode').textContent=currentUser.teacherCode||currentUser.username||'';
+  const[s,c]=await Promise.all([
+    supabase.from('students').select('*').order('full_name'),
+    supabase.from('competencies').select('*').order('type').order('name')
+  ]);
+  allStudents=s.data||[]; allComps=c.data||[];
+  renderStudents(allStudents);
+}
+
+function renderStudents(list){
+  const el=document.getElementById('studentList');
+  el.innerHTML=list.length?list.map(s=>`
+    <div class="student-card ${selectedStudent?.id===s.id?'selected':''}" onclick="selectStudent('${s.id}')">
+      <div class="st-av">🎓</div>
+      <div class="st-info"><div class="st-name">${s.full_name}</div><div class="st-code">${s.student_code||''}</div></div>
+      ${selectedStudent?.id===s.id?'<span class="st-check">✓</span>':''}
+    </div>`).join(''):
+    '<div class="empty"><div class="empty-icon">🔍</div><p>ไม่พบนักศึกษา</p></div>';
+}
+function filterStudents(){
+  const q=document.getElementById('studentSearch').value.toLowerCase();
+  renderStudents(allStudents.filter(s=>s.full_name.toLowerCase().includes(q)||(s.student_code||'').toLowerCase().includes(q)));
+}
+async function selectStudent(id){
+  selectedStudent=allStudents.find(s=>s.id===id);
+  decisions={};
+  filterStudents();
+  document.getElementById('selBadge').textContent='✓ '+selectedStudent.full_name;
+  document.getElementById('selBadge').style.display='inline';
+  document.getElementById('evalSection').style.display='block';
+  document.getElementById('evalSection').scrollIntoView({behavior:'smooth',block:'start'});
+  await renderComps();
+}
+async function renderComps(){
+  const el=document.getElementById('compList');
+  el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+  const{data:existing}=await supabase.from('evaluations').select('*,teachers(full_name)').eq('student_id',selectedStudent.id);
+  const eMap={};(existing||[]).forEach(e=>{eMap[e.competency_id]=e;});
+  el.innerHTML=allComps.map(comp=>{
+    const prev=eMap[comp.id];
+    const rubric=comp.rubric_criteria||DEFAULT_RUBRIC;
+    return `<div class="comp-card" id="cc-${comp.id}">
+      <div class="comp-header">
+        <div class="comp-name">${comp.name}</div>
+        <span class="comp-type ${comp.type==='mandatory'?'type-m':'type-e'}">${comp.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>
+      </div>
+      <div class="comp-body">
+        ${prev?`<div><span class="prev-badge ${prev.status==='pass'?'prev-pass':'prev-fail'}">${prev.status==='pass'?'✅ ผ่านแล้ว':'❌ ไม่ผ่าน'} (Rubric: ${prev.rubric_score||'-'})</span>
+        <span style="font-size:11px;color:var(--slate-light);margin-left:6px;">โดย อ.${prev.teachers?.full_name||'-'} | ${new Date(prev.evaluated_at).toLocaleDateString('th-TH')}</span></div>`:''}
+        ${comp.description?`<div style="font-size:12px;color:var(--slate-mid);margin-bottom:10px;">${comp.description}</div>`:''}
+        <div class="rubric-label-row">📊 Rubric — เลือกระดับทักษะ</div>
+        <div class="rubric-scale" id="rs-${comp.id}">
+          ${rubric.map(r=>`<button class="rubric-btn" onclick="pickRubric('${comp.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('')}
+        </div>
+        <div class="eval-meta">
+          <div class="meta-group"><label class="meta-label">📍 สถานที่</label><input class="meta-input" id="loc-${comp.id}" placeholder="เช่น ห้องปฏิบัติการ" oninput="updateMeta('${comp.id}')"></div>
+          <div class="meta-group"><label class="meta-label">📝 หมายเหตุ</label><input class="meta-input" id="note-${comp.id}" placeholder="(ถ้ามี)" oninput="updateMeta('${comp.id}')"></div>
+        </div>
+        <div class="eval-actions">
+          <button class="eval-btn btn-pass" id="pb-${comp.id}" onclick="setStatus('${comp.id}','pass',this)">✅ ผ่าน</button>
+          <button class="eval-btn btn-fail" id="fb-${comp.id}" onclick="setStatus('${comp.id}','fail',this)">❌ ไม่ผ่าน</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateBar();
+}
+function pickRubric(id,score,btn){
+  btn.closest('.rubric-scale').querySelectorAll('.rubric-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  if(!decisions[id])decisions[id]={};
+  decisions[id].rubric_score=score;
+  updateBar();
+}
+function setStatus(id,status,btn){
+  if(!decisions[id])decisions[id]={};
+  decisions[id].status=status;
+  document.getElementById('pb-'+id).classList.remove('confirmed');
+  document.getElementById('fb-'+id).classList.remove('confirmed');
+  btn.classList.add('confirmed');
+  updateBar();
+}
+function updateMeta(id){
+  if(!decisions[id])decisions[id]={};
+  decisions[id].location=document.getElementById('loc-'+id)?.value;
+  decisions[id].notes=document.getElementById('note-'+id)?.value;
+}
+function updateBar(){
+  const done=Object.values(decisions).filter(d=>d.status).length;
+  document.getElementById('submitInfo').textContent=`ประเมินแล้ว ${done} / ${allComps.length} ทักษะ`;
+  document.getElementById('submitBtn').disabled=done===0;
+}
+async function submitAll(){
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='กำลังบันทึก...';
+  const rows=[];
+  for(const[cid,d]of Object.entries(decisions)){
+    if(!d.status)continue;
+    rows.push({student_id:selectedStudent.id,competency_id:cid,teacher_id:currentUser.profileId,
+      status:d.status,rubric_score:d.rubric_score||null,location:d.location||null,
+      notes:d.notes||null,evaluated_at:new Date().toISOString()});
+  }
+  if(!rows.length){toast('ไม่มีการประเมิน','error');return;}
+  const{error}=await supabase.from('evaluations').upsert(rows,{onConflict:'student_id,competency_id'});
+  if(error){toast('❌ '+error.message,'error');}
+  else{toast(`✅ บันทึกสำเร็จ ${rows.length} ทักษะ`,'success');decisions={};await renderComps();loadHistory();}
+  btn.disabled=false; btn.textContent='💾 บันทึกการประเมิน';
+}
+async function loadHistory(){
+  const el=document.getElementById('historyList');
+  const{data}=await supabase.from('evaluations').select('*,students(full_name,student_code),competencies(name,type)').eq('teacher_id',currentUser.profileId).order('evaluated_at',{ascending:false}).limit(50);
+  if(!data?.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><p>ยังไม่มีประวัติ</p></div>';return;}
+  el.innerHTML=data.map(e=>`<div class="hist-item">
+    <div class="hist-icon ${e.status==='pass'?'hi-pass':'hi-fail'}">${e.status==='pass'?'✅':'❌'}</div>
+    <div class="hist-info">
+      <div class="hist-skill">${e.competencies?.name||'-'}</div>
+      <div class="hist-student">👨‍🎓 ${e.students?.full_name||'-'} | ${e.students?.student_code||''}</div>
+      <div class="hist-meta">${new Date(e.evaluated_at).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}${e.location?' | 📍 '+e.location:''}${e.rubric_score?' | Rubric: '+e.rubric_score:''}</div>
+    </div>
+    <span style="font-size:12px;font-weight:700;color:${e.status==='pass'?'var(--pass)':'var(--fail)'}">${e.status==='pass'?'ผ่าน':'ไม่ผ่าน'}</span>
+  </div>`).join('');
+}
+function showTab(tab){
+  document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  if(tab==='history')loadHistory();
+}
+function toast(msg,type='success'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className=`toast toast-${type} show`;
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+async function logout(){await supabase.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log Book — นักศึกษา</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:#0d9488;--teal-dark:#0f766e;--teal-light:#ccfbf1;--teal-50:#f0fdfa;
+    --slate:#1e293b;--slate-mid:#475569;--slate-light:#94a3b8;
+    --border:#e2e8f0;--bg:#f8fafc;--white:#ffffff;
+    --pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;
+    --pending:#d97706;--pending-bg:#fef3c7;--sidebar:240px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);}
+  .layout{display:flex;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;}
+  .sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+  .sidebar-logo-img{width:44px;height:44px;border-radius:10px;object-fit:contain;background:var(--teal-50);padding:4px;border:1px solid var(--teal-light);flex-shrink:0;}
+  .sidebar-logo-text h2{font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--teal);line-height:1.2;}
+  .sidebar-logo-text p{font-size:10px;color:var(--slate-light);line-height:1.3;margin-top:1px;}
+  .sidebar-user{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--teal-50);}
+  .user-row{display:flex;align-items:center;gap:10px;}
+  .user-av{width:36px;height:36px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;flex-shrink:0;}
+  .user-name{font-size:13px;font-weight:600;color:var(--slate);}
+  .user-code{font-size:11px;color:var(--slate-light);}
+  .role-badge{display:inline-block;background:var(--teal-light);color:var(--teal-dark);font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-top:5px;}
+  .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--slate-mid);cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;}
+  .nav-item:hover{background:var(--bg);color:var(--teal);}
+  .nav-item.active{background:var(--teal-50);color:var(--teal);border-left-color:var(--teal);font-weight:600;}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);}
+  .logout-btn{width:100%;padding:9px;background:transparent;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate-mid);cursor:pointer;transition:all 0.2s;}
+  .logout-btn:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626;}
+
+  /* MAIN */
+  .main{margin-left:var(--sidebar);flex:1;padding:28px 32px;}
+  .tab-view{display:none;}
+  .tab-view.active{display:block;animation:fadeUp 0.25s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .page-header{margin-bottom:24px;}
+  .page-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;}
+  .page-subtitle{font-size:13px;color:var(--slate-light);margin-top:3px;}
+
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+  .stat-card{background:var(--white);border-radius:14px;padding:18px;border:1px solid var(--border);}
+  .stat-label{font-size:11px;font-weight:700;color:var(--slate-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .stat-val{font-family:'Prompt',sans-serif;font-size:30px;font-weight:700;}
+  .stat-sub{font-size:12px;color:var(--slate-light);margin-top:2px;}
+  .sv-pass .stat-val{color:var(--pass);}
+  .sv-fail .stat-val{color:var(--fail);}
+  .sv-pending .stat-val{color:var(--pending);}
+  .sv-total .stat-val{color:var(--teal);}
+
+  /* PROGRESS */
+  .progress-card{background:var(--white);border-radius:14px;padding:22px;border:1px solid var(--border);margin-bottom:22px;}
+  .progress-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+  .progress-sub{font-size:12px;color:var(--slate-light);margin-bottom:12px;}
+  .progress-bar{height:10px;background:var(--border);border-radius:100px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),#14b8a6);border-radius:100px;transition:width 0.7s ease;}
+  .progress-row{display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--slate-light);}
+
+  /* SKILLS */
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .section-title{font-size:15px;font-weight:700;}
+  .filter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+  .filter-btn{padding:5px 12px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px solid var(--border);background:var(--white);color:var(--slate-mid);cursor:pointer;transition:all 0.15s;}
+  .filter-btn.active{background:var(--teal);border-color:var(--teal);color:white;}
+  .skill-list{display:flex;flex-direction:column;gap:9px;}
+  .skill-item{background:var(--white);border-radius:13px;padding:14px 16px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;transition:all 0.15s;}
+  .skill-item:hover{box-shadow:0 2px 12px rgba(0,0,0,0.05);transform:translateY(-1px);}
+  .skill-dot{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .dot-pass{background:var(--pass-bg);}
+  .dot-fail{background:var(--fail-bg);}
+  .dot-pending{background:var(--pending-bg);}
+  .skill-info{flex:1;}
+  .skill-name{font-size:13px;font-weight:600;}
+  .skill-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;display:inline-block;margin:3px 0;}
+  .type-m{background:#ede9fe;color:#5b21b6;}
+  .type-e{background:#e0f2fe;color:#0369a1;}
+  .skill-meta{font-size:11px;color:var(--slate-light);margin-top:1px;}
+  .skill-right{text-align:right;flex-shrink:0;}
+  .status-badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;}
+  .badge-pass{background:var(--pass-bg);color:var(--pass);}
+  .badge-fail{background:var(--fail-bg);color:var(--fail);}
+  .badge-pending{background:var(--pending-bg);color:var(--pending);}
+  .rubric-score{font-size:11px;color:var(--slate-light);margin-top:3px;}
+
+  /* PRINT BUTTON */
+  .print-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .print-btn:hover{background:var(--teal-dark);}
+
+  /* REPORT COVER */
+  .report-cover{background:var(--white);border-radius:16px;padding:32px;text-align:center;border:1px solid var(--border);margin-bottom:18px;}
+  .report-cover img{width:60px;height:60px;object-fit:contain;margin-bottom:10px;}
+  .report-cover h2{font-family:'Prompt',sans-serif;font-size:18px;color:var(--teal);margin-bottom:4px;}
+  .report-cover p{font-size:13px;color:var(--slate-mid);}
+  .report-student{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+  .report-student strong{font-size:15px;}
+  .report-student span{font-size:13px;color:var(--slate-light);}
+
+  /* EMPTY / SPINNER */
+  .empty{text-align:center;padding:50px 20px;color:var(--slate-light);}
+  .empty-icon{font-size:40px;margin-bottom:10px;}
+  .spinner-wrap{text-align:center;padding:40px;}
+  .spinner{display:inline-block;width:26px;height:26px;border:3px solid var(--teal-light);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* MOBILE */
+  .mobile-header{display:none;}
+  @media(max-width:768px){
+    .sidebar{transform:translateX(-100%);transition:transform 0.3s;}
+    .sidebar.open{transform:translateX(0);}
+    .main{margin-left:0;padding:14px;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .mobile-header{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--white);border-bottom:1px solid var(--border);margin:-14px -14px 14px;}
+    .hamburger{font-size:20px;cursor:pointer;}
+  }
+
+  @media print{
+    .sidebar,.no-print,.mobile-header{display:none!important;}
+    .main{margin-left:0!important;padding:16px!important;}
+    .skill-item:hover{box-shadow:none;transform:none;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img class="sidebar-logo-img" src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=width:44px;height:44px;background:var(--teal-50);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;>🏥</div>'">
+      <div class="sidebar-logo-text">
+        <h2>Log Book</h2>
+        <p>คณะสัตวแพทยศาสตร์<br>มทร.ตะวันออก</p>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-av">🎓</div>
+        <div>
+          <div class="user-name" id="sidebarName">—</div>
+          <div class="user-code" id="sidebarCode"></div>
+        </div>
+      </div>
+      <div class="role-badge">นักศึกษา</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showTab('overview')" id="nav-overview"><span class="nav-icon">📊</span> ภาพรวม</div>
+      <div class="nav-item" onclick="showTab('mandatory')" id="nav-mandatory"><span class="nav-icon">⭐</span> ทักษะบังคับ</div>
+      <div class="nav-item" onclick="showTab('elective')" id="nav-elective"><span class="nav-icon">📝</span> ทักษะเลือก</div>
+      <div class="nav-item" onclick="showTab('report')" id="nav-report"><span class="nav-icon">🖨️</span> พิมพ์รายงาน</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mobile-header">
+      <span class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</span>
+      <img src="fac.png" alt="Logo" style="width:28px;height:28px;object-fit:contain;" onerror="this.outerHTML='🏥'">
+      <strong style="font-family:'Prompt',sans-serif;font-size:14px;color:var(--teal)">Log Book</strong>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div id="tab-overview" class="tab-view active">
+      <div class="page-header">
+        <h1 class="page-title" id="welcomeTitle">สวัสดี!</h1>
+        <p class="page-subtitle">ติดตามความคืบหน้าทักษะของคุณ</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card sv-pass"><div class="stat-label">✅ ผ่านแล้ว</div><div class="stat-val" id="statPass">—</div><div class="stat-sub">ทักษะ</div></div>
+        <div class="stat-card sv-fail"><div class="stat-label">❌ ไม่ผ่าน</div><div class="stat-val" id="statFail">—</div><div class="stat-sub">ทักษะ</div></div>
+        <div class="stat-card sv-pending"><div class="stat-label">⏳ ยังไม่ประเมิน</div><div class="stat-val" id="statPending">—</div><div class="stat-sub">ทักษะ</div></div>
+        <div class="stat-card sv-total"><div class="stat-label">📚 ทั้งหมด</div><div class="stat-val" id="statTotal">—</div><div class="stat-sub">ทักษะ</div></div>
+      </div>
+      <div class="progress-card">
+        <div class="progress-title">ความคืบหน้าทักษะบังคับ</div>
+        <div class="progress-sub" id="progressText">กำลังโหลด...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="progress-row"><span>0%</span><span id="progressPct">0%</span><span>100%</span></div>
+      </div>
+      <div class="section-head"><div class="section-title">ทักษะล่าสุด</div></div>
+      <div id="recentList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- MANDATORY -->
+    <div id="tab-mandatory" class="tab-view">
+      <div class="page-header"><h1 class="page-title">⭐ ทักษะบังคับ</h1><p class="page-subtitle">ต้องผ่านทั้งหมด</p></div>
+      <div class="filter-row no-print">
+        <button class="filter-btn active" onclick="filterSkills('mandatory','all',this)">ทั้งหมด</button>
+        <button class="filter-btn" onclick="filterSkills('mandatory','pass',this)">✅ ผ่าน</button>
+        <button class="filter-btn" onclick="filterSkills('mandatory','fail',this)">❌ ไม่ผ่าน</button>
+        <button class="filter-btn" onclick="filterSkills('mandatory','pending',this)">⏳ ยังไม่ประเมิน</button>
+      </div>
+      <div id="mandatoryList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ELECTIVE -->
+    <div id="tab-elective" class="tab-view">
+      <div class="page-header"><h1 class="page-title">📝 ทักษะเลือก</h1><p class="page-subtitle">ทักษะที่เลือกเพิ่มเติม</p></div>
+      <div class="filter-row no-print">
+        <button class="filter-btn active" onclick="filterSkills('elective','all',this)">ทั้งหมด</button>
+        <button class="filter-btn" onclick="filterSkills('elective','pass',this)">✅ ผ่าน</button>
+        <button class="filter-btn" onclick="filterSkills('elective','pending',this)">⏳ ยังไม่ประเมิน</button>
+      </div>
+      <div id="electiveList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="tab-report" class="tab-view">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div><h1 class="page-title">🖨️ พิมพ์รายงาน</h1><p class="page-subtitle">สรุปทักษะสำหรับพิมพ์</p></div>
+        <button class="print-btn no-print" onclick="window.print()">🖨️ พิมพ์</button>
+      </div>
+      <div class="report-cover">
+        <img src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=font-size:48px;margin-bottom:10px>🏥</div>'">
+        <h2>รายงาน Log Book</h2>
+        <p>คณะสัตวแพทยศาสตร์ มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
+        <div class="report-student">
+          <div><strong id="reportName">—</strong></div>
+          <div><span id="reportCode">—</span></div>
+          <div style="margin-top:6px;font-size:12px;color:var(--slate-light);" id="reportDate"></div>
+        </div>
+      </div>
+      <div id="reportList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null, allSkillData = [];
+
+async function init() {
+  const stored = localStorage.getItem('lb_user');
+  if (!stored) { window.location.href='index.html'; return; }
+  currentUser = JSON.parse(stored);
+  if (currentUser.role !== 'student') { window.location.href='index.html'; return; }
+
+  document.getElementById('sidebarName').textContent = currentUser.fullName;
+  document.getElementById('sidebarCode').textContent = currentUser.studentCode || currentUser.username || '';
+  document.getElementById('welcomeTitle').textContent = 'สวัสดี, ' + currentUser.fullName;
+  document.getElementById('reportName').textContent = currentUser.fullName;
+  document.getElementById('reportCode').textContent = 'รหัสนักศึกษา: ' + (currentUser.studentCode || '-');
+  document.getElementById('reportDate').textContent = 'วันที่พิมพ์: ' + new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+
+  await loadData();
+}
+
+async function loadData() {
+  const [compsRes, evalsRes] = await Promise.all([
+    supabase.from('competencies').select('*').order('type').order('name'),
+    supabase.from('evaluations').select('*,teachers(full_name)').eq('student_id', currentUser.profileId).order('evaluated_at',{ascending:false})
+  ]);
+  const comps = compsRes.data || [], evals = evalsRes.data || [];
+  allSkillData = comps.map(c => {
+    const e = evals.find(ev => ev.competency_id === c.id) || null;
+    return { ...c, evaluation:e, status: e ? e.status : 'pending' };
+  });
+  renderStats(); renderRecent(); renderMandatory(); renderElective(); renderReport();
+}
+
+function skillHTML(skill) {
+  const sm = { pass:{icon:'✅',cls:'dot-pass',badge:'badge-pass',text:'ผ่าน'}, fail:{icon:'❌',cls:'dot-fail',badge:'badge-fail',text:'ไม่ผ่าน'}, pending:{icon:'⏳',cls:'dot-pending',badge:'badge-pending',text:'ยังไม่ประเมิน'} };
+  const s = sm[skill.status]||sm.pending;
+  const date = skill.evaluation ? new Date(skill.evaluation.evaluated_at).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) : '';
+  const loc = skill.evaluation?.location ? ' | ' + skill.evaluation.location : '';
+  const teacher = skill.evaluation?.teachers?.full_name ? ' | อ.' + skill.evaluation.teachers.full_name : '';
+  return `<div class="skill-item">
+    <div class="skill-dot ${s.cls}">${s.icon}</div>
+    <div class="skill-info">
+      <div class="skill-name">${skill.name}</div>
+      <span class="skill-type ${skill.type==='mandatory'?'type-m':'type-e'}">${skill.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>
+      ${date?`<div class="skill-meta">${date}${loc}${teacher}</div>`:''}
+    </div>
+    <div class="skill-right">
+      <span class="status-badge ${s.badge}">${s.text}</span>
+      ${skill.evaluation?.rubric_score?`<div class="rubric-score">Rubric: ${skill.evaluation.rubric_score}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderStats() {
+  const pass=allSkillData.filter(s=>s.status==='pass').length, fail=allSkillData.filter(s=>s.status==='fail').length;
+  const pending=allSkillData.filter(s=>s.status==='pending').length, total=allSkillData.length;
+  const mand=allSkillData.filter(s=>s.type==='mandatory'), mandPass=mand.filter(s=>s.status==='pass').length;
+  const pct=mand.length>0?Math.round(mandPass/mand.length*100):0;
+  document.getElementById('statPass').textContent=pass;
+  document.getElementById('statFail').textContent=fail;
+  document.getElementById('statPending').textContent=pending;
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressPct').textContent=pct+'%';
+  document.getElementById('progressText').textContent=`ผ่านแล้ว ${mandPass} จาก ${mand.length} ทักษะบังคับ`;
+}
+function renderRecent() {
+  const el=document.getElementById('recentList');
+  const items=[...allSkillData].filter(s=>s.status!=='pending').sort((a,b)=>new Date(b.evaluation?.evaluated_at)-new Date(a.evaluation?.evaluated_at)).slice(0,5);
+  el.innerHTML=items.length?items.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">📋</div><p>ยังไม่มีการประเมิน</p></div>`;
+}
+function renderMandatory(f='all') {
+  let items=allSkillData.filter(s=>s.type==='mandatory');
+  if(f!=='all') items=items.filter(s=>s.status===f);
+  document.getElementById('mandatoryList').innerHTML=items.length?items.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">🔍</div><p>ไม่พบทักษะ</p></div>`;
+}
+function renderElective(f='all') {
+  let items=allSkillData.filter(s=>s.type==='elective');
+  if(f!=='all') items=items.filter(s=>s.status===f);
+  document.getElementById('electiveList').innerHTML=items.length?items.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">🔍</div><p>ไม่พบทักษะ</p></div>`;
+}
+function renderReport() {
+  document.getElementById('reportList').innerHTML=allSkillData.length?allSkillData.map(skillHTML).join(''):`<div class="empty"><div class="empty-icon">📋</div><p>ไม่มีข้อมูล</p></div>`;
+}
+function filterSkills(type,f,btn) {
+  btn.closest('.filter-row').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  type==='mandatory'?renderMandatory(f):renderElective(f);
+}
+function showTab(tab) {
+  document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+}
+async function logout() {
+  await supabase.auth.signOut();
+  localStorage.removeItem('lb_user');
+  window.location.href='index.html';
+}
+init();
+</script>
+</body>
+</html>

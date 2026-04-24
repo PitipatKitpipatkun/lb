@@ -1,386 +1,158 @@
 -- ============================================================
--- บันทึก Log Book สำหรับนักศึกษา - Database Setup
--- Supabase SQL Script
+-- Log Book System — Database Setup v2 (FIX)
+-- รันไฟล์นี้แทนไฟล์เก่า — จะลบ Policy ที่ซ้ำออกให้อัตโนมัติ
 -- ============================================================
 
--- ============================================================
--- 1. สร้างตาราง Students (นักศึกษา)
--- ============================================================
+-- 1. สร้างตาราง (ถ้ามีอยู่แล้วจะข้าม)
 CREATE TABLE IF NOT EXISTS students (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    student_id VARCHAR(20) UNIQUE NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    phone VARCHAR(20),
-    department VARCHAR(100),
-    advisor VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  student_code TEXT UNIQUE NOT NULL,
+  full_name    TEXT NOT NULL,
+  year         INTEGER DEFAULT 1,
+  created_at   TIMESTAMPTZ DEFAULT now()
 );
 
--- ============================================================
--- 2. สร้างตาราง Teachers (อาจารย์)
--- ============================================================
 CREATE TABLE IF NOT EXISTS teachers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    teacher_id VARCHAR(20) UNIQUE NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    phone VARCHAR(20),
-    department VARCHAR(100),
-    position VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  teacher_code TEXT UNIQUE NOT NULL,
+  full_name    TEXT NOT NULL,
+  created_at   TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS admins (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  username   TEXT UNIQUE NOT NULL DEFAULT 'admin',
+  full_name  TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS competencies (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name            TEXT NOT NULL,
+  description     TEXT,
+  type            TEXT NOT NULL CHECK (type IN ('mandatory','elective')),
+  rubric_criteria JSONB DEFAULT '[
+    {"score":1,"label":"ทำไม่ได้"},
+    {"score":2,"label":"ทำได้โดยมีผู้ช่วย"},
+    {"score":3,"label":"ทำได้โดยมีผู้ดูแล"},
+    {"score":4,"label":"ทำได้อิสระ"},
+    {"score":5,"label":"ทำได้และสอนผู้อื่น"}
+  ]'::jsonb,
+  passing_score   INTEGER DEFAULT 3,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS evaluations (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id    UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  competency_id UUID NOT NULL REFERENCES competencies(id) ON DELETE CASCADE,
+  teacher_id    UUID REFERENCES teachers(id) ON DELETE SET NULL,
+  status        TEXT NOT NULL CHECK (status IN ('pass','fail')),
+  rubric_score  INTEGER,
+  location      TEXT,
+  notes         TEXT,
+  evaluated_at  TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (student_id, competency_id)
 );
 
 -- ============================================================
--- 3. สร้างตาราง Log Books (บันทึก Log)
+-- 2. เปิด RLS
 -- ============================================================
-CREATE TABLE IF NOT EXISTS log_books (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
-    teacher_id UUID REFERENCES teachers(id),
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    log_date DATE NOT NULL,
-    start_time TIME,
-    end_time TIME,
-    activity_type VARCHAR(50), -- e.g., 'internship', 'project', 'training'
-    location VARCHAR(255),
-    status VARCHAR(20) DEFAULT 'pending', -- pending, approved, rejected
-    feedback TEXT,
-    hours_logged DECIMAL(5,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+ALTER TABLE students     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teachers     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admins       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE competencies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE evaluations  ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
--- 4. สร้างตาราง Approvals (อนุมัติบันทึก)
+-- 3. ลบ Policy เก่าทั้งหมดก่อน (ป้องกัน error "already exists")
 -- ============================================================
-CREATE TABLE IF NOT EXISTS approvals (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    log_book_id UUID REFERENCES log_books(id) ON DELETE CASCADE,
-    teacher_id UUID REFERENCES teachers(id) ON DELETE CASCADE,
-    approval_status VARCHAR(20) DEFAULT 'pending', -- pending, approved, rejected
-    comment TEXT,
-    approved_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+DROP POLICY IF EXISTS "read_competencies"              ON competencies;
+DROP POLICY IF EXISTS "admin_competencies"             ON competencies;
+DROP POLICY IF EXISTS "Anyone read competencies"       ON competencies;
+DROP POLICY IF EXISTS "Admins manage competencies"     ON competencies;
 
--- ============================================================
--- 5. สร้างตาราง Attachments (ไฟล์แนบ)
--- ============================================================
-CREATE TABLE IF NOT EXISTS attachments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    log_book_id UUID REFERENCES log_books(id) ON DELETE CASCADE,
-    file_name VARCHAR(255) NOT NULL,
-    file_url TEXT NOT NULL,
-    file_type VARCHAR(50),
-    file_size INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+DROP POLICY IF EXISTS "student_own"                    ON students;
+DROP POLICY IF EXISTS "teacher_read_students"          ON students;
+DROP POLICY IF EXISTS "admin_students"                 ON students;
+DROP POLICY IF EXISTS "Students read own profile"      ON students;
+DROP POLICY IF EXISTS "Teachers read all students"     ON students;
+DROP POLICY IF EXISTS "Admins full access students"    ON students;
 
--- ============================================================
--- 6. สร้างตาราง Notifications (การแจ้งเตือน)
--- ============================================================
-CREATE TABLE IF NOT EXISTS notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    type VARCHAR(50), -- info, warning, success, error
-    related_log_book_id UUID REFERENCES log_books(id) ON DELETE CASCADE,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+DROP POLICY IF EXISTS "admin_teachers"                 ON teachers;
+DROP POLICY IF EXISTS "teacher_own"                    ON teachers;
+DROP POLICY IF EXISTS "Admins full access teachers"    ON teachers;
+DROP POLICY IF EXISTS "Teachers read own profile"      ON teachers;
+
+DROP POLICY IF EXISTS "student_evals"                  ON evaluations;
+DROP POLICY IF EXISTS "teacher_admin_evals"            ON evaluations;
+DROP POLICY IF EXISTS "Students read own evaluations"  ON evaluations;
+DROP POLICY IF EXISTS "Teachers read/write evaluations" ON evaluations;
+
+DROP POLICY IF EXISTS "admin_own"                      ON admins;
+DROP POLICY IF EXISTS "admin_full"                     ON admins;
 
 -- ============================================================
--- 7. สร้างตาราง Settings (การตั้งค่า)
+-- 4. สร้าง Policy ใหม่
 -- ============================================================
-CREATE TABLE IF NOT EXISTS settings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    notification_enabled BOOLEAN DEFAULT TRUE,
-    dark_mode_enabled BOOLEAN DEFAULT FALSE,
-    language VARCHAR(10) DEFAULT 'th',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE POLICY "read_competencies" ON competencies
+  FOR SELECT USING (auth.role() = 'authenticated');
 
--- ============================================================
--- 8. Enable Row Level Security (RLS)
--- ============================================================
+CREATE POLICY "admin_competencies" ON competencies
+  FOR ALL USING (EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid()));
 
--- RLS for students table
-ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "student_own" ON students
+  FOR SELECT USING (user_id = auth.uid());
 
-CREATE POLICY "Users can view own student data" ON students
-    FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "teacher_read_students" ON students
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM teachers WHERE user_id = auth.uid())
+    OR EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid())
+  );
 
-CREATE POLICY "Users can update own student data" ON students
-    FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "admin_students" ON students
+  FOR ALL USING (EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid()));
 
-CREATE POLICY "Teachers can view all students" ON students
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM teachers WHERE teachers.user_id = auth.uid()
-        )
-    );
+CREATE POLICY "admin_teachers" ON teachers
+  FOR ALL USING (EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid()));
 
--- RLS for teachers table
-ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "teacher_own" ON teachers
+  FOR SELECT USING (user_id = auth.uid());
 
-CREATE POLICY "Users can view own teacher data" ON teachers
-    FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "student_evals" ON evaluations
+  FOR SELECT USING (
+    student_id IN (SELECT id FROM students WHERE user_id = auth.uid())
+  );
 
-CREATE POLICY "Users can update own teacher data" ON teachers
-    FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "teacher_admin_evals" ON evaluations
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM teachers WHERE user_id = auth.uid())
+    OR EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid())
+  );
 
--- RLS for log_books table
-ALTER TABLE log_books ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admin_own" ON admins
+  FOR SELECT USING (user_id = auth.uid());
 
-CREATE POLICY "Students can view own log books" ON log_books
-    FOR SELECT USING (
-        student_id IN (
-            SELECT id FROM students WHERE students.user_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Students can create log books" ON log_books
-    FOR INSERT WITH CHECK (
-        student_id IN (
-            SELECT id FROM students WHERE students.user_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Students can update own log books" ON log_books
-    FOR UPDATE USING (
-        student_id IN (
-            SELECT id FROM students WHERE students.user_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Teachers can view all log books" ON log_books
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM teachers WHERE teachers.user_id = auth.uid()
-        )
-    );
-
--- RLS for approvals table
-ALTER TABLE approvals ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Teachers can view approvals" ON approvals
-    FOR SELECT USING (
-        teacher_id IN (
-            SELECT id FROM teachers WHERE teachers.user_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Teachers can create approvals" ON approvals
-    FOR INSERT WITH CHECK (
-        teacher_id IN (
-            SELECT id FROM teachers WHERE teachers.user_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Teachers can update approvals" ON approvals
-    FOR UPDATE USING (
-        teacher_id IN (
-            SELECT id FROM teachers WHERE teachers.user_id = auth.uid()
-        )
-    );
-
--- RLS for attachments table
-ALTER TABLE attachments ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view attachments" ON attachments
-    FOR SELECT USING (
-        log_book_id IN (
-            SELECT id FROM log_books WHERE 
-            student_id IN (SELECT id FROM students WHERE students.user_id = auth.uid())
-        )
-        OR
-        EXISTS (
-            SELECT 1 FROM teachers WHERE teachers.user_id = auth.uid()
-        )
-    );
-
--- RLS for notifications table
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own notifications" ON notifications
-    FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own notifications" ON notifications
-    FOR UPDATE USING (auth.uid() = user_id);
-
--- RLS for settings table
-ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own settings" ON settings
-    FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own settings" ON settings
-    FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own settings" ON settings
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "admin_full" ON admins
+  FOR ALL USING (EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid()));
 
 -- ============================================================
--- 9. สร้าง Indexes เพื่อ Query Performance
+-- 5. ข้อมูลตัวอย่าง Competency (ถ้ามีอยู่แล้วจะข้าม)
 -- ============================================================
-
--- Students indexes
-CREATE INDEX idx_students_user_id ON students(user_id);
-CREATE INDEX idx_students_email ON students(email);
-CREATE INDEX idx_students_student_id ON students(student_id);
-
--- Teachers indexes
-CREATE INDEX idx_teachers_user_id ON teachers(user_id);
-CREATE INDEX idx_teachers_email ON teachers(email);
-CREATE INDEX idx_teachers_teacher_id ON teachers(teacher_id);
-
--- Log books indexes
-CREATE INDEX idx_log_books_student_id ON log_books(student_id);
-CREATE INDEX idx_log_books_teacher_id ON log_books(teacher_id);
-CREATE INDEX idx_log_books_status ON log_books(status);
-CREATE INDEX idx_log_books_log_date ON log_books(log_date);
-
--- Approvals indexes
-CREATE INDEX idx_approvals_log_book_id ON approvals(log_book_id);
-CREATE INDEX idx_approvals_teacher_id ON approvals(teacher_id);
-CREATE INDEX idx_approvals_status ON approvals(approval_status);
-
--- Attachments indexes
-CREATE INDEX idx_attachments_log_book_id ON attachments(log_book_id);
-
--- Notifications indexes
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_is_read ON notifications(is_read);
-
--- Settings indexes
-CREATE INDEX idx_settings_user_id ON settings(user_id);
-
--- ============================================================
--- 10. ข้อมูลตัวอย่างสำหรับทดสอบ (ไม่จำเป็น - สามารถลบได้)
--- ============================================================
-
--- หมายเหตุ: ต้องสร้าง Auth users ใน Supabase Authentication ก่อน
--- จากนั้นจึงแทนที่ UUID ด้านล่างด้วย user_id จริง
-
--- INSERT INTO students (user_id, student_id, full_name, email, phone, department, advisor)
--- VALUES (
---     '550e8400-e29b-41d4-a716-446655440000', -- แทนที่ด้วย UUID ของ student@example.com
---     'STU001',
---     'นายปิติพัฒน์ นักศึกษา',
---     'student@example.com',
---     '0801234567',
---     'วิทยาการคอมพิวเตอร์',
---     'ดร.อาจารย์ ศรีสุพัฒน์'
--- );
-
--- INSERT INTO teachers (user_id, teacher_id, full_name, email, phone, department, position)
--- VALUES (
---     '550e8400-e29b-41d4-a716-446655440001', -- แทนที่ด้วย UUID ของ teacher@example.com
---     'T001',
---     'ดร.อาจารย์ ศรีสุพัฒน์',
---     'teacher@example.com',
---     '0802345678',
---     'วิทยาการคอมพิวเตอร์',
---     'อาจารย์'
--- );
-
--- ============================================================
--- 11. สร้าง Functions สำหรับ Auto Update Updated_at
--- ============================================================
-
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create triggers for auto update updated_at
-CREATE TRIGGER trigger_update_students_updated_at
-BEFORE UPDATE ON students
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_update_teachers_updated_at
-BEFORE UPDATE ON teachers
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_update_log_books_updated_at
-BEFORE UPDATE ON log_books
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_update_approvals_updated_at
-BEFORE UPDATE ON approvals
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at();
-
-CREATE TRIGGER trigger_update_settings_updated_at
-BEFORE UPDATE ON settings
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at();
-
--- ============================================================
--- 12. สร้าง Views สำหรับ Dashboard
--- ============================================================
-
--- View สำหรับแสดงสถิตินักศึกษา
-CREATE OR REPLACE VIEW student_statistics AS
-SELECT 
-    s.id,
-    s.student_id,
-    s.full_name,
-    COUNT(lb.id) as total_logs,
-    SUM(CASE WHEN lb.status = 'approved' THEN 1 ELSE 0 END) as approved_logs,
-    SUM(CASE WHEN lb.status = 'pending' THEN 1 ELSE 0 END) as pending_logs,
-    SUM(CASE WHEN lb.status = 'rejected' THEN 1 ELSE 0 END) as rejected_logs,
-    SUM(lb.hours_logged) as total_hours
-FROM students s
-LEFT JOIN log_books lb ON s.id = lb.student_id
-GROUP BY s.id, s.student_id, s.full_name;
-
--- View สำหรับแสดง Log Books ที่รอการอนุมัติ
-CREATE OR REPLACE VIEW pending_approvals AS
-SELECT 
-    lb.id,
-    lb.title,
-    s.student_id,
-    s.full_name as student_name,
-    lb.log_date,
-    lb.status,
-    COUNT(a.id) as approval_count
-FROM log_books lb
-JOIN students s ON lb.student_id = s.id
-LEFT JOIN approvals a ON lb.id = a.log_book_id
-WHERE lb.status = 'pending'
-GROUP BY lb.id, lb.title, s.student_id, s.full_name, lb.log_date, lb.status;
-
--- ============================================================
--- 13. Storage Bucket สำหรับ File Uploads (ถ้าใช้ Supabase Storage)
--- ============================================================
-
--- หมายเหตุ: ใช้ Supabase Dashboard เพื่อสร้าง Storage bucket
--- ไป Storage → New bucket → ตั้งชื่อว่า "logbook-attachments"
-
--- ============================================================
--- Script เสร็จสิ้น!
--- ============================================================
--- 
--- ขั้นตอนต่อไป:
--- 1. สร้าง Auth Users ใน Supabase Authentication
--- 2. แทนที่ UUID ในส่วน INSERT DATA ด้วยค่าจริง
--- 3. ทดสอบการเข้าสู่ระบบ
--- 4. ตรวจสอบ RLS policies ว่าทำงานได้ถูกต้อง
--- ============================================================
+INSERT INTO competencies (name, description, type) VALUES
+('การสอดเข็ม IV Catheter เข้าหลอดเลือดขาหน้าสุนัข',
+ 'การใส่สายน้ำเกลือเข้าหลอดเลือดดำบริเวณขาหน้าของสุนัข', 'mandatory'),
+('การตรวจร่างกายสุนัขเบื้องต้น',
+ 'การตรวจวัดสัญญาณชีพและประเมินสภาพทั่วไป', 'mandatory'),
+('การเจาะเลือดสุนัข',
+ 'การเก็บตัวอย่างเลือดจากหลอดเลือดดำของสุนัข', 'mandatory'),
+('การให้ยาชาเฉพาะที่',
+ 'การฉีดยาชาบริเวณผิวหนังก่อนทำหัตถการ', 'mandatory'),
+('การตรวจอุจจาระ',
+ 'การส่งตรวจและอ่านผลตรวจอุจจาระเพื่อหาพยาธิ', 'elective'),
+('การตรวจปัสสาวะด้วย dipstick',
+ 'การตรวจปัสสาวะเบื้องต้นด้วยแถบทดสอบ', 'elective')
+ON CONFLICT DO NOTHING;
