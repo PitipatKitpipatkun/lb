@@ -284,6 +284,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
         👨‍🎓 นักศึกษาที่รอประเมิน (<span id="queueCount">0</span> คน)
         <button onclick="refreshQueue()" style="margin-left:8px;padding:4px 10px;background:var(--teal-l);color:var(--teal);border:none;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">🔄</button>
       </div>
+      <!-- Batch eval bar -->
+      <div id="queueBatchBar" style="display:none;align-items:center;justify-content:space-between;background:var(--rose-50);border:1.5px solid var(--rose-l);border-radius:11px;padding:10px 13px;margin-bottom:10px;gap:10px;flex-wrap:wrap;">
+        <span id="queueBatchCount" style="font-size:13px;font-weight:700;color:var(--rose-d);flex:1;">เลือกนักศึกษาเพื่อประเมินกลุ่ม</span>
+        <button id="batchEvalBtn" onclick="batchEvalFromQueue()" disabled style="padding:8px 14px;background:var(--rose);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;opacity:0.5;">
+          👥 ประเมินกลุ่ม
+        </button>
+      </div>
       <div id="queueList" style="display:flex;flex-direction:column;gap:7px;"></div>
     </div>
   </div>
@@ -878,18 +885,54 @@ async function refreshQueue(){
     .eq('status','waiting')
     .order('joined_at');
   document.getElementById('queueCount').textContent=(data?.length||0);
-  document.getElementById('queueList').innerHTML=(data||[]).map((q,i)=>`
+  if(!data?.length){
+    document.getElementById('queueList').innerHTML='<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">ยังไม่มีนักศึกษาในคิว</div>';
+    document.getElementById('queueBatchBar').style.display='none';
+    return;
+  }
+  document.getElementById('queueList').innerHTML=data.map((q,i)=>`
     <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--bg);border-radius:11px;border:1px solid var(--border);">
-      <div style="width:28px;height:28px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;flex-shrink:0;">${i+1}</div>
+      <input type="checkbox" id="qchk-${q.student_id}" data-sid="${q.student_id}" data-qid="${q.id}"
+        style="width:18px;height:18px;accent-color:var(--rose);flex-shrink:0;" onchange="updateQueueBatchBar()">
+      <div style="width:26px;height:26px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;flex-shrink:0;">${i+1}</div>
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:600;">${q.students?.full_name||'-'}</div>
         <div style="font-size:11px;color:var(--slate-l);">${q.students?.student_code||''}</div>
       </div>
       <button onclick="evalFromQueue('${q.student_id}','${q.id}')"
-        style="padding:6px 12px;background:var(--rose);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">✍️ ประเมิน</button>
+        style="padding:6px 12px;background:var(--rose);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">✍️</button>
       <button onclick="skipQueue('${q.id}')"
         style="padding:6px 10px;background:var(--bg);color:var(--slate-m);border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">ข้าม</button>
-    </div>`).join('') || '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">ยังไม่มีนักศึกษาในคิว</div>';
+    </div>`).join('');
+  // Batch bar
+  document.getElementById('queueBatchBar').style.display='flex';
+}
+
+function updateQueueBatchBar(){
+  const checked=document.querySelectorAll('[id^=qchk-]:checked').length;
+  document.getElementById('queueBatchCount').textContent=checked>0?checked+' คน ที่เลือก':'เลือกนักศึกษาเพื่อประเมินกลุ่ม';
+  document.getElementById('batchEvalBtn').disabled=checked===0;
+  document.getElementById('batchEvalBtn').style.opacity=checked===0?'0.5':'1';
+}
+
+async function batchEvalFromQueue(){
+  const checked=[...document.querySelectorAll('[id^=qchk-]:checked')];
+  if(!checked.length)return;
+  const selectedIds=checked.map(cb=>cb.getAttribute('data-sid'));
+  // Override gSelectedIds and switch to group eval
+  gSelectedIds=new Set(selectedIds);
+  gDecisions={};
+  // Mark as evaluating in queue
+  for(const cb of checked){
+    await sb.from('qr_queue').update({status:'evaluated'}).eq('id',cb.getAttribute('data-qid'));
+  }
+  switchTab('group');
+  // Show eval section
+  document.getElementById('editGroupCard').style.display='none';
+  document.getElementById('gGroupLabel').textContent='👥 จาก QR คิว ('+selectedIds.length+' คน)';
+  document.getElementById('gEvalSection').style.display='block';
+  renderGComps();
+  showToast('✅ โหลด '+selectedIds.length+' คนจากคิว','ok');
 }
 
 async function evalFromQueue(studentId,queueEntryId){
