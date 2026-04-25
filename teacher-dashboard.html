@@ -422,7 +422,7 @@ const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
 const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
 const DEF_RUBRIC=[{score:1,label:'ทำไม่ได้'},{score:2,label:'ทำได้โดยมีผู้ช่วย'},{score:3,label:'ทำได้โดยมีผู้ดูแล'},{score:4,label:'ทำได้อิสระ'},{score:5,label:'ทำได้และสอนผู้อื่น'}];
-let user=null,students=[],comps=[],selStudent=null,decisions={},currentFilter='all';
+let user=null,students=[],comps=[],selStudent=null,decisions={},currentFilter='all',histMap={};
 
 async function init(){
   const s=localStorage.getItem('lb_user');
@@ -489,7 +489,8 @@ async function renderComps(){
     sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',selStudent.id).order('evaluated_at',{ascending:false})
   ]);
   const eMap={};(evalRes.data||[]).forEach(e=>{eMap[e.competency_id]=e;});
-  const histMap={};(histRes.data||[]).forEach(h=>{if(!histMap[h.competency_id])histMap[h.competency_id]=[];histMap[h.competency_id].push(h);});
+  const histMapLocal={};(histRes.data||[]).forEach(h=>{if(!histMapLocal[h.competency_id])histMapLocal[h.competency_id]=[];histMapLocal[h.competency_id].push(h);});
+  histMap=histMapLocal;
 
   let sorted=[...comps];
   const sortVal=document.getElementById('sortSelect')?.value||'alpha';
@@ -658,23 +659,28 @@ async function submitAll(){
   const{error:histErr}=await sb.from('evaluation_history').insert(histRows);
   if(histErr){showToast('❌ '+histErr.message,'err');btn.disabled=false;btn.textContent='💾 บันทึก';return;}
 
-  // 2. For each competency: fetch ALL history, compute average, upsert to evaluations
-  for(const[cid,d] of toSubmit){
-    const{data:hist}=await sb.from('evaluation_history')
-      .select('rubric_score,status')
-      .eq('student_id',selStudent.id)
-      .eq('competency_id',cid);
-    const validScores=(hist||[]).filter(h=>h.rubric_score!=null).map(h=>h.rubric_score);
+  // 2. Fetch ALL history for all affected competencies in one query
+  const compIds=toSubmit.map(([cid])=>cid);
+  const{data:allHist}=await sb.from('evaluation_history')
+    .select('competency_id,rubric_score,status')
+    .eq('student_id',selStudent.id)
+    .in('competency_id',compIds);
+
+  // 3. Build upsert rows using history data (parallel)
+  const upsertRows=toSubmit.map(([cid,d])=>{
+    const hist=(allHist||[]).filter(h=>h.competency_id===cid);
+    const validScores=hist.filter(h=>h.rubric_score!=null).map(h=>h.rubric_score);
     const avgScore=validScores.length?Math.round(validScores.reduce((a,b)=>a+b,0)/validScores.length):d.rubric_score||null;
-    const passCount=(hist||[]).filter(h=>h.status==='pass').length;
-    const finalStatus=passCount>=(hist||[]).length/2?'pass':'fail';
-    await sb.from('evaluations').upsert({
-      student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,
+    const passCount=hist.filter(h=>h.status==='pass').length;
+    const finalStatus=hist.length>0&&passCount>=hist.length/2?'pass':hist.length>0?'fail':d.status;
+    return{student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,
       status:finalStatus,rubric_score:avgScore,avg_rubric_score:avgScore,
-      eval_count:hist?.length||1,location:d.location||null,notes:d.notes||null,
-      feedback:d.feedback||null,evaluated_at:now
-    },{onConflict:'student_id,competency_id'});
-  }
+      eval_count:hist.length||1,location:d.location||null,notes:d.notes||null,
+      feedback:d.feedback||null,evaluated_at:now};
+  });
+
+  const{error:upsertErr}=await sb.from('evaluations').upsert(upsertRows,{onConflict:'student_id,competency_id'});
+  if(upsertErr){showToast('❌ '+upsertErr.message,'err');btn.disabled=false;btn.textContent='💾 บันทึก';return;}
   const passCount=toSubmit.filter(([,d])=>d.status==='pass').length;
   const failCount=toSubmit.filter(([,d])=>d.status==='fail').length;
   showToast('✅ บันทึกสำเร็จ '+toSubmit.length+' ทักษะ','ok');
