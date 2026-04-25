@@ -394,34 +394,110 @@ tr:hover td{background:var(--amber-50);}
     <!-- Per-table cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:20px;">
 
-      ${[
-        {tbl:'students',icon:'👨‍🎓',label:'นักศึกษา',color:'var(--teal-l)',countId:'bk-s-count'},
-        {tbl:'teachers',icon:'👩‍🏫',label:'อาจารย์',color:'var(--rose-l)',countId:'bk-t-count'},
-        {tbl:'competencies',icon:'📋',label:'ทักษะ',color:'var(--amber-l)',countId:'bk-c-count'},
-        {tbl:'evaluations',icon:'✅',label:'ผลการประเมิน',color:'#ede9fe',countId:'bk-e-count'},
-        {tbl:'activity_logs',icon:'📜',label:'บันทึกกิจกรรม',color:'#dbeafe',countId:'bk-l-count'},
-      ].map(({tbl,icon,label,color,countId})=>`
       <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:44px;height:44px;background:${color};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">${icon}</div>
-          <div><div style="font-size:14px;font-weight:700;">${label}</div>
-          <div style="font-size:12px;color:var(--slate-l);" id="${countId}">—</div></div>
+          <div style="width:44px;height:44px;background:var(--teal-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">👨‍🎓</div>
+          <div><div style="font-size:14px;font-weight:700;">นักศึกษา</div><div style="font-size:12px;color:var(--slate-l);" id="bk-s-count">—</div></div>
         </div>
         <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬇ Export</div>
         <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <button onclick="backupTable('${tbl}','JSON')" class="bk-btn bk-json">JSON</button>
-          <button onclick="backupTable('${tbl}','CSV')" class="bk-btn bk-csv">CSV</button>
+          <button onclick="backupTable('students','JSON')" class="bk-btn bk-json">JSON</button>
+          <button onclick="backupTable('students','CSV')" class="bk-btn bk-csv">CSV</button>
         </div>
         <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬆ Import</div>
         <div style="display:flex;gap:6px;">
           <label style="flex:1;text-align:center;padding:8px;background:#f0fdf4;color:#166534;border:1.5px solid #86efac;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
-            JSON <input type="file" accept=".json" style="display:none;" onchange="importTableFile('${tbl}','JSON',this)">
+            JSON <input type="file" accept=".json" style="display:none;" onchange="importTableFile('students','JSON',this)">
           </label>
           <label style="flex:1;text-align:center;padding:8px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
-            CSV <input type="file" accept=".csv,.txt" style="display:none;" onchange="importTableFile('${tbl}','CSV',this)">
+            CSV <input type="file" accept=".csv,.txt" style="display:none;" onchange="importTableFile('students','CSV',this)">
           </label>
         </div>
-      </div>`).join('')}
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:var(--rose-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">👩‍🏫</div>
+          <div><div style="font-size:14px;font-weight:700;">อาจารย์</div><div style="font-size:12px;color:var(--slate-l);" id="bk-t-count">—</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬇ Export</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button onclick="backupTable('teachers','JSON')" class="bk-btn bk-json">JSON</button>
+          <button onclick="backupTable('teachers','CSV')" class="bk-btn bk-csv">CSV</button>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬆ Import</div>
+        <div style="display:flex;gap:6px;">
+          <label style="flex:1;text-align:center;padding:8px;background:#f0fdf4;color:#166534;border:1.5px solid #86efac;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            JSON <input type="file" accept=".json" style="display:none;" onchange="importTableFile('teachers','JSON',this)">
+          </label>
+          <label style="flex:1;text-align:center;padding:8px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            CSV <input type="file" accept=".csv,.txt" style="display:none;" onchange="importTableFile('teachers','CSV',this)">
+          </label>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:var(--amber-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">📋</div>
+          <div><div style="font-size:14px;font-weight:700;">ทักษะ</div><div style="font-size:12px;color:var(--slate-l);" id="bk-c-count">—</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬇ Export</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button onclick="backupTable('competencies','JSON')" class="bk-btn bk-json">JSON</button>
+          <button onclick="backupTable('competencies','CSV')" class="bk-btn bk-csv">CSV</button>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬆ Import</div>
+        <div style="display:flex;gap:6px;">
+          <label style="flex:1;text-align:center;padding:8px;background:#f0fdf4;color:#166534;border:1.5px solid #86efac;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            JSON <input type="file" accept=".json" style="display:none;" onchange="importTableFile('competencies','JSON',this)">
+          </label>
+          <label style="flex:1;text-align:center;padding:8px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            CSV <input type="file" accept=".csv,.txt" style="display:none;" onchange="importTableFile('competencies','CSV',this)">
+          </label>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:#ede9fe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✅</div>
+          <div><div style="font-size:14px;font-weight:700;">ผลการประเมิน</div><div style="font-size:12px;color:var(--slate-l);" id="bk-e-count">—</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬇ Export</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button onclick="backupTable('evaluations','JSON')" class="bk-btn bk-json">JSON</button>
+          <button onclick="backupTable('evaluations','CSV')" class="bk-btn bk-csv">CSV</button>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬆ Import</div>
+        <div style="display:flex;gap:6px;">
+          <label style="flex:1;text-align:center;padding:8px;background:#f0fdf4;color:#166534;border:1.5px solid #86efac;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            JSON <input type="file" accept=".json" style="display:none;" onchange="importTableFile('evaluations','JSON',this)">
+          </label>
+          <label style="flex:1;text-align:center;padding:8px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            CSV <input type="file" accept=".csv,.txt" style="display:none;" onchange="importTableFile('evaluations','CSV',this)">
+          </label>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:#dbeafe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">📜</div>
+          <div><div style="font-size:14px;font-weight:700;">บันทึกกิจกรรม</div><div style="font-size:12px;color:var(--slate-l);" id="bk-l-count">—</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬇ Export</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button onclick="backupTable('activity_logs','JSON')" class="bk-btn bk-json">JSON</button>
+          <button onclick="backupTable('activity_logs','CSV')" class="bk-btn bk-csv">CSV</button>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬆ Import</div>
+        <div style="display:flex;gap:6px;">
+          <label style="flex:1;text-align:center;padding:8px;background:#f0fdf4;color:#166534;border:1.5px solid #86efac;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            JSON <input type="file" accept=".json" style="display:none;" onchange="importTableFile('activity_logs','JSON',this)">
+          </label>
+          <label style="flex:1;text-align:center;padding:8px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            CSV <input type="file" accept=".csv,.txt" style="display:none;" onchange="importTableFile('activity_logs','CSV',this)">
+          </label>
+        </div>
+      </div>
 
     </div>
 
