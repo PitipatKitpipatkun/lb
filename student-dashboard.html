@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Log Book — นักศึกษา</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -242,6 +243,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="nav-item" onclick="switchTab('mandatory')" id="ni-mandatory"><span class="nav-icon">⭐</span> ทักษะบังคับ</div>
     <div class="nav-item" onclick="switchTab('elective')" id="ni-elective"><span class="nav-icon">📝</span> ทักษะเลือก</div>
     <div class="nav-item" onclick="switchTab('report')" id="ni-report"><span class="nav-icon">🖨️</span> พิมพ์รายงาน</div>
+    <div class="nav-item" onclick="switchTab('qrscan')" id="ni-qrscan"><span class="nav-icon">📲</span> สแกน QR</div>
     <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
   </nav>
   <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
@@ -318,6 +320,60 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div id="reportList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
   </div>
 
+  <!-- QR SCAN -->
+  <div id="tab-qrscan" class="tab-view">
+    <div style="margin-bottom:18px;"><h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">📲 สแกน QR</h1>
+    <p style="font-size:13px;color:var(--slate-l);margin-top:3px;">สแกน QR จากอาจารย์เพื่อเข้าร่วมคิวประเมิน</p></div>
+
+    <div class="card" style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
+      <!-- Camera view -->
+      <div id="scannerContainer" style="position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:1;margin-bottom:16px;display:none;">
+        <video id="qrVideo" style="width:100%;height:100%;object-fit:cover;" playsinline muted autoplay></video>
+        <!-- Scan overlay -->
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <div style="width:65%;aspect-ratio:1;border:3px solid var(--teal);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);position:relative;">
+            <div style="position:absolute;top:-3px;left:-3px;width:20px;height:20px;border-top:4px solid white;border-left:4px solid white;border-radius:4px 0 0 0;"></div>
+            <div style="position:absolute;top:-3px;right:-3px;width:20px;height:20px;border-top:4px solid white;border-right:4px solid white;border-radius:0 4px 0 0;"></div>
+            <div style="position:absolute;bottom:-3px;left:-3px;width:20px;height:20px;border-bottom:4px solid white;border-left:4px solid white;border-radius:0 0 0 4px;"></div>
+            <div style="position:absolute;bottom:-3px;right:-3px;width:20px;height:20px;border-bottom:4px solid white;border-right:4px solid white;border-radius:0 0 4px 0;"></div>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:12px;left:0;right:0;text-align:center;color:white;font-size:12px;font-weight:600;">เล็งกล้องไปที่ QR Code</div>
+      </div>
+      <canvas id="qrCanvas" style="display:none;"></canvas>
+
+      <!-- Start scan button -->
+      <div id="scanStart">
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:56px;margin-bottom:12px;">📷</div>
+          <p style="font-size:13px;color:var(--slate-l);margin-bottom:16px;">กดปุ่มด้านล่างเพื่อเปิดกล้องและสแกน QR จากอาจารย์</p>
+        </div>
+        <button onclick="startScanner()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(13,148,136,0.3);">
+          📷 เปิดกล้องสแกน QR
+        </button>
+      </div>
+
+      <div id="scanStatus" style="display:none;text-align:center;padding:8px 0 4px;">
+        <div id="scanStatusText" style="font-size:13px;color:var(--slate-m);font-weight:500;"></div>
+        <button id="stopScanBtn" onclick="stopScanner()" style="margin-top:10px;padding:8px 18px;background:var(--bg);color:var(--slate-m);border:1.5px solid var(--border);border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;">ยกเลิก</button>
+      </div>
+
+      <div id="qrAlert" style="display:none;margin-top:12px;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;"></div>
+    </div>
+
+    <!-- Result: joined queue -->
+    <div id="qrJoined" class="card" style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;display:none;text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">⏳</div>
+      <div style="font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;color:var(--teal);">เข้าร่วมคิวสำเร็จ!</div>
+      <div style="font-size:13px;color:var(--slate-m);margin-top:6px;margin-bottom:16px;" id="qrJoinedInfo"></div>
+      <div style="background:var(--teal-50);border:1px solid var(--teal-l);border-radius:12px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:12px;color:var(--slate-l);margin-bottom:4px;">ลำดับในคิว</div>
+        <div style="font-family:'Prompt',sans-serif;font-size:36px;font-weight:800;color:var(--teal);" id="qrQueuePos">—</div>
+      </div>
+      <button onclick="scanAnother()" style="width:100%;padding:12px;background:var(--bg);color:var(--slate-m);border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">สแกน QR อื่น</button>
+    </div>
+  </div>
+
   <!-- PASSWORD -->
   <div id="tab-password" class="tab-view">
     <div style="margin-bottom:18px;"><h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">🔑 เปลี่ยนรหัสผ่าน</h1></div>
@@ -370,6 +426,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
     <div class="bn-item" onclick="switchTab('report')" id="bn-report">
       <span class="bn-icon">🖨️</span><span class="bn-label">รายงาน</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('qrscan')" id="bn-qrscan">
+      <span class="bn-icon">📲</span><span class="bn-label">สแกน QR</span><div class="bn-dot"></div>
     </div>
     <div class="bn-item" onclick="switchTab('password')" id="bn-password">
       <span class="bn-icon">🔑</span><span class="bn-label">รหัสผ่าน</span><div class="bn-dot"></div>
@@ -486,6 +545,100 @@ function switchTab(tab){
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('on');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('on');}
 async function logout(){await sb.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
+
+// ===== QR SCANNER =====
+let scanStream=null,scanAnimFrame=null,lastQrToken=null;
+
+async function startScanner(){
+  document.getElementById('scanStart').style.display='none';
+  document.getElementById('scanStatus').style.display='block';
+  document.getElementById('scanStatusText').textContent='กำลังเปิดกล้อง...';
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    const video=document.getElementById('qrVideo');
+    video.srcObject=scanStream;
+    await video.play();
+    document.getElementById('scannerContainer').style.display='block';
+    document.getElementById('scanStatusText').textContent='กำลังสแกน...';
+    scanFrame();
+  }catch(e){
+    document.getElementById('scanStart').style.display='block';
+    document.getElementById('scanStatus').style.display='none';
+    showQrAlert('❌ ไม่สามารถเปิดกล้องได้: '+e.message,'err');
+  }
+}
+
+function scanFrame(){
+  const video=document.getElementById('qrVideo');
+  const canvas=document.getElementById('qrCanvas');
+  if(video.readyState===video.HAVE_ENOUGH_DATA){
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
+    if(code){
+      const url=code.data;
+      const match=url.match(/[?&]token=([^&]+)/);
+      if(match){
+        stopScanner();
+        handleQRToken(match[1]);
+        return;
+      }
+    }
+  }
+  scanAnimFrame=requestAnimationFrame(scanFrame);
+}
+
+function stopScanner(){
+  if(scanAnimFrame)cancelAnimationFrame(scanAnimFrame);
+  if(scanStream)scanStream.getTracks().forEach(t=>t.stop());
+  scanStream=null;
+  document.getElementById('scannerContainer').style.display='none';
+  document.getElementById('scanStart').style.display='block';
+  document.getElementById('scanStatus').style.display='none';
+}
+
+async function handleQRToken(token){
+  showQrAlert('⏳ กำลังตรวจสอบ QR...','warn');
+  const{data,error}=await sb.from('qr_tokens')
+    .select('*,teachers(full_name),competencies(name,category)')
+    .eq('token',token).eq('is_active',true).single();
+  if(error||!data){showQrAlert('❌ QR Code ไม่ถูกต้องหรือหมดอายุแล้ว','err');return;}
+  lastQrToken=data;
+  // Insert to qr_queue
+  const{data:existing}=await sb.from('qr_queue').select('id,status')
+    .eq('token_id',data.id).eq('student_id',user.profileId).single();
+  let queueId;
+  if(existing){
+    queueId=existing.id;
+    if(existing.status!=='waiting')await sb.from('qr_queue').update({status:'waiting'}).eq('id',queueId);
+  } else {
+    const{data:q}=await sb.from('qr_queue').insert({token_id:data.id,student_id:user.profileId}).select().single();
+    queueId=q?.id;
+  }
+  // Get queue position
+  const{data:allQ}=await sb.from('qr_queue').select('student_id').eq('token_id',data.id).eq('status','waiting').order('joined_at');
+  const pos=(allQ||[]).findIndex(q=>q.student_id===user.profileId)+1;
+  document.getElementById('qrAlert').style.display='none';
+  document.getElementById('qrJoinedInfo').textContent='ทักษะ: '+data.competencies.name+' | อ.'+data.teachers.full_name;
+  document.getElementById('qrQueuePos').textContent=pos;
+  document.getElementById('qrJoined').style.display='block';
+}
+
+function scanAnother(){
+  document.getElementById('qrJoined').style.display='none';
+  document.getElementById('qrAlert').style.display='none';
+}
+
+function showQrAlert(msg,type){
+  const el=document.getElementById('qrAlert');
+  el.textContent=msg;
+  el.style.display='block';
+  el.style.background=type==='ok'?'#dcfce7':type==='err'?'#fee2e2':'#fef3c7';
+  el.style.color=type==='ok'?'#166534':type==='err'?'#991b1b':'#92400e';
+  el.style.border=type==='ok'?'1px solid #86efac':type==='err'?'1px solid #fca5a5':'1px solid #fde68a';
+}
 
 function openPDF(){
   const pass=skills.filter(s=>s.status==='pass');
