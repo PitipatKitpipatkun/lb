@@ -534,32 +534,35 @@ async function renderComps(qrCompId){
 
 function buildPassedCard(comp,prev,rubric,teacherName,evalDate,histHTML){
   const rb=rubric.map(r=>'<button class="rubric-btn" onclick="event.stopPropagation();pickRubric(\'' +comp.id+ '\','+r.score+',this)"><div class="rubric-num">'+r.score+'</div><div class="rubric-desc">'+r.label+'</div></button>').join('');
+  const evalCount=histMap[comp.id]?.length||1;
+  // Collapsed header: hide scores, show only count
+  const headerSub=evalCount>1
+    ?'ประเมินแล้ว '+evalCount+' ท่าน (กดเพื่อดูรายละเอียด)'
+    :'✅ ผ่านแล้ว (กดเพื่อดูรายละเอียด)';
   return '<div class="comp-card passed" id="cc-'+comp.id+'" onclick="toggleCard(\'' +comp.id+ '\')">'
     +'<div class="comp-head">'
     +'<div style="width:32px;height:32px;background:var(--pass-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>'
     +'<div style="flex:1;min-width:0;">'
     +'<div style="font-size:15px;font-weight:700;color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+comp.name+'</div>'
-    +'<div style="font-size:11px;color:var(--pass);margin-top:2px;">R:'+( prev.rubric_score||'-')+(teacherName?' | '+teacherName:'')+(evalDate?' | '+evalDate:'')+(prev.location?' | '+prev.location:'')+(histMap&&histMap[comp.id]&&histMap[comp.id].length>1?' | '+histMap[comp.id].length+' ครั้ง':'')+' </div>'
+    +'<div style="font-size:11px;color:var(--pass);margin-top:2px;">'+headerSub+'</div>'
     +'</div>'
     +'<span class="comp-type '+( comp.type==='mandatory'?'t-m':'t-e')+'" style="flex-shrink:0;">'+( comp.type==='mandatory'?'⭐':'📝')+'</span>'
     +'</div>'
-    +'<div class="comp-body" style="padding-bottom:14px;">'
+    +'<div class="comp-body" onclick="event.stopPropagation()" style="padding-bottom:14px;">'
+    // Expanded: show only status and count — NOT individual scores/feedback
     +'<div style="background:var(--pass-bg);border-radius:10px;padding:10px 12px;margin-bottom:12px;">'
-    +'<div style="font-size:12px;font-weight:700;color:var(--pass);">✅ ผ่านแล้ว — Rubric: '+(prev.rubric_score||'-')+(prev.avg_rubric_score?' (เฉลี่ย: '+prev.avg_rubric_score+')':'')+'</div>'
-    +(teacherName?'<div style="font-size:11px;color:var(--slate-m);margin-top:3px;">👤 '+teacherName+'</div>':'')
-    +(prev.location||prev.notes?'<div style="font-size:11px;color:var(--slate-m);margin-top:2px;">'+(prev.location?'📍 '+prev.location+' ':'')+(prev.notes?'📝 '+prev.notes:'')+'</div>':'')
-    +(prev.feedback?'<div style="margin-top:5px;padding:5px 9px;background:rgba(255,255,255,0.7);border-radius:7px;font-size:11px;">💬 <b>Feedback:</b> '+prev.feedback+'</div>':'')
-    +'<div style="font-size:11px;color:var(--slate-l);margin-top:4px;">กดที่การ์ดนี้เพื่อยุบ | ประเมินใหม่ได้ด้านล่าง</div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--pass);">✅ ผ่านแล้ว — ประเมินโดย '+evalCount+' ท่าน</div>'
+    +(prev.avg_rubric_score&&evalCount>1?'<div style="font-size:11px;color:var(--slate-m);margin-top:3px;">📊 คะแนนเฉลี่ยรวม: '+prev.avg_rubric_score+'/5</div>':'')
+    +'<div style="font-size:11px;color:var(--amber);margin-top:4px;font-weight:600;">⚠️ คะแนนรายท่านแสดงเฉพาะนักศึกษา</div>'
     +'</div>'
-    +histHTML
-    +'<div class="rubric-lbl">📊 Rubric (ประเมินใหม่)</div>'
+    +'<div class="rubric-lbl">📊 ให้คะแนน Rubric ของท่าน</div>'
     +'<div class="rubric-scale" id="rs-'+comp.id+'">'+rb+'</div>'
     +'<div class="eval-meta">'
-    +'<div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-'+comp.id+'" placeholder="ห้องปฏิบัติการ" oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')"></div>'
-    +'<div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-'+comp.id+'" placeholder="(ถ้ามี)" oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')"></div>'
+    +'<div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-'+comp.id+'" placeholder="ห้องปฏิบัติการ" onclick="event.stopPropagation()" oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')"></div>'
+    +'<div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-'+comp.id+'" placeholder="(ถ้ามี)" onclick="event.stopPropagation()" oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')"></div>'
     +'</div>'
-    +'<div style="margin-top:10px;"><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">💬 Feedback ให้นักศึกษา</label>'
-    +'<textarea id="fb2-'+comp.id+'" placeholder="Feedback..." oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:Sarabun,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none;"></textarea></div>'
+    +'<div style="margin-top:10px;"><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;" onclick="event.stopPropagation()">💬 Feedback ของท่าน (นักศึกษาจะเห็น)</label>'
+    +'<textarea id="fb2-'+comp.id+'" placeholder="Feedback สำหรับนักศึกษา..." onclick="event.stopPropagation()" oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')" onfocus="event.stopPropagation()" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:Sarabun,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none;"></textarea></div>'
     +'<div class="eval-actions">'
     +'<button class="eval-btn btn-pass" id="pb-'+comp.id+'" onclick="event.stopPropagation();setStatus(\'' +comp.id+ '\',\'pass\',this)">✅ ผ่าน</button>'
     +'<button class="eval-btn btn-fail" id="fb-'+comp.id+'" onclick="event.stopPropagation();setStatus(\'' +comp.id+ '\',\'fail\',this)">❌ ไม่ผ่าน</button>'
@@ -570,14 +573,14 @@ function buildPassedCard(comp,prev,rubric,teacherName,evalDate,histHTML){
 
 function buildFullCard(comp,prev,rubric,teacherName,evalDate,histHTML,i){
   const rb=rubric.map(r=>'<button class="rubric-btn" onclick="pickRubric(\'' +comp.id+ '\','+r.score+',this)"><div class="rubric-num">'+r.score+'</div><div class="rubric-desc">'+r.label+'</div></button>').join('');
+  const evalCount2=histMap[comp.id]?.length||0;
   const prevSection=prev?'<div style="background:var(--fail-bg);border-radius:10px;padding:8px 12px;margin-bottom:10px;">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">'
-    +'<span class="prev-badge prev-fail">❌ ไม่ผ่าน | Rubric: '+(prev.rubric_score||'-')+'</span>'
+    +'<span class="prev-badge prev-fail">❌ ไม่ผ่าน'+(evalCount2>1?' — ประเมินโดย '+evalCount2+' ท่าน':'')+'</span>'
     +'<button onclick="quickEditEval(\'' +prev.id+ '\',\'' +comp.id+ '\',\'fail\')" style="padding:4px 10px;background:var(--pass-bg);color:var(--pass);border:none;border-radius:8px;font-family:Sarabun,sans-serif;font-size:11px;font-weight:700;cursor:pointer;">✏️ แก้เป็นผ่าน</button>'
     +'</div>'
-    +(teacherName?'<div style="font-size:11px;color:var(--slate-m);margin-top:4px;">👤 '+teacherName+'</div>':'')
-    +(prev.location||prev.notes?'<div style="font-size:11px;color:var(--slate-m);margin-top:2px;">'+(prev.location?'📍 '+prev.location+' ':'')+(prev.notes?'📝 '+prev.notes:'')+'</div>':'')
-    +(prev.feedback?'<div style="margin-top:5px;padding:5px 9px;background:rgba(255,255,255,0.6);border-radius:7px;font-size:11px;">💬 <b>Feedback:</b> '+prev.feedback+'</div>':'')
+    +(prev.avg_rubric_score&&evalCount2>1?'<div style="font-size:11px;color:var(--slate-m);margin-top:3px;">📊 คะแนนเฉลี่ยรวม: '+prev.avg_rubric_score+'/5</div>':'')
+    +'<div style="font-size:11px;color:var(--amber);margin-top:3px;font-weight:600;">⚠️ คะแนนรายท่านแสดงเฉพาะนักศึกษา</div>'
     +'</div>'
     :''
   ;
