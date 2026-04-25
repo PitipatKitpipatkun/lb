@@ -361,104 +361,86 @@ tr:hover td{background:var(--amber-50);}
   <!-- BACKUP -->
   <div id="tab-backup" class="tab-view">
     <div class="page-header">
-      <div><div class="page-title">💾 สำรองข้อมูล</div><div class="page-sub">ดาวน์โหลดข้อมูลทั้งหมดจากระบบ</div></div>
+      <div><div class="page-title">💾 สำรองข้อมูล</div><div class="page-sub">Download & Upload ข้อมูล</div></div>
       <button onclick="backupAll()" id="backupAllBtn"
         style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,var(--amber),#f59e0b);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(217,119,6,0.3);">
-        📦 Backup ทั้งหมด
+        📦 Export ทั้งหมด
       </button>
     </div>
 
     <!-- Status bar -->
     <div id="backupStatus" style="display:none;padding:12px 16px;border-radius:12px;margin-bottom:18px;font-size:13px;font-weight:600;"></div>
 
-    <!-- Backup cards -->
+    <!-- Import JSON ทั้งหมด -->
+    <div style="background:white;border-radius:18px;border:2px solid var(--amber-l);padding:18px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:40px;height:40px;background:var(--amber-l);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📂</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;">Import จาก Backup File</div>
+          <div style="font-size:12px;color:var(--slate-l);">นำเข้าข้อมูลจากไฟล์ JSON ที่ Export ไว้</div>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--amber-50);border:2px dashed var(--amber-l);border-radius:12px;cursor:pointer;transition:all 0.2s;" id="importDropZone">
+        <span style="font-size:22px;">📥</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--amber-d);">คลิกเพื่อเลือกไฟล์ JSON</div>
+          <div style="font-size:11px;color:var(--slate-l);">รองรับเฉพาะไฟล์ backup_all_*.json</div>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="previewImport(this)">
+      </label>
+      <div id="importPreview" style="display:none;margin-top:12px;"></div>
+    </div>
+
+    <!-- Per-table cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:20px;">
 
-      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
+      ${[
+        {tbl:'students',icon:'👨‍🎓',label:'นักศึกษา',color:'var(--teal-l)',countId:'bk-s-count'},
+        {tbl:'teachers',icon:'👩‍🏫',label:'อาจารย์',color:'var(--rose-l)',countId:'bk-t-count'},
+        {tbl:'competencies',icon:'📋',label:'ทักษะ',color:'var(--amber-l)',countId:'bk-c-count'},
+        {tbl:'evaluations',icon:'✅',label:'ผลการประเมิน',color:'#ede9fe',countId:'bk-e-count'},
+        {tbl:'activity_logs',icon:'📜',label:'บันทึกกิจกรรม',color:'#dbeafe',countId:'bk-l-count'},
+      ].map(({tbl,icon,label,color,countId})=>`
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:44px;height:44px;background:var(--teal-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">👨‍🎓</div>
-          <div>
-            <div style="font-size:14px;font-weight:700;">นักศึกษา</div>
-            <div style="font-size:12px;color:var(--slate-l);" id="bk-s-count">—</div>
-          </div>
+          <div style="width:44px;height:44px;background:${color};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">${icon}</div>
+          <div><div style="font-size:14px;font-weight:700;">${label}</div>
+          <div style="font-size:12px;color:var(--slate-l);" id="${countId}">—</div></div>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="backupTable('students','JSON')" class="bk-btn bk-json">⬇ JSON</button>
-          <button onclick="backupTable('students','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬇ Export</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button onclick="backupTable('${tbl}','JSON')" class="bk-btn bk-json">JSON</button>
+          <button onclick="backupTable('${tbl}','CSV')" class="bk-btn bk-csv">CSV</button>
         </div>
-      </div>
-
-      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:44px;height:44px;background:var(--rose-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">👩‍🏫</div>
-          <div>
-            <div style="font-size:14px;font-weight:700;">อาจารย์</div>
-            <div style="font-size:12px;color:var(--slate-l);" id="bk-t-count">—</div>
-          </div>
+        <div style="font-size:11px;font-weight:700;color:var(--slate-l);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">⬆ Import</div>
+        <div style="display:flex;gap:6px;">
+          <label style="flex:1;text-align:center;padding:8px;background:#f0fdf4;color:#166534;border:1.5px solid #86efac;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            JSON <input type="file" accept=".json" style="display:none;" onchange="importTableFile('${tbl}','JSON',this)">
+          </label>
+          <label style="flex:1;text-align:center;padding:8px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            CSV <input type="file" accept=".csv,.txt" style="display:none;" onchange="importTableFile('${tbl}','CSV',this)">
+          </label>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="backupTable('teachers','JSON')" class="bk-btn bk-json">⬇ JSON</button>
-          <button onclick="backupTable('teachers','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
-        </div>
-      </div>
-
-      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:44px;height:44px;background:var(--amber-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">📋</div>
-          <div>
-            <div style="font-size:14px;font-weight:700;">ทักษะ</div>
-            <div style="font-size:12px;color:var(--slate-l);" id="bk-c-count">—</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="backupTable('competencies','JSON')" class="bk-btn bk-json">⬇ JSON</button>
-          <button onclick="backupTable('competencies','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
-        </div>
-      </div>
-
-      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:44px;height:44px;background:#ede9fe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✅</div>
-          <div>
-            <div style="font-size:14px;font-weight:700;">ผลการประเมิน</div>
-            <div style="font-size:12px;color:var(--slate-l);" id="bk-e-count">—</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="backupTable('evaluations','JSON')" class="bk-btn bk-json">⬇ JSON</button>
-          <button onclick="backupTable('evaluations','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
-        </div>
-      </div>
-
-      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:44px;height:44px;background:#dbeafe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">📜</div>
-          <div>
-            <div style="font-size:14px;font-weight:700;">บันทึกกิจกรรม</div>
-            <div style="font-size:12px;color:var(--slate-l);" id="bk-l-count">—</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="backupTable('activity_logs','JSON')" class="bk-btn bk-json">⬇ JSON</button>
-          <button onclick="backupTable('activity_logs','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
-        </div>
-      </div>
+      </div>`).join('')}
 
     </div>
 
-    <!-- Last backup info -->
+    <!-- Guide -->
     <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
-      <div style="font-size:13px;font-weight:700;margin-bottom:12px;">📖 คู่มือการใช้งาน Backup</div>
-      <div style="font-size:12px;color:var(--slate-m);line-height:1.8;">
-        <div>• <strong>JSON</strong> — บันทึกข้อมูลครบถ้วน เหมาะสำหรับสำรองข้อมูลทั้งหมด</div>
-        <div>• <strong>CSV</strong> — เปิดด้วย Excel ได้ทันที เหมาะสำหรับวิเคราะห์ข้อมูล</div>
-        <div>• <strong>Backup ทั้งหมด</strong> — ดาวน์โหลด JSON รวมทุกตารางในไฟล์เดียว</div>
-        <div style="margin-top:8px;padding:10px 12px;background:var(--amber-50);border-radius:8px;color:var(--amber-d);">
-          ⚠️ ควร Backup อย่างน้อยเดือนละครั้ง และเก็บไฟล์ไว้ในที่ปลอดภัย
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;">📖 คู่มือ Backup & Restore</div>
+      <div style="font-size:12px;color:var(--slate-m);line-height:1.9;">
+        <div><strong>⬇ Export JSON</strong> — ข้อมูลครบถ้วน ใช้สำรองหรือ restore</div>
+        <div><strong>⬇ Export CSV</strong> — เปิดด้วย Excel ได้ทันที เหมาะวิเคราะห์ข้อมูล</div>
+        <div><strong>⬆ Import JSON</strong> — นำเข้าข้อมูลจากไฟล์ backup เดิม (upsert = เพิ่ม/แก้ไข ไม่ลบ)</div>
+        <div><strong>⬆ Import CSV</strong> — นำเข้าจาก Excel/CSV สำหรับ นักศึกษา / อาจารย์ / ทักษะ</div>
+        <div><strong>📂 Import ทั้งหมด</strong> — นำเข้าจากไฟล์ backup_all_*.json ที่ Export ไว้</div>
+        <div style="margin-top:10px;padding:10px 12px;background:#fee2e2;border-radius:8px;color:#991b1b;font-weight:600;">
+          ⚠️ Import จะ <u>เพิ่มและแก้ไข</u> ข้อมูลเท่านั้น ไม่ลบข้อมูลที่มีอยู่ | ควร Backup ก่อน Import เสมอ
         </div>
       </div>
     </div>
   </div>
+
 
   <!-- SETTINGS -->
   <div id="tab-settings" class="tab-view">
@@ -894,7 +876,137 @@ async function delDept(id){
   showToast('✅ ลบสำเร็จ','ok');loadDepts();
 }
 
-// ===== BACKUP =====
+// ===== IMPORT / RESTORE =====
+
+// Allowed columns per table (to prevent injection)
+const ALLOWED_COLS={
+  students:['id','full_name','student_code','student_id','email','phone','department','password','department_id','created_at'],
+  teachers:['id','full_name','teacher_code','teacher_id','email','phone','department','position','password','department_id','is_admin','created_at'],
+  competencies:['id','name','description','type','category','rubric_criteria','passing_score','department_id','created_at'],
+  evaluations:['id','student_id','competency_id','teacher_id','status','rubric_score','avg_rubric_score','eval_count','location','notes','feedback','evaluated_at'],
+  activity_logs:['id','user_role','user_name','user_code','action','details','created_at'],
+};
+
+// Parse CSV to array of objects
+function parseCSV(text){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+  if(!lines.length)return[];
+  const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+  return lines.slice(1).map(line=>{
+    const vals=[];let cur='',inQ=false;
+    for(const ch of line){
+      if(ch==='"')inQ=!inQ;
+      else if(ch===','&&!inQ){vals.push(cur);cur='';}
+      else cur+=ch;
+    }
+    vals.push(cur);
+    const obj={};
+    headers.forEach((h,i)=>{obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim()||null;});
+    return obj;
+  }).filter(r=>Object.values(r).some(v=>v));
+}
+
+// Preview import from backup_all JSON
+function previewImport(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try{
+      const bundle=JSON.parse(e.target.result);
+      if(!bundle.tables){showBackupStatus('❌ ไม่ใช่ไฟล์ backup_all ที่ถูกต้อง','err');return;}
+      const el=document.getElementById('importPreview');
+      const tables=Object.entries(bundle.tables);
+      el.innerHTML=`<div style="background:var(--amber-50);border:1px solid var(--amber-l);border-radius:12px;padding:14px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 พบข้อมูลในไฟล์: <span style="color:var(--teal)">${bundle.backup_date?new Date(bundle.backup_date).toLocaleDateString('th-TH'):'ไม่ระบุวันที่'}</span> | โดย ${bundle.backup_by||'-'}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;">
+          ${tables.map(([k,v])=>`<div style="background:white;border-radius:8px;padding:8px 12px;text-align:center;">
+            <div style="font-size:18px;margin-bottom:4px;">${{students:'👨‍🎓',teachers:'👩‍🏫',competencies:'📋',evaluations:'✅',activity_logs:'📜'}[k]||'📄'}</div>
+            <div style="font-size:11px;font-weight:700;color:var(--slate-m);">${k}</div>
+            <div style="font-size:16px;font-weight:800;color:var(--teal);">${v.count||0}</div>
+            <div style="font-size:10px;color:var(--slate-l);">รายการ</div>
+          </div>`).join('')}
+        </div>
+        <button onclick="confirmImportAll(${JSON.stringify(bundle).replace(/'/g,"\\'")})" 
+          style="width:100%;padding:12px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+          ✅ นำเข้าข้อมูลทั้งหมด
+        </button>
+      </div>`;
+      el.style.display='block';
+    }catch(err){showBackupStatus('❌ ไฟล์ไม่ถูกต้อง: '+err.message,'err');}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+async function confirmImportAll(bundleStr){
+  if(!confirm('ยืนยันการนำเข้าข้อมูลทั้งหมด?\n\n⚠️ จะ upsert (เพิ่ม/แก้ไข) ข้อมูลที่มีอยู่ ไม่ลบข้อมูลเดิม'))return;
+  const bundle=typeof bundleStr==='string'?JSON.parse(bundleStr):bundleStr;
+  let total=0,errs=[];
+  showBackupStatus('⏳ กำลังนำเข้าข้อมูล...','warn');
+  for(const[tbl,v] of Object.entries(bundle.tables)){
+    if(!v.data?.length)continue;
+    const allowed=ALLOWED_COLS[tbl];
+    if(!allowed)continue;
+    const clean=v.data.map(row=>{const r={};allowed.forEach(k=>{if(row[k]!==undefined)r[k]=row[k]||null;});return r;});
+    const{error}=await sb.from(tbl).upsert(clean,{onConflict:'id',ignoreDuplicates:false});
+    if(error)errs.push(tbl+': '+error.message);
+    else total+=clean.length;
+  }
+  if(errs.length)showBackupStatus('⚠️ นำเข้าบางส่วน ('+total+' รายการ) | ข้อผิดพลาด: '+errs.join(' | '),'warn');
+  else{showBackupStatus('✅ นำเข้าสำเร็จ '+total+' รายการ','ok');logActivity('Import ทั้งหมด','จากไฟล์ backup | '+total+' รายการ');}
+  document.getElementById('importPreview').style.display='none';
+  initBackup();loadStudents();loadTeachers();loadComps();loadOverview();
+}
+
+async function importTableFile(table,format,input){
+  const file=input.files[0];if(!file){return;}
+  input.value='';
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    let rows=[];
+    try{
+      if(format==='JSON'){
+        const parsed=JSON.parse(e.target.result);
+        rows=Array.isArray(parsed)?parsed:(parsed.data||[]);
+      }else{
+        // CSV: handle BOM
+        let text=e.target.result;
+        if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+        rows=parseCSV(text);
+      }
+    }catch(err){showBackupStatus('❌ อ่านไฟล์ไม่ได้: '+err.message,'err');return;}
+    if(!rows.length){showBackupStatus('❌ ไม่พบข้อมูลในไฟล์','err');return;}
+    const allowed=ALLOWED_COLS[table];
+    if(!allowed){showBackupStatus('❌ ไม่รองรับตาราง: '+table,'err');return;}
+    // Clean rows
+    const clean=rows.map(row=>{
+      const r={};
+      allowed.forEach(k=>{
+        if(row[k]!==undefined&&row[k]!==''&&row[k]!==null)r[k]=row[k];
+      });
+      return r;
+    }).filter(r=>Object.keys(r).length>0);
+    if(!clean.length){showBackupStatus('❌ ไม่พบคอลัมน์ที่รองรับในไฟล์','err');return;}
+    if(!confirm(`นำเข้า ${clean.length} รายการเข้าตาราง "${table}"?\n\nจะ upsert ข้อมูล ไม่ลบข้อมูลเดิม`))return;
+    showBackupStatus('⏳ กำลังนำเข้า '+clean.length+' รายการ...','warn');
+    // Chunk to avoid timeout (100 rows per batch)
+    let imported=0;
+    for(let i=0;i<clean.length;i+=100){
+      const chunk=clean.slice(i,i+100);
+      const{error}=await sb.from(table).upsert(chunk,{onConflict:'id',ignoreDuplicates:false});
+      if(error){showBackupStatus('❌ '+error.message,'err');return;}
+      imported+=chunk.length;
+    }
+    showBackupStatus(`✅ นำเข้า "${table}" สำเร็จ ${imported} รายการ`,'ok');
+    logActivity('Import '+table,`${format} | ${imported} รายการ`);
+    initBackup();
+    if(table==='students')loadStudents();
+    if(table==='teachers')loadTeachers();
+    if(table==='competencies')loadComps();
+    loadOverview();
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
 async function initBackup(){
   const[s,t,c,e,l]=await Promise.all([
     sb.from('students').select('id',{count:'exact',head:true}),
