@@ -461,30 +461,70 @@ async function init(){
   await loadData();
 }
 async function loadData(){
-  try{
-  const deptId=user.departmentId||null;
-  const[cr,er,hr]=await Promise.all([
-    sb.from('competencies').select('*'),
-    sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId),
-    sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
-  ]);
-  if(cr.error)throw cr.error;
-  const comps=cr.data||[],evals=er.data||[],hist=hr.data||[];
-  const histByComp={};hist.forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
-  const filteredComps=(comps||[]).filter(comp=>
-    !comp.department_id || comp.department_id===deptId
-  );
-  const sortedComps=(filteredComps||[]).sort((a,b)=>{
-    const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
-    if(ca!==0)return ca;
-    return (a.name||'').localeCompare(b.name||'','th');
+  // Show loading state
+  ['recentList','mandatoryList','electiveList','reportList'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
   });
-  skills=sortedComps.map(comp=>{const e=evals.find(ev=>ev.competency_id===comp.id)||null;return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};});
-  renderStats();renderRecent();renderMandatory();renderElective();renderReport();
+  try{
+    const deptId=user.departmentId||null;
+    const[cr,er,hr]=await Promise.all([
+      sb.from('competencies').select('*'),
+      sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId),
+      sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
+    ]);
+    if(cr.error)throw new Error('competencies: '+cr.error.message);
+    if(er.error)throw new Error('evaluations: '+er.error.message);
+    // evaluation_history error is non-fatal — just use empty
+    const comps=cr.data||[],evals=er.data||[],hist=hr.data||[];
+    const histByComp={};
+    hist.forEach(h=>{
+      if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];
+      histByComp[h.competency_id].push(h);
+    });
+    const filteredComps=comps.filter(comp=>!comp.department_id||comp.department_id===deptId);
+    const sortedComps=filteredComps.sort((a,b)=>{
+      const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
+      if(ca!==0)return ca;
+      return(a.name||'').localeCompare(b.name||'','th');
+    });
+    skills=sortedComps.map(comp=>{
+      const e=evals.find(ev=>ev.competency_id===comp.id)||null;
+      return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};
+    });
+    // Render each section with individual error handling
+    safeRender('renderStats',renderStats);
+    safeRender('renderRecent',renderRecent);
+    safeRender('renderMandatory',()=>renderMandatory('all'));
+    safeRender('renderElective',()=>renderElective('all'));
+    safeRender('renderReport',renderReport);
   }catch(err){
     console.error('loadData error:',err);
-    document.getElementById('recentList').innerHTML='<div class="empty"><span class="empty-icon">⚠️</span><p style="color:#dc2626">โหลดข้อมูลไม่สำเร็จ<br><small>'+( err.message||err)+'</small></p><button onclick="loadData()" style="margin-top:12px;padding:8px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:Sarabun,sans-serif;font-size:13px;cursor:pointer;">🔄 ลองใหม่</button></div>';
+    showLoadError(err.message||String(err));
   }
+}
+function safeRender(name,fn){
+  try{fn();}
+  catch(e){
+    console.error(name+' error:',e);
+    // Show error in relevant container
+    const map={renderStats:null,renderRecent:'recentList',renderMandatory:'mandatoryList',renderElective:'electiveList',renderReport:'reportList'};
+    const id=Object.entries(map).find(([k])=>name.includes(k.replace('render','').toLowerCase()))?.[1];
+    if(id){
+      document.getElementById(id).innerHTML=`<div class="empty"><span class="empty-icon">⚠️</span><p style="color:#dc2626;font-size:12px;">${name} error:<br>${e.message}</p></div>`;
+    }
+    showLoadError(name+': '+e.message);
+  }
+}
+function showLoadError(msg){
+  let bar=document.getElementById('loadErrorBar');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='loadErrorBar';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999;background:#dc2626;color:white;padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;';
+    document.body.prepend(bar);
+  }
+  bar.innerHTML=`<span>⚠️ ${msg}</span><div style="display:flex;gap:8px;"><button onclick="loadData()" style="padding:4px 12px;background:white;color:#dc2626;border:none;border-radius:6px;font-family:Sarabun,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 ลองใหม่</button><button onclick="this.parentElement.parentElement.remove()" style="padding:4px 10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:6px;cursor:pointer;">✕</button></div>`;
 }
 function skillHTML(sk,delay=0){
   const sm={pass:{icon:'✅',cls:'d-pass',b:'b-pass',txt:'ผ่าน'},fail:{icon:'❌',cls:'d-fail',b:'b-fail',txt:'ไม่ผ่าน'},pending:{icon:'⏳',cls:'d-pend',b:'b-pend',txt:'รอประเมิน'}};
