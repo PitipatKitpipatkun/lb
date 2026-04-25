@@ -432,8 +432,8 @@ async function init(){
   document.getElementById('sbName').textContent=user.fullName;
   document.getElementById('sbCode').textContent=user.teacherCode||user.username||'';
   const[sr,cr]=await Promise.all([
-    sb.from('students').select('*').order('full_name'),
-    sb.from('competencies').select('*')
+    sb.from('students').select('*,departments(name)').order('full_name'),
+    sb.from('competencies').select('*,departments(name,code)')
   ]);
   students=sr.data||[];
   comps=(cr.data||[]).sort((a,b)=>{
@@ -492,7 +492,10 @@ async function renderComps(qrCompId){
   const histMapLocal={};(histRes.data||[]).forEach(h=>{if(!histMapLocal[h.competency_id])histMapLocal[h.competency_id]=[];histMapLocal[h.competency_id].push(h);});
   histMap=histMapLocal;
 
-  let sorted=[...comps];
+  // Filter comps by student's department (null = all departments)
+  const stuDeptId=selStudent?.department_id||null;
+  const availComps=comps.filter(comp=>!comp.department_id||comp.department_id===stuDeptId);
+  let sorted=[...availComps];
   const sortVal=document.getElementById('sortSelect')?.value||'alpha';
   if(sortVal==='category'){sorted.sort((a,b)=>{const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');if(ca!==0)return ca;return(a.name||'').localeCompare(b.name||'','th');});}
   else if(sortVal==='type'){sorted.sort((a,b)=>{if(a.type!==b.type)return a.type==='mandatory'?-1:1;return(a.name||'').localeCompare(b.name||'','th');});}
@@ -585,7 +588,7 @@ function buildFullCard(comp,prev,rubric,teacherName,evalDate,histHTML,i){
     :''
   ;
   return '<div class="comp-card" style="animation-delay:'+(i*0.04)+'s" id="cc-'+comp.id+'">'
-    +'<div class="comp-head"><div class="comp-name">'+comp.name+'</div>'
+    +'<div class="comp-head"><div style="flex:1"><div class="comp-name">'+comp.name+'</div>'+(comp.department_id?'':'+'+'<span style="font-size:9px;background:#fef9c3;color:#854d0e;padding:1px 6px;border-radius:100px;">🌐 ทุกสาขา</span>')+'</div>'
     +'<span class="comp-type '+(comp.type==='mandatory'?'t-m':'t-e')+'">'+(comp.type==='mandatory'?'⭐':'📝')+'</span>'
     +'</div>'
     +'<div class="comp-body">'
@@ -721,7 +724,11 @@ async function printStudentReport(){
   const today=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   const eMap={};(evalRes.data||[]).forEach(e=>{eMap[e.competency_id]=e;});
   const histByComp={};(histRes.data||[]).forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
-  const sorted=(compRes.data||[]).sort((a,b)=>{
+  const stuDeptIdR=selStudent.department_id||null;
+  const filteredForReport=(compRes.data||[]).filter(comp=>
+    !comp.department_id||comp.department_id===stuDeptIdR
+  );
+  const sorted=(filteredForReport||[]).sort((a,b)=>{
     const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
     if(ca!==0)return ca;
     return(a.name||'').localeCompare(b.name||'','th');
