@@ -484,8 +484,7 @@ function skillHTML(sk,delay=0){
       <div class="skill-name">${sk.name}</div>
       <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>${sk.category?` <span class="skill-type" style="background:#f1f5f9;color:var(--slate-m)">${sk.category}</span>`:''}
       ${date?`<div class="skill-meta">${date}${loc}${tea}</div>`:''}
-      ${sk.evaluation?.feedback?`<div style="font-size:11px;padding:4px 8px;background:var(--teal-50);border-radius:6px;color:var(--teal-d);margin-top:3px;">💬 ${sk.evaluation.feedback}</div>`:''}
-      ${(sk.history||[]).length>1?`<div style="font-size:10px;color:var(--slate-l);margin-top:2px;">📊 ประเมินแล้ว ${(sk.history||[]).length} ครั้ง | เฉลี่ย ${sk.evaluation?.avg_rubric_score||'-'}</div>`:''}
+      ${buildHistoryDetail(sk)}
     </div>
     <div class="skill-right">
       <span class="status-badge ${s.b}">${s.txt}</span>
@@ -544,6 +543,56 @@ function switchTab(tab){
 }
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('on');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('on');}
+function buildHistoryDetail(sk){
+  const hist=sk.history||[];
+  const ev=sk.evaluation;
+  if(!ev&&!hist.length)return '';
+  let html='';
+
+  // Show average score prominently if multiple evaluations
+  if(hist.length>1){
+    const validScores=hist.filter(h=>h.rubric_score!=null).map(h=>h.rubric_score);
+    const avg=validScores.length?Math.round(validScores.reduce((a,b)=>a+b,0)/validScores.length*10)/10:null;
+    html+=`<div style="margin-top:6px;padding:6px 10px;background:var(--teal-50);border:1px solid var(--teal-l);border-radius:8px;font-size:11px;">
+      <span style="font-weight:700;color:var(--teal);">📊 ประเมินโดย ${hist.length} ท่าน | คะแนนเฉลี่ย: ${avg??'-'}/5</span>
+    </div>`;
+  }
+
+  // Per-teacher history rows
+  if(hist.length>0){
+    const rows=hist.map(h=>{
+      const dt=h.evaluated_at?new Date(h.evaluated_at).toLocaleDateString('th-TH',{year:'2-digit',month:'short',day:'numeric'}):'';
+      const pass=h.status==='pass';
+      return `<div style="margin-top:5px;padding:7px 10px;background:${pass?'var(--pass-bg)':'var(--fail-bg)'};border-radius:9px;font-size:11px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-weight:700;color:${pass?'var(--pass)':'var(--fail)'};">${pass?'✅ ผ่าน':'❌ ไม่ผ่าน'}</span>
+          <span style="color:var(--slate-m);">R: <b>${h.rubric_score||'-'}</b></span>
+          <span style="color:var(--slate-m);">👤 ${h.teachers?.full_name||'อาจารย์'}</span>
+          ${dt?`<span style="color:var(--slate-l);">${dt}</span>`:''}
+        </div>
+        ${h.location?`<div style="margin-top:3px;color:var(--slate-m);">📍 ${h.location}</div>`:''}
+        ${h.notes?`<div style="margin-top:2px;color:var(--slate-m);">📝 ${h.notes}</div>`:''}
+        ${h.feedback?`<div style="margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.6);border-radius:6px;color:var(--teal-d);font-style:italic;">💬 <b>Feedback:</b> ${h.feedback}</div>`:''}
+      </div>`;
+    }).join('');
+    html+=rows;
+  } else if(ev){
+    // Only one eval (no history yet shown), show from evaluations table
+    const pass=ev.status==='pass';
+    html+=`<div style="margin-top:5px;padding:7px 10px;background:${pass?'var(--pass-bg)':'var(--fail-bg)'};border-radius:9px;font-size:11px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-weight:700;color:${pass?'var(--pass)':'var(--fail)'};">${pass?'✅ ผ่าน':'❌ ไม่ผ่าน'}</span>
+        <span style="color:var(--slate-m);">R: <b>${ev.rubric_score||'-'}</b></span>
+        <span style="color:var(--slate-m);">👤 ${ev.teachers?.full_name||'อาจารย์'}</span>
+      </div>
+      ${ev.location?`<div style="margin-top:3px;color:var(--slate-m);">📍 ${ev.location}</div>`:''}
+      ${ev.notes?`<div style="margin-top:2px;color:var(--slate-m);">📝 ${ev.notes}</div>`:''}
+      ${ev.feedback?`<div style="margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.6);border-radius:6px;color:var(--teal-d);font-style:italic;">💬 <b>Feedback:</b> ${ev.feedback}</div>`:''}
+    </div>`;
+  }
+  return html;
+}
+
 async function logout(){await sb.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
 
 // ===== QR SCANNER =====
