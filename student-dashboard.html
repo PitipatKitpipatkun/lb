@@ -455,18 +455,22 @@ async function init(){
   document.getElementById('repName').textContent=user.fullName;
   document.getElementById('repCode').textContent='รหัสนักศึกษา: '+(user.studentCode||'-');
   document.getElementById('repDate').textContent='วันที่พิมพ์: '+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  // Verify session is still valid
+  const{data:chk}=await sb.from('students').select('id').eq('id',user.profileId).single();
+  if(!chk){localStorage.removeItem('lb_user');window.location.href='index.html';return;}
   await loadData();
 }
 async function loadData(){
+  try{
   const deptId=user.departmentId||null;
   const[cr,er,hr]=await Promise.all([
     sb.from('competencies').select('*'),
     sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId),
     sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
   ]);
+  if(cr.error)throw cr.error;
   const comps=cr.data||[],evals=er.data||[],hist=hr.data||[];
   const histByComp={};hist.forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
-  // Filter: show global (null) + own department
   const filteredComps=(comps||[]).filter(comp=>
     !comp.department_id || comp.department_id===deptId
   );
@@ -475,7 +479,12 @@ async function loadData(){
     if(ca!==0)return ca;
     return (a.name||'').localeCompare(b.name||'','th');
   });
-  skills=sortedComps.map(comp=>{const e=evals.find(ev=>ev.competency_id===comp.id)||null;return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};});  renderStats();renderRecent();renderMandatory();renderElective();renderReport();
+  skills=sortedComps.map(comp=>{const e=evals.find(ev=>ev.competency_id===comp.id)||null;return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};});
+  renderStats();renderRecent();renderMandatory();renderElective();renderReport();
+  }catch(err){
+    console.error('loadData error:',err);
+    document.getElementById('recentList').innerHTML='<div class="empty"><span class="empty-icon">⚠️</span><p style="color:#dc2626">โหลดข้อมูลไม่สำเร็จ<br><small>'+( err.message||err)+'</small></p><button onclick="loadData()" style="margin-top:12px;padding:8px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:Sarabun,sans-serif;font-size:13px;cursor:pointer;">🔄 ลองใหม่</button></div>';
+  }
 }
 function skillHTML(sk,delay=0){
   const sm={pass:{icon:'✅',cls:'d-pass',b:'b-pass',txt:'ผ่าน'},fail:{icon:'❌',cls:'d-fail',b:'b-fail',txt:'ไม่ผ่าน'},pending:{icon:'⏳',cls:'d-pend',b:'b-pend',txt:'รอประเมิน'}};
