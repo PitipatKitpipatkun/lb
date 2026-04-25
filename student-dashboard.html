@@ -445,10 +445,12 @@ const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
 let user=null,skills=[];
 
 async function init(){
+  dbg('init() เริ่ม');
   try{
     const s=localStorage.getItem('lb_user');
     if(!s){window.location.href='index.html';return;}
     user=JSON.parse(s);
+    dbg('user: '+user.fullName+' / '+user.role);
     if(user.role!=='student'){window.location.href='index.html';return;}
     const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
     set('sbName',user.fullName||'');
@@ -457,57 +459,77 @@ async function init(){
     set('repName',user.fullName);
     set('repCode','รหัสนักศึกษา: '+(user.studentCode||'-'));
     set('repDate','วันที่พิมพ์: '+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}));
+    dbg('กำลังโหลดข้อมูล...');
     await loadData();
+    dbg('โหลดเสร็จ ✅');
   }catch(e){
+    dbg('init ERROR: '+e.message,'red');
     console.error('init error:',e);
-    showLoadError('init error: '+e.message);
   }
 }
-function showLoadError(msg){
-  let bar=document.getElementById('loadErrorBar');
+
+// Debug bar — shows step on screen
+function dbg(msg, color='#166534'){
+  let bar=document.getElementById('_dbgBar');
   if(!bar){
     bar=document.createElement('div');
-    bar.id='loadErrorBar';
-    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:white;padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:Sarabun,sans-serif;';
-    document.body.prepend(bar);
+    bar.id='_dbgBar';
+    bar.style.cssText='position:fixed;bottom:80px;left:8px;right:8px;z-index:9999;background:rgba(0,0,0,0.85);color:#4ade80;padding:8px 12px;border-radius:10px;font-family:monospace;font-size:12px;max-height:120px;overflow-y:auto;';
+    document.body.appendChild(bar);
   }
-  bar.innerHTML='<span>⚠️ '+msg+'</span>'
-    +'<div style="display:flex;gap:8px;">'
-    +'<button onclick="loadData()" style="padding:4px 12px;background:white;color:#dc2626;border:none;border-radius:6px;font-family:Sarabun,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 ลองใหม่</button>'
-    +'<button onclick="document.getElementById(\'loadErrorBar\').remove()" style="padding:4px 10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:6px;cursor:pointer;">✕</button>'
-    +'</div>';
+  const line=document.createElement('div');
+  line.style.color=color;
+  line.textContent='['+new Date().toLocaleTimeString('th-TH')+'] '+msg;
+  bar.appendChild(line);
+  bar.scrollTop=bar.scrollHeight;
+  console.log('[DBG]',msg);
 }
+
 async function loadData(){
   const listIds=['recentList','mandatoryList','electiveList','reportList'];
   const spinHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
-  const errHTML=msg=>'<div class="empty"><span class="empty-icon">⚠️</span><p style="color:#dc2626;font-size:12px;">'+msg+'</p><button onclick="loadData()" style="margin-top:10px;padding:8px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:Sarabun,sans-serif;font-size:13px;cursor:pointer;">🔄 ลองใหม่</button></div>';
   listIds.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=spinHTML;});
-  let step='init';
   try{
-    step='fetch competencies';
+    dbg('fetch competencies...');
     const{data:comps,error:e1}=await sb.from('competencies').select('*');
-    if(e1)throw new Error(e1.message);
-    step='fetch evaluations';
+    if(e1)throw new Error('competencies: '+e1.message);
+    dbg('competencies: '+comps.length+' รายการ');
+
+    dbg('fetch evaluations...');
     const{data:evals,error:e2}=await sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId);
-    if(e2)throw new Error(e2.message);
-    step='fetch history';
-    const{data:hist=[]}=await sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false});
-    step='process data';
+    if(e2)throw new Error('evaluations: '+e2.message);
+    dbg('evaluations: '+evals.length+' รายการ');
+
+    dbg('fetch history...');
+    const{data:histRaw}=await sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false});
+    const hist=histRaw||[];
+    dbg('history: '+hist.length+' รายการ');
+
     const deptId=user.departmentId||null;
+    dbg('deptId: '+deptId);
     const histByComp={};
-    (hist||[]).forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
+    hist.forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
     const filtered=(comps||[]).filter(c=>!c.department_id||c.department_id===deptId);
+    dbg('filtered comps: '+filtered.length);
     filtered.sort((a,b)=>{const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');return ca!==0?ca:(a.name||'').localeCompare(b.name||'','th');});
     skills=filtered.map(comp=>{const e=(evals||[]).find(ev=>ev.competency_id===comp.id)||null;return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};});
-    step='renderStats';  try{renderStats();}    catch(e){console.error(step,e);showLoadError(step+': '+e.message);}
-    step='renderRecent'; try{renderRecent();}   catch(e){console.error(step,e);document.getElementById('recentList').innerHTML=errHTML(step+': '+e.message);}
-    step='renderMandatory';try{renderMandatory();}catch(e){console.error(step,e);document.getElementById('mandatoryList').innerHTML=errHTML(step+': '+e.message);}
-    step='renderElective';try{renderElective();}catch(e){console.error(step,e);document.getElementById('electiveList').innerHTML=errHTML(step+': '+e.message);}
-    step='renderReport'; try{renderReport();}   catch(e){console.error(step,e);document.getElementById('reportList').innerHTML=errHTML(step+': '+e.message);}
+    dbg('skills: '+skills.length);
+
+    dbg('renderStats...');
+    try{renderStats();}catch(e){dbg('renderStats ERROR: '+e.message,'#f87171');}
+    dbg('renderRecent...');
+    try{renderRecent();}catch(e){dbg('renderRecent ERROR: '+e.message,'#f87171');document.getElementById('recentList').innerHTML='<p style="color:red;padding:10px">'+e.message+'</p>';}
+    dbg('renderMandatory...');
+    try{renderMandatory();}catch(e){dbg('renderMandatory ERROR: '+e.message,'#f87171');document.getElementById('mandatoryList').innerHTML='<p style="color:red;padding:10px">'+e.message+'</p>';}
+    dbg('renderElective...');
+    try{renderElective();}catch(e){dbg('renderElective ERROR: '+e.message,'#f87171');document.getElementById('electiveList').innerHTML='<p style="color:red;padding:10px">'+e.message+'</p>';}
+    dbg('renderReport...');
+    try{renderReport();}catch(e){dbg('renderReport ERROR: '+e.message,'#f87171');document.getElementById('reportList').innerHTML='<p style="color:red;padding:10px">'+e.message+'</p>';}
+    dbg('DONE ✅');
   }catch(err){
-    console.error('loadData ['+step+']:',err);
-    listIds.forEach(id=>{const el=document.getElementById(id);if(el&&el.innerHTML.includes('spinner'))el.innerHTML=errHTML('ล้มเหลว: '+step);});
-    showLoadError('ล้มเหลวที่: '+step+' — '+err.message);
+    dbg('loadData ERROR: '+err.message,'#f87171');
+    console.error('loadData error:',err);
+    listIds.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<p style="color:red;padding:10px;font-size:12px;">'+err.message+'<br><button onclick="loadData()">🔄 ลองใหม่</button></p>';});
   }
 }
 
