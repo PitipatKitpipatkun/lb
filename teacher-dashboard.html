@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Log Book — อาจารย์</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -181,6 +182,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   </div>
   <nav class="sb-nav">
     <div class="nav-item active" onclick="switchTab('evaluate')" id="ni-evaluate"><span class="nav-icon">✍️</span> ประเมินรายบุคคล</div>
+    <div class="nav-item" onclick="switchTab('qreval')" id="ni-qreval"><span class="nav-icon">📲</span> QR ประเมิน</div>
     <div class="nav-item" onclick="switchTab('group')" id="ni-group"><span class="nav-icon">👥</span> ประเมินเป็นกลุ่ม</div>
     <div class="nav-item" onclick="switchTab('history')" id="ni-history"><span class="nav-icon">📋</span> ประวัติ</div>
     <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
@@ -237,6 +239,52 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- QR EVALUATION -->
+  <div id="tab-qreval" class="tab-view">
+    <div style="margin-bottom:18px;">
+      <div class="page-title">📲 QR ประเมิน</div>
+      <div class="page-sub">สร้าง QR ให้นักศึกษา scan เพื่อรอรับการประเมิน</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">สร้าง QR Code</span></div>
+      <div class="card-body">
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">เลือกทักษะที่จะประเมิน</label>
+          <select class="search-input" id="qrCompSelect" style="margin-bottom:0;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;">
+            <option value="">— เลือกทักษะ —</option>
+          </select>
+        </div>
+        <button onclick="createQR()"
+          style="width:100%;padding:12px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+          📲 สร้าง QR Code
+        </button>
+      </div>
+    </div>
+
+    <!-- Active QR codes -->
+    <div id="activeQRs"></div>
+
+    <!-- QR display modal-like -->
+    <div id="qrDisplay" style="display:none;background:white;border-radius:18px;border:1px solid var(--border);padding:20px;margin-top:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:700;" id="qrCompName"></div>
+        <button onclick="deactivateQR()" style="padding:5px 12px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+          ❌ ปิด QR
+        </button>
+      </div>
+      <div style="text-align:center;margin-bottom:16px;">
+        <div id="qrCodeDiv" style="display:inline-block;padding:12px;background:white;border-radius:12px;border:2px solid var(--border);"></div>
+        <div style="font-size:11px;color:var(--slate-l);margin-top:8px;" id="qrUrlText"></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">
+        👨‍🎓 นักศึกษาที่รอประเมิน (<span id="queueCount">0</span> คน)
+        <button onclick="refreshQueue()" style="margin-left:8px;padding:4px 10px;background:var(--teal-l);color:var(--teal);border:none;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">🔄</button>
+      </div>
+      <div id="queueList" style="display:flex;flex-direction:column;gap:7px;"></div>
     </div>
   </div>
 
@@ -345,6 +393,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="bn-item active" onclick="switchTab('evaluate')" id="bn-evaluate">
       <span class="bn-icon">✍️</span><span class="bn-label">รายบุคคล</span><div class="bn-dot"></div>
     </div>
+    <div class="bn-item" onclick="switchTab('qreval')" id="bn-qreval">
+      <span class="bn-icon">📲</span><span class="bn-label">QR</span><div class="bn-dot"></div>
+    </div>
     <div class="bn-item" onclick="switchTab('group')" id="bn-group">
       <span class="bn-icon">👥</span><span class="bn-label">กลุ่ม</span><div class="bn-dot"></div>
     </div>
@@ -409,143 +460,133 @@ async function selectStudent(id){
   document.getElementById('evalSection').scrollIntoView({behavior:'smooth',block:'start'});
   await renderComps();
 }
+function buildHistoryHTML(hist){
+  if(!hist||hist.length<=1)return '';
+  const rows=hist.map(h=>{
+    const bg=h.status==='pass'?'var(--pass-bg)':'var(--fail-bg)';
+    const dt=h.evaluated_at?new Date(h.evaluated_at).toLocaleDateString('th-TH',{month:'short',day:'numeric'}):'';
+    return '<div style="font-size:11px;padding:5px 9px;background:'+bg+';border-radius:7px;margin-bottom:4px;">'
+      +(h.status==='pass'?'✅':'❌')+' R:'+(h.rubric_score||'-')
+      +(h.teachers?.full_name?' | อ.'+h.teachers.full_name:'')
+      +(dt?' | '+dt:'')
+      +(h.feedback?' | 💬 '+h.feedback:'')
+      +'</div>';
+  }).join('');
+  return '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--slate-m);margin-bottom:5px;">📊 ประวัติ '+hist.length+' ครั้ง</div>'+rows+'</div>';
+}
 async function renderComps(){
   const el=document.getElementById('compList');
   el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
-  const{data:existing}=await sb.from('evaluations')
-    .select('*,teachers(full_name,teacher_code)')
-    .eq('student_id',selStudent.id);
-  const eMap={};(existing||[]).forEach(e=>{eMap[e.competency_id]=e;});
+  const[evalRes,histRes]=await Promise.all([
+    sb.from('evaluations').select('*,teachers(full_name,teacher_code)').eq('student_id',selStudent.id),
+    sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',selStudent.id).order('evaluated_at',{ascending:false})
+  ]);
+  const eMap={};(evalRes.data||[]).forEach(e=>{eMap[e.competency_id]=e;});
+  const histMap={};(histRes.data||[]).forEach(h=>{if(!histMap[h.competency_id])histMap[h.competency_id]=[];histMap[h.competency_id].push(h);});
 
-  // Apply sort
   let sorted=[...comps];
   const sortVal=document.getElementById('sortSelect')?.value||'alpha';
-  if(sortVal==='category'){
-    sorted.sort((a,b)=>{
-      const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
-      if(ca!==0)return ca;
-      return (a.name||'').localeCompare(b.name||'','th');
-    });
-  } else if(sortVal==='type'){
-    sorted.sort((a,b)=>{
-      if(a.type!==b.type)return a.type==='mandatory'?-1:1;
-      return (a.name||'').localeCompare(b.name||'','th');
-    });
-  } else if(sortVal==='status'){
-    const order={pending:0,fail:1,pass:2};
-    sorted.sort((a,b)=>{
-      const sa=eMap[a.id]?.status||'pending';
-      const sb2=eMap[b.id]?.status||'pending';
-      if(order[sa]!==order[sb2])return order[sa]-order[sb2];
-      return (a.name||'').localeCompare(b.name||'','th');
-    });
-  } else {
-    sorted.sort((a,b)=>(a.name||'').localeCompare(b.name||'','th'));
-  }
+  if(sortVal==='category'){sorted.sort((a,b)=>{const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');if(ca!==0)return ca;return(a.name||'').localeCompare(b.name||'','th');});}
+  else if(sortVal==='type'){sorted.sort((a,b)=>{if(a.type!==b.type)return a.type==='mandatory'?-1:1;return(a.name||'').localeCompare(b.name||'','th');});}
+  else if(sortVal==='status'){const ord={pending:0,fail:1,pass:2};sorted.sort((a,b)=>{const sa=eMap[a.id]?.status||'pending',sb2=eMap[b.id]?.status||'pending';if(ord[sa]!==ord[sb2])return ord[sa]-ord[sb2];return(a.name||'').localeCompare(b.name||'','th');});}
+  else{sorted.sort((a,b)=>(a.name||'').localeCompare(b.name||'','th'));}
 
-  // Apply filter
   const filter=currentFilter||'all';
-  const filtered=sorted.filter(c=>{
-    const st=eMap[c.id]?.status||'pending';
+  const filtered=sorted.filter(comp=>{
+    const st=eMap[comp.id]?.status||'pending';
     if(filter==='pending')return st==='pending';
     if(filter==='fail')return st==='fail';
     if(filter==='pass')return st==='pass';
     return true;
   });
-
-  if(!filtered.length){
-    el.innerHTML='<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะในหมวดนี้</p></div>';
-    updateBar();return;
-  }
+  if(!filtered.length){el.innerHTML='<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะในหมวดนี้</p></div>';updateBar();return;}
 
   el.innerHTML=filtered.map((comp,i)=>{
     const prev=eMap[comp.id];
     const rubric=comp.rubric_criteria||DEF_RUBRIC;
     const isPassed=prev?.status==='pass';
-    const teacherInfo=prev?.teachers?`อ.${prev.teachers.full_name||'-'}`:'';
+    const teacherName=prev?.teachers?'อ.'+prev.teachers.full_name+(prev.teachers.teacher_code?' ('+prev.teachers.teacher_code+')':''):'';
     const evalDate=prev?new Date(prev.evaluated_at).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'}):'';
+    const histHTML=buildHistoryHTML(histMap[comp.id]||[]);
 
-    // COLLAPSED card for passed skills
     if(isPassed){
-      return `<div class="comp-card passed" id="cc-${comp.id}" onclick="toggleCard('${comp.id}')">
-        <div class="comp-head">
-          <div style="width:32px;height:32px;background:var(--pass-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:600;color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${comp.name}</div>
-            <div style="font-size:11px;color:var(--pass);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap;">
-              <span>Rubric: ${prev.rubric_score||'-'}</span>
-              ${teacherInfo?`<span>👤 ${teacherInfo}</span>`:''}
-              ${evalDate?`<span>📅 ${evalDate}</span>`:''}
-              ${prev.location?`<span>📍 ${prev.location}</span>`:''}
-            </div>
-          </div>
-          <span class="comp-type ${comp.type==='mandatory'?'t-m':'t-e'}" style="flex-shrink:0;">${comp.type==='mandatory'?'⭐':'📝'}</span>
-        </div>
-        <div class="comp-body" style="padding-bottom:14px;">
-          <div style="background:var(--pass-bg);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
-            <div style="font-size:12px;font-weight:700;color:var(--pass);">✅ ผ่านแล้ว — Rubric: ${prev.rubric_score||'-'}</div>
-            <div style="font-size:11px;color:var(--slate-m);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
-              ${teacherInfo?`<span>👤 ${teacherInfo}${prev.teachers?.teacher_code?' ('+prev.teachers.teacher_code+')':''}</span>`:''}
-              ${evalDate?`<span>📅 ${evalDate}</span>`:''}
-              ${prev.location?`<span>📍 ${prev.location}</span>`:''}
-              ${prev.notes?`<span>📝 ${prev.notes}</span>`:''}
-            </div>
-            <div style="font-size:11px;color:var(--slate-l);margin-top:4px;">กดที่การ์ดนี้เพื่อยุบ | ประเมินใหม่ได้ด้านล่าง</div>
-          </div>
-          <div class="rubric-lbl">📊 Rubric (ประเมินใหม่)</div>
-          <div class="rubric-scale" id="rs-${comp.id}">
-            ${rubric.map(r=>`<button class="rubric-btn" onclick="event.stopPropagation();pickRubric('${comp.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('')}
-          </div>
-          <div class="eval-meta">
-            <div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-${comp.id}" placeholder="ห้องปฏิบัติการ" oninput="event.stopPropagation();updateMeta('${comp.id}')"></div>
-            <div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-${comp.id}" placeholder="(ถ้ามี)" oninput="event.stopPropagation();updateMeta('${comp.id}')"></div>
-          </div>
-          <div class="eval-actions">
-            <button class="eval-btn btn-pass" id="pb-${comp.id}" onclick="event.stopPropagation();setStatus('${comp.id}','pass',this)">✅ ผ่าน (ประเมินใหม่)</button>
-            <button class="eval-btn btn-fail" id="fb-${comp.id}" onclick="event.stopPropagation();setStatus('${comp.id}','fail',this)">❌ ไม่ผ่าน</button>
-          </div>
-        </div>
-      </div>`;
+      return buildPassedCard(comp,prev,rubric,teacherName,evalDate,histHTML);
     }
-
-    // FULL card for pending/fail skills
-    return `<div class="comp-card" style="animation-delay:${i*0.04}s" id="cc-${comp.id}">
-      <div class="comp-head">
-        <div class="comp-name">${comp.name}</div>
-        <span class="comp-type ${comp.type==='mandatory'?'t-m':'t-e'}">${comp.type==='mandatory'?'⭐':'📝'}</span>
-      </div>
-      <div class="comp-body">
-        ${prev?`<div style="background:var(--fail-bg);border-radius:10px;padding:8px 12px;margin-bottom:10px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-            <span class="prev-badge prev-fail">❌ ไม่ผ่าน | Rubric: ${prev.rubric_score||'-'}</span>
-            <button onclick="quickEditEval('${prev.id}','${comp.id}','fail')"
-              style="padding:4px 10px;background:var(--pass-bg);color:var(--pass);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">
-              ✏️ แก้เป็นผ่าน
-            </button>
-          </div>
-          <div style="font-size:11px;color:var(--slate-m);margin-top:5px;display:flex;gap:12px;flex-wrap:wrap;">
-            ${teacherInfo?`<span>👤 ${teacherInfo}${prev.teachers?.teacher_code?' ('+prev.teachers.teacher_code+')':''}</span>`:''}
-            ${evalDate?`<span>📅 ${evalDate}</span>`:''}
-            ${prev.location?`<span>📍 ${prev.location}</span>`:''}
-            ${prev.notes?`<span>📝 ${prev.notes}</span>`:''}
-          </div>
-        </div>`:''}
-        <div class="rubric-lbl">📊 Rubric</div>
-        <div class="rubric-scale" id="rs-${comp.id}">
-          ${rubric.map(r=>`<button class="rubric-btn" onclick="pickRubric('${comp.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('')}
-        </div>
-        <div class="eval-meta">
-          <div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-${comp.id}" placeholder="ห้องปฏิบัติการ" oninput="updateMeta('${comp.id}')"></div>
-          <div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-${comp.id}" placeholder="(ถ้ามี)" oninput="updateMeta('${comp.id}')"></div>
-        </div>
-        <div class="eval-actions">
-          <button class="eval-btn btn-pass" id="pb-${comp.id}" onclick="setStatus('${comp.id}','pass',this)">✅ ผ่าน</button>
-          <button class="eval-btn btn-fail" id="fb-${comp.id}" onclick="setStatus('${comp.id}','fail',this)">❌ ไม่ผ่าน</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('') + '<div style="height:80px;"></div>';
+    return buildFullCard(comp,prev,rubric,teacherName,evalDate,histHTML,i);
+  }).join('')+'<div style="height:80px;"></div>';
   updateBar();
+}
+
+function buildPassedCard(comp,prev,rubric,teacherName,evalDate,histHTML){
+  const rb=rubric.map(r=>'<button class="rubric-btn" onclick="event.stopPropagation();pickRubric(\'' +comp.id+ '\','+r.score+',this)"><div class="rubric-num">'+r.score+'</div><div class="rubric-desc">'+r.label+'</div></button>').join('');
+  return '<div class="comp-card passed" id="cc-'+comp.id+'" onclick="toggleCard(\'' +comp.id+ '\')">'
+    +'<div class="comp-head">'
+    +'<div style="width:32px;height:32px;background:var(--pass-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>'
+    +'<div style="flex:1;min-width:0;">'
+    +'<div style="font-size:15px;font-weight:700;color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+comp.name+'</div>'
+    +'<div style="font-size:11px;color:var(--pass);margin-top:2px;">R:'+( prev.rubric_score||'-')+(teacherName?' | '+teacherName:'')+(evalDate?' | '+evalDate:'')+(prev.location?' | '+prev.location:'')+(histMap&&histMap[comp.id]&&histMap[comp.id].length>1?' | '+histMap[comp.id].length+' ครั้ง':'')+' </div>'
+    +'</div>'
+    +'<span class="comp-type '+( comp.type==='mandatory'?'t-m':'t-e')+'" style="flex-shrink:0;">'+( comp.type==='mandatory'?'⭐':'📝')+'</span>'
+    +'</div>'
+    +'<div class="comp-body" style="padding-bottom:14px;">'
+    +'<div style="background:var(--pass-bg);border-radius:10px;padding:10px 12px;margin-bottom:12px;">'
+    +'<div style="font-size:12px;font-weight:700;color:var(--pass);">✅ ผ่านแล้ว — Rubric: '+(prev.rubric_score||'-')+(prev.avg_rubric_score?' (เฉลี่ย: '+prev.avg_rubric_score+')':'')+'</div>'
+    +(teacherName?'<div style="font-size:11px;color:var(--slate-m);margin-top:3px;">👤 '+teacherName+'</div>':'')
+    +(prev.location||prev.notes?'<div style="font-size:11px;color:var(--slate-m);margin-top:2px;">'+(prev.location?'📍 '+prev.location+' ':'')+(prev.notes?'📝 '+prev.notes:'')+'</div>':'')
+    +(prev.feedback?'<div style="margin-top:5px;padding:5px 9px;background:rgba(255,255,255,0.7);border-radius:7px;font-size:11px;">💬 <b>Feedback:</b> '+prev.feedback+'</div>':'')
+    +'<div style="font-size:11px;color:var(--slate-l);margin-top:4px;">กดที่การ์ดนี้เพื่อยุบ | ประเมินใหม่ได้ด้านล่าง</div>'
+    +'</div>'
+    +histHTML
+    +'<div class="rubric-lbl">📊 Rubric (ประเมินใหม่)</div>'
+    +'<div class="rubric-scale" id="rs-'+comp.id+'">'+rb+'</div>'
+    +'<div class="eval-meta">'
+    +'<div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-'+comp.id+'" placeholder="ห้องปฏิบัติการ" oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')"></div>'
+    +'<div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-'+comp.id+'" placeholder="(ถ้ามี)" oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')"></div>'
+    +'</div>'
+    +'<div style="margin-top:10px;"><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">💬 Feedback ให้นักศึกษา</label>'
+    +'<textarea id="fb2-'+comp.id+'" placeholder="Feedback..." oninput="event.stopPropagation();updateMeta(\'' +comp.id+ '\')" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:Sarabun,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none;"></textarea></div>'
+    +'<div class="eval-actions">'
+    +'<button class="eval-btn btn-pass" id="pb-'+comp.id+'" onclick="event.stopPropagation();setStatus(\'' +comp.id+ '\',\'pass\',this)">✅ ผ่าน</button>'
+    +'<button class="eval-btn btn-fail" id="fb-'+comp.id+'" onclick="event.stopPropagation();setStatus(\'' +comp.id+ '\',\'fail\',this)">❌ ไม่ผ่าน</button>'
+    +'</div>'
+    +'</div>'
+    +'</div>';
+}
+
+function buildFullCard(comp,prev,rubric,teacherName,evalDate,histHTML,i){
+  const rb=rubric.map(r=>'<button class="rubric-btn" onclick="pickRubric(\'' +comp.id+ '\','+r.score+',this)"><div class="rubric-num">'+r.score+'</div><div class="rubric-desc">'+r.label+'</div></button>').join('');
+  const prevSection=prev?'<div style="background:var(--fail-bg);border-radius:10px;padding:8px 12px;margin-bottom:10px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">'
+    +'<span class="prev-badge prev-fail">❌ ไม่ผ่าน | Rubric: '+(prev.rubric_score||'-')+'</span>'
+    +'<button onclick="quickEditEval(\'' +prev.id+ '\',\'' +comp.id+ '\',\'fail\')" style="padding:4px 10px;background:var(--pass-bg);color:var(--pass);border:none;border-radius:8px;font-family:Sarabun,sans-serif;font-size:11px;font-weight:700;cursor:pointer;">✏️ แก้เป็นผ่าน</button>'
+    +'</div>'
+    +(teacherName?'<div style="font-size:11px;color:var(--slate-m);margin-top:4px;">👤 '+teacherName+'</div>':'')
+    +(prev.location||prev.notes?'<div style="font-size:11px;color:var(--slate-m);margin-top:2px;">'+(prev.location?'📍 '+prev.location+' ':'')+(prev.notes?'📝 '+prev.notes:'')+'</div>':'')
+    +(prev.feedback?'<div style="margin-top:5px;padding:5px 9px;background:rgba(255,255,255,0.6);border-radius:7px;font-size:11px;">💬 <b>Feedback:</b> '+prev.feedback+'</div>':'')
+    +'</div>'
+    :''
+  ;
+  return '<div class="comp-card" style="animation-delay:'+(i*0.04)+'s" id="cc-'+comp.id+'">'
+    +'<div class="comp-head"><div class="comp-name">'+comp.name+'</div>'
+    +'<span class="comp-type '+(comp.type==='mandatory'?'t-m':'t-e')+'">'+(comp.type==='mandatory'?'⭐':'📝')+'</span>'
+    +'</div>'
+    +'<div class="comp-body">'
+    +prevSection
+    +histHTML
+    +'<div class="rubric-lbl">📊 Rubric</div>'
+    +'<div class="rubric-scale" id="rs-'+comp.id+'">'+rb+'</div>'
+    +'<div class="eval-meta">'
+    +'<div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-'+comp.id+'" placeholder="ห้องปฏิบัติการ" oninput="updateMeta(\'' +comp.id+ '\')"></div>'
+    +'<div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-'+comp.id+'" placeholder="(ถ้ามี)" oninput="updateMeta(\'' +comp.id+ '\')"></div>'
+    +'</div>'
+    +'<div style="margin-top:10px;"><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">💬 Feedback ให้นักศึกษา</label>'
+    +'<textarea id="fb2-'+comp.id+'" placeholder="Feedback..." oninput="updateMeta(\'' +comp.id+ '\')" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:Sarabun,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none;"></textarea></div>'
+    +'<div class="eval-actions">'
+    +'<button class="eval-btn btn-pass" id="pb-'+comp.id+'" onclick="setStatus(\'' +comp.id+ '\',\'pass\',this)">✅ ผ่าน</button>'
+    +'<button class="eval-btn btn-fail" id="fb-'+comp.id+'" onclick="setStatus(\'' +comp.id+ '\',\'fail\',this)">❌ ไม่ผ่าน</button>'
+    +'</div>'
+    +'</div>'
+    +'</div>';
 }
 function toggleCard(id){
   const card=document.getElementById('cc-'+id);
@@ -582,6 +623,7 @@ function updateMeta(id){
   if(!decisions[id])decisions[id]={};
   decisions[id].location=document.getElementById('loc-'+id)?.value;
   decisions[id].notes=document.getElementById('note-'+id)?.value;
+  decisions[id].feedback=document.getElementById('fb2-'+id)?.value;
 }
 function updateBar(){
   const done=Object.values(decisions).filter(d=>d.status).length;
@@ -596,21 +638,41 @@ async function logActivity(action,details){
 async function submitAll(){
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const rows=[];
-  for(const[cid,d]of Object.entries(decisions)){
-    if(!d.status)continue;
-    rows.push({student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,status:d.status,rubric_score:d.rubric_score||null,location:d.location||null,notes:d.notes||null,evaluated_at:new Date().toISOString()});
+  const now=new Date().toISOString();
+  const toSubmit=Object.entries(decisions).filter(([,d])=>d.status);
+  if(!toSubmit.length){showToast('ไม่มีการประเมิน','err');btn.disabled=false;btn.textContent='💾 บันทึก';return;}
+
+  // 1. Insert to evaluation_history (every submission)
+  const histRows=toSubmit.map(([cid,d])=>({
+    student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,
+    status:d.status,rubric_score:d.rubric_score||null,
+    location:d.location||null,notes:d.notes||null,feedback:d.feedback||null,evaluated_at:now
+  }));
+  const{error:histErr}=await sb.from('evaluation_history').insert(histRows);
+  if(histErr){showToast('❌ '+histErr.message,'err');btn.disabled=false;btn.textContent='💾 บันทึก';return;}
+
+  // 2. For each competency: fetch ALL history, compute average, upsert to evaluations
+  for(const[cid,d] of toSubmit){
+    const{data:hist}=await sb.from('evaluation_history')
+      .select('rubric_score,status')
+      .eq('student_id',selStudent.id)
+      .eq('competency_id',cid);
+    const validScores=(hist||[]).filter(h=>h.rubric_score!=null).map(h=>h.rubric_score);
+    const avgScore=validScores.length?Math.round(validScores.reduce((a,b)=>a+b,0)/validScores.length):d.rubric_score||null;
+    const passCount=(hist||[]).filter(h=>h.status==='pass').length;
+    const finalStatus=passCount>=(hist||[]).length/2?'pass':'fail';
+    await sb.from('evaluations').upsert({
+      student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,
+      status:finalStatus,rubric_score:avgScore,avg_rubric_score:avgScore,
+      eval_count:hist?.length||1,location:d.location||null,notes:d.notes||null,
+      feedback:d.feedback||null,evaluated_at:now
+    },{onConflict:'student_id,competency_id'});
   }
-  if(!rows.length){showToast('ไม่มีการประเมิน','err');return;}
-  const{error}=await sb.from('evaluations').upsert(rows,{onConflict:'student_id,competency_id'});
-  if(error){showToast('❌ '+error.message,'err');}
-  else{
-    showToast('✅ บันทึกสำเร็จ '+rows.length+' ทักษะ','ok');
-    const passCount=Object.values(decisions).filter(d=>d.status==='pass').length;
-    const failCount=Object.values(decisions).filter(d=>d.status==='fail').length;
-    logActivity('ประเมินทักษะ',`นศ. ${selStudent.full_name} (${selStudent.student_code||'-'}) | ผ่าน ${passCount} | ไม่ผ่าน ${failCount} | รวม ${rows.length} ทักษะ`);
-    decisions={};await renderComps();loadHistory();
-  }
+  const passCount=toSubmit.filter(([,d])=>d.status==='pass').length;
+  const failCount=toSubmit.filter(([,d])=>d.status==='fail').length;
+  showToast('✅ บันทึกสำเร็จ '+toSubmit.length+' ทักษะ','ok');
+  logActivity('ประเมินทักษะ',`นศ. ${selStudent.full_name} (${selStudent.student_code||'-'}) | ผ่าน ${passCount} | ไม่ผ่าน ${failCount}`);
+  decisions={};await renderComps();loadHistory();
   btn.disabled=false;btn.textContent='💾 บันทึก';
 }
 async function printStudentReport(){
@@ -741,7 +803,123 @@ function switchTab(tab){
   document.getElementById('bn-'+tab)?.classList.add('active');
   if(tab==='history')loadHistory();
   if(tab==='group'){gSelectedIds=new Set();gDecisions={};document.getElementById('editGroupCard').style.display='none';document.getElementById('gEvalSection').style.display='none';renderSavedGroups();}
+  if(tab==='qreval')initQRTab();
   closeSidebar();
+}
+
+// ===== QR EVALUATION =====
+let activeQRToken=null,qrPollTimer=null;
+const BASE_URL=window.location.origin+window.location.pathname.replace('teacher-dashboard.html','');
+
+async function initQRTab(){
+  // Populate competency select
+  const sel=document.getElementById('qrCompSelect');
+  if(sel.options.length<=1){
+    comps.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name+(c.category?' ('+c.category+')':'');sel.appendChild(o);});
+  }
+  // Load active QR tokens for this teacher
+  const{data}=await sb.from('qr_tokens')
+    .select('*,competencies(name)')
+    .eq('teacher_id',user.profileId)
+    .eq('is_active',true)
+    .order('created_at',{ascending:false});
+  const el=document.getElementById('activeQRs');
+  if(data?.length){
+    el.innerHTML='<div style="font-size:13px;font-weight:700;margin-bottom:10px;margin-top:4px;">📋 QR ที่เปิดอยู่</div>'+
+    data.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:white;border:1.5px solid var(--teal-l);border-radius:12px;margin-bottom:8px;">
+      <span style="font-size:20px;">📲</span>
+      <div style="flex:1;font-size:13px;font-weight:600;">${t.competencies?.name||'-'}</div>
+      <button onclick="showActiveQR('${t.id}','${t.token}','${t.competencies?.name||''}')"
+        style="padding:6px 12px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ดู QR</button>
+      <button onclick="closeQRToken('${t.id}')"
+        style="padding:6px 10px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ปิด</button>
+    </div>`).join('');
+  }else{
+    el.innerHTML='';
+  }
+}
+
+async function createQR(){
+  const compId=document.getElementById('qrCompSelect').value;
+  if(!compId){showToast('❌ กรุณาเลือกทักษะ','err');return;}
+  const{data,error}=await sb.from('qr_tokens').insert({teacher_id:user.profileId,competency_id:compId}).select().single();
+  if(error){showToast('❌ '+error.message,'err');return;}
+  const compName=comps.find(c=>c.id===compId)?.name||'ทักษะ';
+  showActiveQR(data.id,data.token,compName);
+  initQRTab();
+}
+
+function showActiveQR(tokenId,token,compName){
+  activeQRToken=tokenId;
+  clearInterval(qrPollTimer);
+  const url=BASE_URL+'qr-eval.html?token='+token;
+  document.getElementById('qrCompName').textContent='📋 '+compName;
+  document.getElementById('qrUrlText').textContent=url;
+  document.getElementById('qrDisplay').style.display='block';
+  // Generate QR
+  const qrDiv=document.getElementById('qrCodeDiv');
+  qrDiv.innerHTML='';
+  if(window.QRCode){
+    new QRCode(qrDiv,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+  } else {
+    // fallback: qr via API
+    qrDiv.innerHTML=`<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" width="180" height="180">`;
+  }
+  refreshQueue();
+  qrPollTimer=setInterval(refreshQueue,5000);
+  document.getElementById('qrDisplay').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function refreshQueue(){
+  if(!activeQRToken)return;
+  const{data}=await sb.from('qr_queue')
+    .select('*,students(full_name,student_code)')
+    .eq('token_id',activeQRToken)
+    .eq('status','waiting')
+    .order('joined_at');
+  document.getElementById('queueCount').textContent=(data?.length||0);
+  document.getElementById('queueList').innerHTML=(data||[]).map((q,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--bg);border-radius:11px;border:1px solid var(--border);">
+      <div style="width:28px;height:28px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${q.students?.full_name||'-'}</div>
+        <div style="font-size:11px;color:var(--slate-l);">${q.students?.student_code||''}</div>
+      </div>
+      <button onclick="evalFromQueue('${q.student_id}','${q.id}')"
+        style="padding:6px 12px;background:var(--rose);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">✍️ ประเมิน</button>
+      <button onclick="skipQueue('${q.id}')"
+        style="padding:6px 10px;background:var(--bg);color:var(--slate-m);border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">ข้าม</button>
+    </div>`).join('') || '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">ยังไม่มีนักศึกษาในคิว</div>';
+}
+
+async function evalFromQueue(studentId,queueEntryId){
+  const st=students.find(s=>s.id===studentId);
+  if(!st){showToast('ไม่พบข้อมูลนักศึกษา','err');return;}
+  await sb.from('qr_queue').update({status:'evaluated'}).eq('id',queueEntryId);
+  // Switch to evaluate tab and select this student
+  switchTab('evaluate');
+  document.getElementById('stSearch').value=st.full_name;
+  filterStudents();
+  setTimeout(()=>selectStudent(studentId),200);
+}
+
+async function skipQueue(queueEntryId){
+  await sb.from('qr_queue').update({status:'skipped'}).eq('id',queueEntryId);
+  refreshQueue();
+}
+
+async function closeQRToken(tokenId){
+  if(!confirm('ปิด QR นี้? นักศึกษาจะไม่สามารถ scan ได้อีก'))return;
+  await sb.from('qr_tokens').update({is_active:false}).eq('id',tokenId);
+  clearInterval(qrPollTimer);
+  document.getElementById('qrDisplay').style.display='none';
+  activeQRToken=null;
+  initQRTab();
+  showToast('✅ ปิด QR สำเร็จ','ok');
+}
+
+async function deactivateQR(){
+  if(activeQRToken)await closeQRToken(activeQRToken);
 }
 
 // ===== GROUP EVALUATION (localStorage-based) =====
