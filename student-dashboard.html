@@ -399,18 +399,19 @@ async function init(){
   await loadData();
 }
 async function loadData(){
-  const[cr,er]=await Promise.all([
+  const[cr,er,hr]=await Promise.all([
     sb.from('competencies').select('*'),
-    sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
+    sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId),
+    sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
   ]);
-  const comps=cr.data||[],evals=er.data||[];
+  const comps=cr.data||[],evals=er.data||[],hist=hr.data||[];
+  const histByComp={};hist.forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
   const sortedComps=(comps||[]).sort((a,b)=>{
     const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
     if(ca!==0)return ca;
     return (a.name||'').localeCompare(b.name||'','th');
   });
-  skills=sortedComps.map(c=>{const e=evals.find(ev=>ev.competency_id===c.id)||null;return{...c,evaluation:e,status:e?e.status:'pending'};});
-  renderStats();renderRecent();renderMandatory();renderElective();renderReport();
+  skills=sortedComps.map(comp=>{const e=evals.find(ev=>ev.competency_id===comp.id)||null;return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};});  renderStats();renderRecent();renderMandatory();renderElective();renderReport();
 }
 function skillHTML(sk,delay=0){
   const sm={pass:{icon:'✅',cls:'d-pass',b:'b-pass',txt:'ผ่าน'},fail:{icon:'❌',cls:'d-fail',b:'b-fail',txt:'ไม่ผ่าน'},pending:{icon:'⏳',cls:'d-pend',b:'b-pend',txt:'รอประเมิน'}};
@@ -424,6 +425,8 @@ function skillHTML(sk,delay=0){
       <div class="skill-name">${sk.name}</div>
       <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>${sk.category?` <span class="skill-type" style="background:#f1f5f9;color:var(--slate-m)">${sk.category}</span>`:''}
       ${date?`<div class="skill-meta">${date}${loc}${tea}</div>`:''}
+      ${sk.evaluation?.feedback?`<div style="font-size:11px;padding:4px 8px;background:var(--teal-50);border-radius:6px;color:var(--teal-d);margin-top:3px;">💬 ${sk.evaluation.feedback}</div>`:''}
+      ${(sk.history||[]).length>1?`<div style="font-size:10px;color:var(--slate-l);margin-top:2px;">📊 ประเมินแล้ว ${(sk.history||[]).length} ครั้ง | เฉลี่ย ${sk.evaluation?.avg_rubric_score||'-'}</div>`:''}
     </div>
     <div class="skill-right">
       <span class="status-badge ${s.b}">${s.txt}</span>
