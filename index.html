@@ -204,6 +204,10 @@ input[type="password"].fi::placeholder{letter-spacing:0;font-size:15px;}
       </div>
     </div>
     <p class="menu-footer" style="margin-top:14px;">Log Book System v2.0</p>
+    <div id="sessionBar" style="display:none;margin-top:8px;text-align:center;">
+      <span style="font-size:12px;color:rgba(255,255,255,0.6);">มี session เก่าอยู่ — </span>
+      <button onclick="clearSession()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:7px;padding:3px 12px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">🚪 ออกจากระบบ</button>
+    </div>
   </div>
 
   <!-- STUDENT LOGIN -->
@@ -318,6 +322,7 @@ function rippleEffect(el,e){
   el.appendChild(r);setTimeout(()=>r.remove(),600);
 }
 
+function clearSession(){localStorage.removeItem('lb_user');sb.auth.signOut();document.getElementById('sessionBar').style.display='none';showMenu();}
 async function logLogin(role,name,code){
   const roleLabel={student:'นักศึกษา',teacher:'อาจารย์',admin:'Admin'};
   sb.from('activity_logs').insert({user_role:role,user_name:name,user_code:code,action:'เข้าสู่ระบบ',details:`${roleLabel[role]} login สำเร็จ`}).then(()=>{});
@@ -377,11 +382,27 @@ document.addEventListener('keydown',e=>{
     handleLogin(role,document.getElementById(role+'Btn'));
   }
 });
-window.addEventListener('load',()=>{
+window.addEventListener('load',async()=>{
   const s=localStorage.getItem('lb_user');if(!s)return;
   const i=JSON.parse(s);
-  const m={student:'student-dashboard.html',teacher:'teacher-dashboard.html',admin:'admin-dashboard.html'};
-  if(m[i.role])window.location.href=m[i.role];
+  const map={student:'student-dashboard.html',teacher:'teacher-dashboard.html',admin:'admin-dashboard.html'};
+  if(!map[i.role]){localStorage.removeItem('lb_user');return;}
+  // Quick verify: check if user still exists in DB
+  try{
+    if(i.role==='student'){
+      const{data}=await sb.from('students').select('id').eq('id',i.profileId).single();
+      if(!data){localStorage.removeItem('lb_user');return;}
+    } else if(i.role==='teacher'){
+      const{data}=await sb.from('teachers').select('id').eq('id',i.profileId).single();
+      if(!data){localStorage.removeItem('lb_user');return;}
+    } else if(i.role==='admin'){
+      const{data:{session}}=await sb.auth.getSession();
+      if(!session){localStorage.removeItem('lb_user');return;}
+    }
+    window.location.href=map[i.role];
+  }catch(e){
+    localStorage.removeItem('lb_user');
+  }
 });
 </script>
 </body>
