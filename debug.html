@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debug — Log Book</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<style>
+  body{font-family:monospace;padding:16px;background:#0f172a;color:#94a3b8;font-size:13px;}
+  h2{color:#38bdf8;margin-bottom:16px;}
+  .step{margin-bottom:8px;padding:8px 12px;border-radius:6px;background:#1e293b;}
+  .ok{color:#4ade80;}.err{color:#f87171;}.warn{color:#fbbf24;}.info{color:#38bdf8;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:6px;}
+  .b-ok{background:#166534;color:#4ade80;}
+  .b-err{background:#7f1d1d;color:#f87171;}
+  .b-warn{background:#78350f;color:#fbbf24;}
+  pre{background:#0f172a;padding:8px;border-radius:4px;overflow-x:auto;font-size:11px;color:#94a3b8;margin-top:4px;white-space:pre-wrap;}
+  button{padding:8px 16px;background:#0369a1;color:white;border:none;border-radius:6px;cursor:pointer;margin:4px 4px 12px 0;font-family:monospace;}
+  button:hover{background:#0284c7;}
+  .danger{background:#991b1b;}.danger:hover{background:#b91c1c;}
+  hr{border:none;border-top:1px solid #1e293b;margin:16px 0;}
+</style>
+</head>
+<body>
+<h2>🔧 Log Book — Diagnostic Tool</h2>
+
+<button onclick="runAll()">▶ Run All Tests</button>
+<button onclick="clearLS()" class="danger">🗑️ Clear localStorage</button>
+<button onclick="location.href='index.html'">🏠 Back to index</button>
+
+<hr>
+<div id="log"></div>
+
+<script>
+const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const{createClient}=window.supabase;
+const sb=createClient(SB_URL,SB_KEY);
+const el=document.getElementById('log');
+
+function log(msg,type='info'){
+  const d=document.createElement('div');
+  d.className='step';
+  d.innerHTML=`<span class="badge b-${type==='ok'?'ok':type==='err'?'err':'warn'}">${type.toUpperCase()}</span><span class="${type}">${msg}</span>`;
+  el.appendChild(d);
+}
+function logPre(label,data){
+  const d=document.createElement('div');
+  d.className='step';
+  d.innerHTML=`<span class="info">${label}</span><pre>${JSON.stringify(data,null,2)}</pre>`;
+  el.appendChild(d);
+}
+function sep(title){
+  el.innerHTML+=`<hr><div style="color:#38bdf8;font-weight:bold;margin-bottom:8px;">📋 ${title}</div>`;
+}
+
+async function runAll(){
+  el.innerHTML='';
+
+  // ─── 1. localStorage ───
+  sep('1. localStorage');
+  const raw=localStorage.getItem('lb_user');
+  if(!raw){log('ไม่มี session ใน localStorage','warn');}
+  else{
+    try{
+      const u=JSON.parse(raw);
+      log(`พบ session: role=${u.role} | profileId=${u.profileId} | name=${u.fullName}`,'ok');
+      logPre('lb_user content',u);
+    }catch(e){log('parse localStorage ไม่ได้: '+e.message,'err');}
+  }
+
+  // ─── 2. Supabase connection ───
+  sep('2. Supabase Connection');
+  try{
+    const{data,error}=await sb.from('students').select('id').limit(1);
+    if(error)log('students query error: '+error.message,'err');
+    else log('เชื่อมต่อ Supabase OK (students)','ok');
+  }catch(e){log('fetch error: '+e.message,'err');}
+
+  // ─── 3. Tables existence ───
+  sep('3. ตรวจสอบตารางทั้งหมด');
+  const tables=['students','teachers','competencies','evaluations',
+    'evaluation_history','qr_tokens','qr_queue','activity_logs','departments'];
+  for(const t of tables){
+    const{data,error}=await sb.from(t).select('id').limit(1);
+    if(error)log(`❌ ${t}: ${error.message}`,'err');
+    else log(`✅ ${t} — พบ ${Array.isArray(data)?data.length:'?'} rows (sample)`,'ok');
+  }
+
+  // ─── 4. departments FK join ───
+  sep('4. ตรวจสอบ FK Join (departments)');
+  const{data:stDept,error:stErr}=await sb.from('students').select('id,departments(name)').limit(1);
+  if(stErr)log('students JOIN departments: '+stErr.message,'err');
+  else log('students JOIN departments: OK','ok');
+
+  const{data:tcDept,error:tcErr}=await sb.from('teachers').select('id,departments(name)').limit(1);
+  if(tcErr)log('teachers JOIN departments: '+tcErr.message,'err');
+  else log('teachers JOIN departments: OK','ok');
+
+  const{data:cpDept,error:cpErr}=await sb.from('competencies').select('id,departments(name)').limit(1);
+  if(cpErr)log('competencies JOIN departments: '+cpErr.message,'err');
+  else log('competencies JOIN departments: OK','ok');
+
+  // ─── 5. evaluations columns ───
+  sep('5. ตรวจสอบ columns ใน evaluations');
+  const{data:evData,error:evErr}=await sb.from('evaluations')
+    .select('id,feedback,avg_rubric_score,eval_count').limit(1);
+  if(evErr)log('evaluations new columns: '+evErr.message,'err');
+  else log('evaluations columns (feedback,avg_rubric_score,eval_count): OK','ok');
+
+  // ─── 6. evaluation_history teachers join ───
+  sep('6. evaluation_history JOIN teachers');
+  const{data:ehData,error:ehErr}=await sb.from('evaluation_history')
+    .select('id,teachers(full_name)').limit(1);
+  if(ehErr)log('evaluation_history JOIN teachers: '+ehErr.message,'err');
+  else log('evaluation_history JOIN teachers: OK','ok');
+
+  // ─── 7. If student session, test their queries ───
+  if(raw){
+    const u=JSON.parse(raw);
+    if(u.role==='student'&&u.profileId){
+      sep('7. ทดสอบ queries ของ student');
+      const tests=[
+        ['competencies',sb.from('competencies').select('*').limit(3)],
+        ['evaluations',sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',u.profileId).limit(3)],
+        ['evaluation_history',sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',u.profileId).limit(3)],
+        ['student verify',sb.from('students').select('id').eq('id',u.profileId).single()],
+      ];
+      for(const[name,q] of tests){
+        const{data,error}=await q;
+        if(error)log(`❌ ${name}: ${error.message}`,'err');
+        else log(`✅ ${name}: ${JSON.stringify(data).slice(0,80)}`,'ok');
+      }
+    }
+  }
+
+  log('─── เสร็จสิ้น ───','info');
+}
+
+function clearLS(){
+  localStorage.removeItem('lb_user');
+  sb.auth.signOut();
+  log('✅ ล้าง localStorage แล้ว — กด Back to index เพื่อ login ใหม่','ok');
+}
+</script>
+</body>
+</html>
