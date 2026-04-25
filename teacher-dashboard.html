@@ -457,7 +457,7 @@ function filterStudents(){
   const q=document.getElementById('stSearch').value.toLowerCase();
   renderStudents(students.filter(s=>s.full_name.toLowerCase().includes(q)||(s.student_code||'').toLowerCase().includes(q)));
 }
-async function selectStudent(id){
+async function selectStudent(id, qrCompId){
   selStudent=students.find(s=>s.id===id);decisions={};
   filterStudents();
   document.getElementById('selBadge').textContent='✓ '+selStudent.full_name;
@@ -465,7 +465,7 @@ async function selectStudent(id){
   document.getElementById('printStudentBtn').style.display='inline';
   document.getElementById('evalSection').style.display='block';
   document.getElementById('evalSection').scrollIntoView({behavior:'smooth',block:'start'});
-  await renderComps();
+  await renderComps(qrCompId||null);
 }
 function buildHistoryHTML(hist){
   if(!hist||hist.length<=1)return '';
@@ -481,7 +481,7 @@ function buildHistoryHTML(hist){
   }).join('');
   return '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--slate-m);margin-bottom:5px;">📊 ประวัติ '+hist.length+' ครั้ง</div>'+rows+'</div>';
 }
-async function renderComps(){
+async function renderComps(qrCompId){
   const el=document.getElementById('compList');
   el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
   const[evalRes,histRes]=await Promise.all([
@@ -500,13 +500,20 @@ async function renderComps(){
   else{sorted.sort((a,b)=>(a.name||'').localeCompare(b.name||'','th'));}
 
   const filter=currentFilter||'all';
-  const filtered=sorted.filter(comp=>{
+  let filtered=sorted.filter(comp=>{
     const st=eMap[comp.id]?.status||'pending';
     if(filter==='pending')return st==='pending';
     if(filter==='fail')return st==='fail';
     if(filter==='pass')return st==='pass';
     return true;
   });
+  // QR mode: show only the specific skill
+  if(qrCompId)filtered=filtered.filter(c=>c.id===qrCompId);
+  if(qrCompId&&filtered.length===0){
+    // skill might be filtered out by status filter — show it anyway
+    const qrComp=sorted.find(c=>c.id===qrCompId);
+    if(qrComp)filtered=[qrComp];
+  }
   if(!filtered.length){el.innerHTML='<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะในหมวดนี้</p></div>';updateBar();return;}
 
   el.innerHTML=filtered.map((comp,i)=>{
@@ -821,7 +828,7 @@ function switchTab(tab){
 }
 
 // ===== QR EVALUATION =====
-let activeQRToken=null,qrPollTimer=null;
+let activeQRToken=null,activeQRCompId=null,qrPollTimer=null;
 const BASE_URL=window.location.origin+window.location.pathname.replace('teacher-dashboard.html','');
 
 async function initQRTab(){
@@ -842,7 +849,7 @@ async function initQRTab(){
     data.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:white;border:1.5px solid var(--teal-l);border-radius:12px;margin-bottom:8px;">
       <span style="font-size:20px;">📲</span>
       <div style="flex:1;font-size:13px;font-weight:600;">${t.competencies?.name||'-'}</div>
-      <button onclick="showActiveQR('${t.id}','${t.token}','${t.competencies?.name||''}')"
+      <button onclick="showActiveQR('${t.id}','${t.token}','${t.competencies?.name||''}','${t.competency_id||''}')"
         style="padding:6px 12px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ดู QR</button>
       <button onclick="closeQRToken('${t.id}')"
         style="padding:6px 10px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ปิด</button>
@@ -858,12 +865,13 @@ async function createQR(){
   const{data,error}=await sb.from('qr_tokens').insert({teacher_id:user.profileId,competency_id:compId}).select().single();
   if(error){showToast('❌ '+error.message,'err');return;}
   const compName=comps.find(c=>c.id===compId)?.name||'ทักษะ';
-  showActiveQR(data.id,data.token,compName);
+  showActiveQR(data.id,data.token,compName,compId);
   initQRTab();
 }
 
-function showActiveQR(tokenId,token,compName){
+function showActiveQR(tokenId,token,compName,compId){
   activeQRToken=tokenId;
+  activeQRCompId=compId||null;
   clearInterval(qrPollTimer);
   const url=BASE_URL+'qr-eval.html?token='+token;
   document.getElementById('qrCompName').textContent='📋 '+compName;
@@ -905,7 +913,7 @@ async function refreshQueue(){
         <div style="font-size:13px;font-weight:600;">${q.students?.full_name||'-'}</div>
         <div style="font-size:11px;color:var(--slate-l);">${q.students?.student_code||''}</div>
       </div>
-      <button onclick="evalFromQueue('${q.student_id}','${q.id}')"
+      <button onclick="evalFromQueue('${q.student_id}','${q.id}','${activeQRCompId||''}')"
         style="padding:6px 12px;background:var(--rose);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">✍️</button>
       <button onclick="skipQueue('${q.id}')"
         style="padding:6px 10px;background:var(--bg);color:var(--slate-m);border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">ข้าม</button>
@@ -941,15 +949,16 @@ async function batchEvalFromQueue(){
   showToast('✅ โหลด '+selectedIds.length+' คนจากคิว','ok');
 }
 
-async function evalFromQueue(studentId,queueEntryId){
+async function evalFromQueue(studentId,queueEntryId,compId){
   const st=students.find(s=>s.id===studentId);
   if(!st){showToast('ไม่พบข้อมูลนักศึกษา','err');return;}
   await sb.from('qr_queue').update({status:'evaluated'}).eq('id',queueEntryId);
-  // Switch to evaluate tab and select this student
+  // Switch to evaluate tab, select student, filter to only the QR skill
   switchTab('evaluate');
   document.getElementById('stSearch').value=st.full_name;
   filterStudents();
-  setTimeout(()=>selectStudent(studentId),200);
+  // Pass compId so renderComps knows to show only this skill
+  setTimeout(()=>selectStudent(studentId, compId||activeQRCompId),200);
 }
 
 async function skipQueue(queueEntryId){
