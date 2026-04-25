@@ -146,6 +146,12 @@ tr:hover td{background:var(--amber-50);}
 .spinner-wrap{text-align:center;padding:36px;}
 .spinner{display:inline-block;width:26px;height:26px;border:3px solid var(--amber-l);border-top-color:var(--amber);border-radius:50%;animation:spin 0.7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+.bk-btn{flex:1;padding:9px 0;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.bk-btn:active{transform:scale(0.96);}
+.bk-json{background:var(--amber-l);color:var(--amber-d);}
+.bk-json:hover{background:#fde68a;}
+.bk-csv{background:var(--teal-l);color:var(--teal-d);}
+.bk-csv:hover{background:#a7f3d0;}
 @media(max-width:768px){
   .sidebar{transform:translateX(-100%);}
   .sidebar.open{transform:translateX(0);box-shadow:0 0 40px rgba(0,0,0,0.2);}
@@ -229,6 +235,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="nav-item" onclick="showTab('teachers')" id="ni-teachers"><span class="nav-icon">👩‍🏫</span> อาจารย์</div>
     <div class="nav-item" onclick="showTab('competencies')" id="ni-competencies"><span class="nav-icon">📋</span> ทักษะ</div>
     <div class="nav-item" onclick="showTab('logs')" id="ni-logs"><span class="nav-icon">📜</span> บันทึกกิจกรรม</div>
+    <div class="nav-item" onclick="showTab('backup')" id="ni-backup"><span class="nav-icon">💾</span> สำรองข้อมูล</div>
     <div class="nav-item" onclick="showTab('settings')" id="ni-settings"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
   </nav>
   <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
@@ -314,6 +321,108 @@ tr:hover td{background:var(--amber-50);}
     </div>
   </div>
 
+  <!-- BACKUP -->
+  <div id="tab-backup" class="tab-view">
+    <div class="page-header">
+      <div><div class="page-title">💾 สำรองข้อมูล</div><div class="page-sub">ดาวน์โหลดข้อมูลทั้งหมดจากระบบ</div></div>
+      <button onclick="backupAll()" id="backupAllBtn"
+        style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,var(--amber),#f59e0b);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(217,119,6,0.3);">
+        📦 Backup ทั้งหมด
+      </button>
+    </div>
+
+    <!-- Status bar -->
+    <div id="backupStatus" style="display:none;padding:12px 16px;border-radius:12px;margin-bottom:18px;font-size:13px;font-weight:600;"></div>
+
+    <!-- Backup cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:20px;">
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:var(--teal-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">👨‍🎓</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">นักศึกษา</div>
+            <div style="font-size:12px;color:var(--slate-l);" id="bk-s-count">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="backupTable('students','JSON')" class="bk-btn bk-json">⬇ JSON</button>
+          <button onclick="backupTable('students','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:var(--rose-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">👩‍🏫</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">อาจารย์</div>
+            <div style="font-size:12px;color:var(--slate-l);" id="bk-t-count">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="backupTable('teachers','JSON')" class="bk-btn bk-json">⬇ JSON</button>
+          <button onclick="backupTable('teachers','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:var(--amber-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">📋</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">ทักษะ</div>
+            <div style="font-size:12px;color:var(--slate-l);" id="bk-c-count">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="backupTable('competencies','JSON')" class="bk-btn bk-json">⬇ JSON</button>
+          <button onclick="backupTable('competencies','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:#ede9fe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✅</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">ผลการประเมิน</div>
+            <div style="font-size:12px;color:var(--slate-l);" id="bk-e-count">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="backupTable('evaluations','JSON')" class="bk-btn bk-json">⬇ JSON</button>
+          <button onclick="backupTable('evaluations','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:#dbeafe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">📜</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">บันทึกกิจกรรม</div>
+            <div style="font-size:12px;color:var(--slate-l);" id="bk-l-count">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="backupTable('activity_logs','JSON')" class="bk-btn bk-json">⬇ JSON</button>
+          <button onclick="backupTable('activity_logs','CSV')" class="bk-btn bk-csv">⬇ CSV</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Last backup info -->
+    <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:18px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;">📖 คู่มือการใช้งาน Backup</div>
+      <div style="font-size:12px;color:var(--slate-m);line-height:1.8;">
+        <div>• <strong>JSON</strong> — บันทึกข้อมูลครบถ้วน เหมาะสำหรับสำรองข้อมูลทั้งหมด</div>
+        <div>• <strong>CSV</strong> — เปิดด้วย Excel ได้ทันที เหมาะสำหรับวิเคราะห์ข้อมูล</div>
+        <div>• <strong>Backup ทั้งหมด</strong> — ดาวน์โหลด JSON รวมทุกตารางในไฟล์เดียว</div>
+        <div style="margin-top:8px;padding:10px 12px;background:var(--amber-50);border-radius:8px;color:var(--amber-d);">
+          ⚠️ ควร Backup อย่างน้อยเดือนละครั้ง และเก็บไฟล์ไว้ในที่ปลอดภัย
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div id="tab-settings" class="tab-view">
     <div class="page-header"><div><div class="page-title">🔑 เปลี่ยนรหัสผ่าน</div><div class="page-sub">Admin</div></div></div>
@@ -339,6 +448,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="bn-item" onclick="showTab('teachers')" id="bn-teachers"><span class="bn-icon">👩‍🏫</span><span class="bn-label">อาจารย์</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('competencies')" id="bn-competencies"><span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('logs')" id="bn-logs"><span class="bn-icon">📜</span><span class="bn-label">บันทึก</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="showTab('backup')" id="bn-backup"><span class="bn-icon">💾</span><span class="bn-label">Backup</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('settings')" id="bn-settings"><span class="bn-icon">🔑</span><span class="bn-label">ตั้งค่า</span><div class="bn-dot"></div></div>
   </div>
 </nav>
@@ -631,7 +741,107 @@ function showTab(tab){
   document.getElementById('ni-'+tab)?.classList.add('active');
   document.getElementById('bn-'+tab)?.classList.add('active');
   if(tab==='logs')loadLogs();
+  if(tab==='backup')initBackup();
   closeSidebar();
+}
+
+// ===== BACKUP =====
+async function initBackup(){
+  const[s,t,c,e,l]=await Promise.all([
+    sb.from('students').select('id',{count:'exact',head:true}),
+    sb.from('teachers').select('id',{count:'exact',head:true}),
+    sb.from('competencies').select('id',{count:'exact',head:true}),
+    sb.from('evaluations').select('id',{count:'exact',head:true}),
+    sb.from('activity_logs').select('id',{count:'exact',head:true})
+  ]);
+  document.getElementById('bk-s-count').textContent=(s.count||0)+' รายการ';
+  document.getElementById('bk-t-count').textContent=(t.count||0)+' รายการ';
+  document.getElementById('bk-c-count').textContent=(c.count||0)+' รายการ';
+  document.getElementById('bk-e-count').textContent=(e.count||0)+' รายการ';
+  document.getElementById('bk-l-count').textContent=(l.count||0)+' รายการ';
+}
+
+function showBackupStatus(msg,type){
+  const el=document.getElementById('backupStatus');
+  el.textContent=msg;
+  el.style.display='block';
+  el.style.background=type==='ok'?'#dcfce7':type==='err'?'#fee2e2':'#fef3c7';
+  el.style.color=type==='ok'?'#166534':type==='err'?'#991b1b':'#92400e';
+  el.style.border=type==='ok'?'1px solid #86efac':type==='err'?'1px solid #fca5a5':'1px solid #fde68a';
+  setTimeout(()=>el.style.display='none',5000);
+}
+
+function downloadFile(content,filename,mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();
+  URL.revokeObjectURL(url);
+}
+
+function toCSV(data){
+  if(!data||!data.length)return '';
+  // Flatten JSONB fields
+  const flat=data.map(row=>{
+    const r={...row};
+    for(const k in r){
+      if(typeof r[k]==='object'&&r[k]!==null)r[k]=JSON.stringify(r[k]);
+    }
+    return r;
+  });
+  const headers=Object.keys(flat[0]);
+  const rows=flat.map(r=>headers.map(h=>{
+    const v=r[h]===null||r[h]===undefined?'':String(r[h]);
+    return '"'+v.replace(/"/g,'""')+'"';
+  }).join(','));
+  return [headers.join(','),...rows].join('\n');
+}
+
+async function backupTable(table,format){
+  showBackupStatus('⏳ กำลังดาวน์โหลด '+table+'...','warn');
+  const{data,error}=await sb.from(table).select('*').order('created_at',{ascending:true});
+  if(error){showBackupStatus('❌ '+error.message,'err');return;}
+  const now=new Date().toISOString().slice(0,10);
+  if(format==='JSON'){
+    downloadFile(JSON.stringify(data,null,2),`backup_${table}_${now}.json`,'application/json');
+  }else{
+    downloadFile('\uFEFF'+toCSV(data),`backup_${table}_${now}.csv`,'text/csv;charset=utf-8');
+  }
+  showBackupStatus(`✅ ดาวน์โหลด ${table} (${data.length} รายการ) สำเร็จ`,'ok');
+  logActivity('Backup ข้อมูล',`${table} — ${format} — ${data.length} รายการ`);
+}
+
+async function backupAll(){
+  const btn=document.getElementById('backupAllBtn');
+  btn.disabled=true;btn.textContent='⏳ กำลัง Backup...';
+  showBackupStatus('⏳ กำลังดึงข้อมูลทุกตาราง...','warn');
+  try{
+    const[s,t,c,e,l]=await Promise.all([
+      sb.from('students').select('*'),
+      sb.from('teachers').select('*'),
+      sb.from('competencies').select('*'),
+      sb.from('evaluations').select('*'),
+      sb.from('activity_logs').select('*').order('created_at',{ascending:true}).limit(2000)
+    ]);
+    const total=(s.data?.length||0)+(t.data?.length||0)+(c.data?.length||0)+(e.data?.length||0)+(l.data?.length||0);
+    const bundle={
+      backup_date:new Date().toISOString(),
+      backup_by:user.fullName,
+      system:'Log Book — คณะสัตวแพทยศาสตร์ มทร.ตะวันออก',
+      tables:{
+        students:{count:s.data?.length||0,data:s.data||[]},
+        teachers:{count:t.data?.length||0,data:t.data||[]},
+        competencies:{count:c.data?.length||0,data:c.data||[]},
+        evaluations:{count:e.data?.length||0,data:e.data||[]},
+        activity_logs:{count:l.data?.length||0,data:l.data||[]}
+      }
+    };
+    const now=new Date().toISOString().slice(0,10);
+    downloadFile(JSON.stringify(bundle,null,2),`backup_all_${now}.json`,'application/json');
+    showBackupStatus(`✅ Backup สำเร็จ — รวม ${total} รายการ จาก 5 ตาราง`,'ok');
+    logActivity('Backup ทั้งหมด',`รวม ${total} รายการ — JSON`);
+  }catch(e){showBackupStatus('❌ '+e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='📦 Backup ทั้งหมด';}
 }
 function openM(id){document.getElementById(id).classList.add('open');}
 function closeM(id){document.getElementById(id).classList.remove('open');}
