@@ -342,14 +342,23 @@ async function handleLogin(role,btn){
       showAlert(alertId,'ยินดีต้อนรับ '+p.full_name,'ok');
       setTimeout(()=>{window.location.href='admin-dashboard.html';},800);
     }else if(role==='student'){
-      const{data,error}=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).single();
+      let{data,error}=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).single();
+      // Fallback: if FK not set up, try without join
+      if(error&&(error.message?.includes('relationship')||error.message?.includes('department'))){
+        const res=await sb.from('students').select('*').eq('student_code',username).eq('password',password).single();
+        data=res.data;error=res.error;
+      }
       if(error||!data){showAlert(alertId,'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง','err');return;}
       localStorage.setItem('lb_user',JSON.stringify({role:'student',fullName:data.full_name,profileId:data.id,studentCode:data.student_code,username,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
       logLogin('student',data.full_name,data.student_code||username);
       showAlert(alertId,'ยินดีต้อนรับ '+data.full_name,'ok');
       setTimeout(()=>{window.location.href='student-dashboard.html';},800);
     }else{
-      const{data,error}=await sb.from('teachers').select('*,departments(name)').eq('teacher_code',username).eq('password',password).single();
+      let{data,error}=await sb.from('teachers').select('*,departments(name)').eq('teacher_code',username).eq('password',password).single();
+      if(error&&(error.message?.includes('relationship')||error.message?.includes('department'))){
+        const res=await sb.from('teachers').select('*').eq('teacher_code',username).eq('password',password).single();
+        data=res.data;error=res.error;
+      }
       if(error||!data){showAlert(alertId,'เลขตำแหน่งหรือรหัสผ่านไม่ถูกต้อง','err');return;}
       const isTA=data.is_admin===true;
       localStorage.setItem('lb_user',JSON.stringify({role:'teacher',fullName:data.full_name,profileId:data.id,teacherCode:data.teacher_code,username,isAdmin:isTA,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
