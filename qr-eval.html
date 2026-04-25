@@ -293,7 +293,7 @@ init();
 #_dbgToggle.active{background:#166534;border-color:#4ade80;}
 </style>
 <div id="_dbgBar"></div>
-<button id="_dbgToggle" onclick="toggleDbg()" title="Debug Log">🐛</button>
+<button id="_dbgToggle" onclick="toggleDbg()" title="Debug Log" style="display:none;">🐛</button>
 <script>
 function dbg(msg,color){
   const bar=document.getElementById('_dbgBar');if(!bar)return;
@@ -310,17 +310,26 @@ function toggleDbg(){
   bar.style.display=isOn?'none':'block';
   btn.classList.toggle('active',!isOn);
   if(!isOn)bar.scrollTop=bar.scrollHeight;
-  localStorage.setItem('_dbgOn',!isOn?'1':'');
+  localStorage.setItem('_dbgOpen',!isOn?'1':'');
 }
 (function(){
-  if(localStorage.getItem('_dbgOn')){
-    const b=document.getElementById('_dbgBar');
-    const t=document.getElementById('_dbgToggle');
-    if(b)b.style.display='block';if(t)t.classList.add('active');
+  // Only show debug button if admin has enabled it
+  if(localStorage.getItem('_dbgEnabled')==='1'){
+    const btn=document.getElementById('_dbgToggle');
+    if(btn)btn.style.display='flex';
+    if(localStorage.getItem('_dbgOpen')==='1'){
+      const bar=document.getElementById('_dbgBar');
+      if(bar)bar.style.display='block';
+      if(btn)btn.classList.add('active');
+    }
   }
 })();
-window.onerror=function(msg,src,line){dbg('⚠️ '+msg+' (line '+line+')','#f87171');};
-window.addEventListener('unhandledrejection',function(e){dbg('⚠️ '+(e.reason?.message||e.reason),'#f87171');});
+window.onerror=function(msg,src,line){
+  if(localStorage.getItem('_dbgEnabled')==='1')dbg('⚠️ '+msg+' (line '+line+')','#f87171');
+};
+window.addEventListener('unhandledrejection',function(e){
+  if(localStorage.getItem('_dbgEnabled')==='1')dbg('⚠️ '+(e.reason?.message||e.reason),'#f87171');
+});
 </script>
 <!-- ===== END DEBUG BAR ===== -->
 </body>

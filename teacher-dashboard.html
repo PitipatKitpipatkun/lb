@@ -1268,8 +1268,7 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('ope
 function showToast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='toast on toast-'+type;setTimeout(()=>el.classList.remove('on'),3500);}
 async function logout(){await sb.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
 init();
-</script>
-<!-- ===== DEBUG BAR ===== -->
+</script><!-- ===== DEBUG BAR ===== -->
 <style>
 #_dbgBar{position:fixed;bottom:80px;left:8px;right:8px;z-index:9999;background:rgba(15,23,42,0.95);color:#4ade80;padding:8px 12px;border-radius:12px;font-family:monospace;font-size:11px;max-height:200px;overflow-y:auto;transition:all 0.3s;backdrop-filter:blur(8px);border:1px solid rgba(74,222,128,0.2);display:none;}
 #_dbgToggle{position:fixed;bottom:calc(var(--nav-h,64px) + env(safe-area-inset-bottom,0px) + 8px);right:8px;z-index:10000;width:32px;height:32px;border-radius:50%;background:rgba(15,23,42,0.8);border:1px solid rgba(74,222,128,0.4);color:#4ade80;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all 0.2s;}
@@ -1277,7 +1276,7 @@ init();
 #_dbgToggle.active{background:#166534;border-color:#4ade80;}
 </style>
 <div id="_dbgBar"></div>
-<button id="_dbgToggle" onclick="toggleDbg()" title="Debug Log">🐛</button>
+<button id="_dbgToggle" onclick="toggleDbg()" title="Debug Log" style="display:none;">🐛</button>
 <script>
 function dbg(msg,color){
   const bar=document.getElementById('_dbgBar');if(!bar)return;
@@ -1294,17 +1293,26 @@ function toggleDbg(){
   bar.style.display=isOn?'none':'block';
   btn.classList.toggle('active',!isOn);
   if(!isOn)bar.scrollTop=bar.scrollHeight;
-  localStorage.setItem('_dbgOn',!isOn?'1':'');
+  localStorage.setItem('_dbgOpen',!isOn?'1':'');
 }
 (function(){
-  if(localStorage.getItem('_dbgOn')){
-    const b=document.getElementById('_dbgBar');
-    const t=document.getElementById('_dbgToggle');
-    if(b)b.style.display='block';if(t)t.classList.add('active');
+  // Only show debug button if admin has enabled it
+  if(localStorage.getItem('_dbgEnabled')==='1'){
+    const btn=document.getElementById('_dbgToggle');
+    if(btn)btn.style.display='flex';
+    if(localStorage.getItem('_dbgOpen')==='1'){
+      const bar=document.getElementById('_dbgBar');
+      if(bar)bar.style.display='block';
+      if(btn)btn.classList.add('active');
+    }
   }
 })();
-window.onerror=function(msg,src,line){dbg('⚠️ '+msg+' (line '+line+')','#f87171');};
-window.addEventListener('unhandledrejection',function(e){dbg('⚠️ '+(e.reason?.message||e.reason),'#f87171');});
+window.onerror=function(msg,src,line){
+  if(localStorage.getItem('_dbgEnabled')==='1')dbg('⚠️ '+msg+' (line '+line+')','#f87171');
+};
+window.addEventListener('unhandledrejection',function(e){
+  if(localStorage.getItem('_dbgEnabled')==='1')dbg('⚠️ '+(e.reason?.message||e.reason),'#f87171');
+});
 </script>
 <!-- ===== END DEBUG BAR ===== -->
 </body>

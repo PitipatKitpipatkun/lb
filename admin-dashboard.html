@@ -457,6 +457,32 @@ tr:hover td{background:var(--amber-50);}
         🚪 ออกจากระบบ
       </button>
     </div>
+
+    <!-- Debug Bar Control -->
+    <div style="margin-top:20px;max-width:440px;background:white;border-radius:18px;border:1.5px solid #1e293b;padding:18px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:40px;height:40px;background:#0f172a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🐛</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;">Debug Bar</div>
+          <div style="font-size:12px;color:var(--slate-l);">แสดง debug log ในทุกหน้า (สำหรับ Admin เท่านั้น)</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border-radius:12px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;" id="dbgStatusLabel">สถานะ: —</div>
+          <div style="font-size:11px;color:var(--slate-l);margin-top:2px;">เปิดใช้งานเฉพาะตอน debug/แก้ไขระบบ</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;">
+          <input type="checkbox" id="dbgToggleChk" onchange="setDebugMode(this.checked)" style="opacity:0;width:0;height:0;">
+          <span id="dbgToggleSlider" style="position:absolute;inset:0;background:#cbd5e1;border-radius:100px;transition:all 0.3s;"></span>
+          <span id="dbgToggleDot" style="position:absolute;left:3px;top:3px;width:20px;height:20px;background:white;border-radius:50%;transition:all 0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></span>
+        </label>
+      </div>
+      <div style="font-size:11px;color:var(--slate-l);line-height:1.7;padding:8px 12px;background:var(--amber-50);border-radius:8px;">
+        🔒 การตั้งค่านี้จะถูกบันทึกในอุปกรณ์นี้และมีผลกับทุกหน้า<br>
+        ปิดเสมอเมื่อไม่ได้ debug เพื่อ performance ที่ดีขึ้น
+      </div>
+    </div>
   </div>
 </main>
 
@@ -768,6 +794,32 @@ async function delComp(id){
   showToast('✅ ลบสำเร็จ','ok');loadComps();loadOverview();
 }
 
+
+// ===== DEBUG BAR ADMIN CONTROL =====
+function initDebugToggle(){
+  const enabled=localStorage.getItem('_dbgEnabled')==='1';
+  const chk=document.getElementById('dbgToggleChk');
+  const lbl=document.getElementById('dbgStatusLabel');
+  if(chk)chk.checked=enabled;
+  updateDebugSlider(enabled);
+  if(lbl)lbl.textContent='สถานะ: '+(enabled?'🟢 เปิดใช้งาน':'⚫ ปิดอยู่');
+}
+function updateDebugSlider(on){
+  const slider=document.getElementById('dbgToggleSlider');
+  const dot=document.getElementById('dbgToggleDot');
+  if(slider)slider.style.background=on?'#166534':'#cbd5e1';
+  if(dot)dot.style.transform=on?'translateX(22px)':'translateX(0)';
+}
+function setDebugMode(on){
+  localStorage.setItem('_dbgEnabled',on?'1':'');
+  if(!on)localStorage.removeItem('_dbgOpen');
+  updateDebugSlider(on);
+  const lbl=document.getElementById('dbgStatusLabel');
+  if(lbl)lbl.textContent='สถานะ: '+(on?'🟢 เปิดใช้งาน':'⚫ ปิดอยู่');
+  showToast((on?'🐛 Debug Bar เปิดใช้งานแล้ว':'🔒 Debug Bar ปิดแล้ว'),'ok');
+  logActivity('Debug Bar '+(on?'เปิด':'ปิด'),'Admin '+(on?'เปิด':'ปิด')+'ใช้งาน Debug Bar');
+}
+
 async function changePassword(){
   const current=document.getElementById('pwCurrent').value;
   const newPw=document.getElementById('pwNew').value;
@@ -801,6 +853,7 @@ function showTab(tab){
   if(tab==='logs')loadLogs();
   if(tab==='backup')initBackup();
   if(tab==='departments')loadDepts();
+  if(tab==='settings')initDebugToggle();
   closeSidebar();
 }
 
@@ -1137,13 +1190,14 @@ function toggleDbg(){
   bar.style.display=isOn?'none':'block';
   btn.classList.toggle('active',!isOn);
   if(!isOn)bar.scrollTop=bar.scrollHeight;
-  localStorage.setItem('_dbgOn',!isOn?'1':'');
+  localStorage.setItem('_dbgOpen',!isOn?'1':'');
 }
 (function(){
-  if(localStorage.getItem('_dbgOn')){
-    const b=document.getElementById('_dbgBar');
-    const t=document.getElementById('_dbgToggle');
-    if(b)b.style.display='block';if(t)t.classList.add('active');
+  // Admin: always show debug button
+  if(localStorage.getItem('_dbgOpen')==='1'){
+    const bar=document.getElementById('_dbgBar'),btn=document.getElementById('_dbgToggle');
+    if(bar)bar.style.display='block';
+    if(btn)btn.classList.add('active');
   }
 })();
 window.onerror=function(msg,src,line){dbg('⚠️ '+msg+' (line '+line+')','#f87171');};
