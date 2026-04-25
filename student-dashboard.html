@@ -697,21 +697,64 @@ function openPDF(){
   const pct=mand.length?Math.round(mandPass/mand.length*100):0;
   const today=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 
-  function skillRows(list){
-    return list.map((s,i)=>`
-      <tr style="background:${i%2===0?'#f8fafb':'white'};">
-        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${i+1}</td>
-        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.name}</td>
-        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;text-align:center;">
-          <span style="background:${s.status==='pass'?'#dcfce7':s.status==='fail'?'#fee2e2':'#fef3c7'};color:${s.status==='pass'?'#166534':s.status==='fail'?'#991b1b':'#92400e'};padding:2px 8px;border-radius:100px;font-weight:700;font-size:10px;">
-            ${s.status==='pass'?'✓ ผ่าน':s.status==='fail'?'✗ ไม่ผ่าน':'— รอประเมิน'}
-          </span>
-        </td>
-        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;text-align:center;">${s.evaluation?.rubric_score||'-'}</td>
-        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.evaluation?.location||'-'}</td>
-        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.evaluation?.teachers?.full_name||'-'}</td>
-        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;">${s.evaluation?new Date(s.evaluation.evaluated_at).toLocaleDateString('th-TH',{year:'2-digit',month:'short',day:'numeric'}):'-'}</td>
-      </tr>`).join('');
+  // Build per-skill detail block (multi-teacher aware)
+  function skillBlock(s,i){
+    const hist=s.history||[];
+    const ev=s.evaluation;
+    const evalCount=hist.length||( ev?1:0);
+    const isMulti=evalCount>1;
+    const statusColor=s.status==='pass'?'#166534':s.status==='fail'?'#991b1b':'#92400e';
+    const statusBg=s.status==='pass'?'#dcfce7':s.status==='fail'?'#fee2e2':'#fef3c7';
+    const statusTxt=s.status==='pass'?'✓ ผ่าน':s.status==='fail'?'✗ ไม่ผ่าน':'— รอประเมิน';
+
+    // Summary row
+    let html=`<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;">
+        <span style="font-size:11px;font-weight:700;color:#94a3b8;width:22px;">${i+1}</span>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:700;color:#1e293b;">${s.name}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${s.category||''}</div>
+        </div>
+        <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:100px;font-weight:700;font-size:10px;white-space:nowrap;">${statusTxt}</span>
+        ${isMulti?`<span style="background:#f0fdfa;color:#0d9488;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;">${evalCount} ท่าน</span>`:''}
+        ${ev?.avg_rubric_score&&isMulti?`<span style="background:#ede9fe;color:#5b21b6;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;">เฉลี่ย ${ev.avg_rubric_score}</span>`:''}
+      </div>`;
+
+    // Per-teacher rows from history
+    if(hist.length>0){
+      html+=`<div style="padding:8px 12px;">`;
+      hist.forEach((h,hi)=>{
+        const hPass=h.status==='pass';
+        html+=`<div style="border-left:3px solid ${hPass?'#16a34a':'#dc2626'};padding:6px 10px;margin-bottom:6px;background:${hPass?'#f0fdf4':'#fff5f5'};border-radius:0 6px 6px 0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">
+            <span style="font-size:10px;font-weight:700;color:${hPass?'#166534':'#991b1b'};">ท่านที่ ${hi+1}: ${hPass?'✓ ผ่าน':'✗ ไม่ผ่าน'}</span>
+            <span style="font-size:10px;color:#475569;">Rubric: <b>${h.rubric_score||'-'}</b></span>
+            <span style="font-size:10px;color:#0d9488;font-weight:600;">👤 ${h.teachers?.full_name||'-'}</span>
+            <span style="font-size:10px;color:#94a3b8;">${h.evaluated_at?new Date(h.evaluated_at).toLocaleDateString('th-TH',{year:'2-digit',month:'short',day:'numeric'}):''}</span>
+          </div>
+          ${h.location?`<div style="font-size:10px;color:#475569;">📍 ${h.location}</div>`:''}
+          ${h.notes?`<div style="font-size:10px;color:#475569;">📝 ${h.notes}</div>`:''}
+          ${h.feedback?`<div style="font-size:10px;color:#0f766e;margin-top:3px;padding:3px 7px;background:rgba(13,148,136,0.06);border-radius:4px;">💬 <i>${h.feedback}</i></div>`:''}
+        </div>`;
+      });
+      html+=`</div>`;
+    } else if(ev){
+      // Only evaluations table (no history), single teacher
+      html+=`<div style="padding:8px 12px;">
+        <div style="border-left:3px solid ${ev.status==='pass'?'#16a34a':'#dc2626'};padding:6px 10px;background:${ev.status==='pass'?'#f0fdf4':'#fff5f5'};border-radius:0 6px 6px 0;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:3px;">
+            <span style="font-size:10px;font-weight:700;color:${ev.status==='pass'?'#166534':'#991b1b'};">${ev.status==='pass'?'✓ ผ่าน':'✗ ไม่ผ่าน'}</span>
+            <span style="font-size:10px;color:#475569;">Rubric: <b>${ev.rubric_score||'-'}</b></span>
+            <span style="font-size:10px;color:#0d9488;font-weight:600;">👤 ${ev.teachers?.full_name||'-'}</span>
+          </div>
+          ${ev.location?`<div style="font-size:10px;color:#475569;">📍 ${ev.location}</div>`:''}
+          ${ev.notes?`<div style="font-size:10px;color:#475569;">📝 ${ev.notes}</div>`:''}
+          ${ev.feedback?`<div style="font-size:10px;color:#0f766e;margin-top:3px;padding:3px 7px;background:rgba(13,148,136,0.06);border-radius:4px;">💬 <i>${ev.feedback}</i></div>`:''}
+        </div>
+      </div>`;
+    }
+    html+=`</div>`;
+    return html;
   }
 
   const html=`<!DOCTYPE html>
@@ -721,70 +764,66 @@ function openPDF(){
 <title>Log Book — ${user.fullName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  @page{size:A4;margin:18mm 16mm 20mm;}
+  @page{size:A4;margin:15mm 14mm 18mm;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Sarabun',sans-serif;font-size:12px;color:#1e293b;background:white;}
-  .header{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:3px solid #0d9488;margin-bottom:16px;}
-  .logo{width:64px;height:64px;object-fit:contain;}
-  .logo-placeholder{width:64px;height:64px;background:#e0f7f4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;}
-  .header-text h1{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;color:#0d9488;}
-  .header-text p{font-size:11px;color:#64748b;margin-top:2px;}
-  .header-text .doc-title{font-family:'Prompt',sans-serif;font-size:14px;font-weight:600;color:#1e293b;margin-top:4px;}
-  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-  .info-box{background:#f0fdfa;border:1px solid #ccfbf1;border-radius:8px;padding:10px 14px;}
-  .info-box label{font-size:10px;font-weight:700;color:#0d9488;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px;}
-  .info-box span{font-size:13px;font-weight:600;color:#1e293b;}
-  .summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
-  .summary-box{border-radius:8px;padding:10px;text-align:center;}
-  .summary-box .num{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;}
-  .summary-box .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-top:2px;}
+  .header{display:flex;align-items:center;gap:14px;padding-bottom:12px;border-bottom:3px solid #0d9488;margin-bottom:14px;}
+  .logo{width:60px;height:60px;object-fit:contain;}
+  .header-text h1{font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;color:#0d9488;}
+  .header-text p{font-size:10px;color:#64748b;margin-top:2px;}
+  .header-text .doc-title{font-family:'Prompt',sans-serif;font-size:13px;font-weight:600;color:#1e293b;margin-top:3px;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .info-box{background:#f0fdfa;border:1px solid #ccfbf1;border-radius:7px;padding:8px 12px;}
+  .info-box label{font-size:10px;font-weight:700;color:#0d9488;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:2px;}
+  .info-box span{font-size:12px;font-weight:600;}
+  .summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px;}
+  .summary-box{border-radius:7px;padding:8px;text-align:center;}
+  .summary-box .num{font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;}
+  .summary-box .lbl{font-size:9px;font-weight:700;text-transform:uppercase;margin-top:1px;}
   .s-pass{background:#dcfce7;}.s-pass .num{color:#16a34a;}.s-pass .lbl{color:#166534;}
   .s-fail{background:#fee2e2;}.s-fail .num{color:#dc2626;}.s-fail .lbl{color:#991b1b;}
   .s-pend{background:#fef3c7;}.s-pend .num{color:#d97706;}.s-pend .lbl{color:#92400e;}
   .s-prog{background:#f0fdfa;}.s-prog .num{color:#0d9488;}.s-prog .lbl{color:#0f766e;}
-  .section-title{font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:#0d9488;padding:8px 12px;background:#f0fdfa;border-left:4px solid #0d9488;margin-bottom:8px;border-radius:0 6px 6px 0;}
-  table{width:100%;border-collapse:collapse;margin-bottom:16px;}
-  thead tr{background:#0d9488;}
-  thead th{padding:7px 10px;font-size:10px;font-weight:700;color:white;text-align:left;letter-spacing:0.3px;}
-  .progress-bar{background:#e2e8f0;border-radius:100px;height:8px;margin-top:4px;overflow:hidden;}
-  .progress-fill{background:#0d9488;height:8px;border-radius:100px;width:${pct}%;}
-  .signature-area{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:40px;border-top:1px dashed #cbd5e1;padding-top:16px;}
+  .section-title{font-family:'Prompt',sans-serif;font-size:12px;font-weight:700;color:#0d9488;padding:7px 11px;background:#f0fdfa;border-left:4px solid #0d9488;margin-bottom:10px;border-radius:0 6px 6px 0;}
+  .progress-bar{background:#e2e8f0;border-radius:100px;height:7px;margin-top:4px;overflow:hidden;}
+  .progress-fill{background:#0d9488;height:7px;border-radius:100px;width:${pct}%;}
+  .signature-area{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:36px;border-top:1px dashed #cbd5e1;padding-top:14px;}
   .sig-box{text-align:center;}
-  .sig-line{border-bottom:1px solid #64748b;margin:40px 20px 6px;height:1px;}
-  .sig-label{font-size:11px;color:#64748b;}
-  .sig-name{font-size:12px;font-weight:600;margin-top:2px;}
-  .footer{margin-top:16px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px;}
-  @media print{
-    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .no-print{display:none!important;}
-    button{display:none!important;}
-  }
+  .sig-line{border-bottom:1px solid #64748b;margin:36px 18px 5px;}
+  .sig-label{font-size:10px;color:#64748b;}
+  .footer{margin-top:12px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px;}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}button{display:none!important;}}
 </style>
 </head>
 <body>
-<div class="no-print" style="background:#0d9488;color:white;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-  <span style="font-family:'Prompt',sans-serif;font-weight:700;">📄 พร้อมพิมพ์ — กด Ctrl+P หรือปุ่มด้านขวา</span>
-  <button onclick="window.print()" style="background:white;color:#0d9488;border:none;border-radius:8px;padding:8px 18px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🖨️ พิมพ์ / บันทึก PDF</button>
+<div style="background:#0d9488;color:white;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;" class="no-print">
+  <span style="font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;">📄 Log Book — ${user.fullName}</span>
+  <button onclick="window.print()" style="background:white;color:#0d9488;border:none;border-radius:8px;padding:7px 16px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🖨️ พิมพ์ / บันทึก PDF</button>
 </div>
 
 <div class="header">
-  <img src="fac.png" class="logo" onerror="this.outerHTML='<div class=logo-placeholder>🏥</div>'">
+  <img src="fac.png" class="logo" onerror="this.outerHTML='<div style=width:60px;height:60px;background:#e0f7f4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px>🏥</div>'">
   <div class="header-text">
     <h1>Log Book สมรรถนะทางคลินิก</h1>
     <p>คณะสัตวแพทยศาสตร์ มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
-    <div class="doc-title">เอกสารสรุปผลการฝึกทักษะ</div>
+    <div class="doc-title">รายงานสรุปผลการประเมินทักษะ (ระบบหลายอาจารย์)</div>
   </div>
 </div>
 
 <div class="info-grid">
   <div class="info-box"><label>ชื่อ-นามสกุล</label><span>${user.fullName}</span></div>
   <div class="info-box"><label>รหัสนักศึกษา</label><span>${user.studentCode||'-'}</span></div>
-  <div class="info-box"><label>วันที่พิมพ์</label><span>${today}</span></div>
+  <div class="info-box"><label>สาขาวิชา</label><span>${user.departmentName||'—'}</span></div>
   <div class="info-box">
-    <label>ความคืบหน้าทักษะบังคับ</label>
+    <label>ทักษะบังคับ</label>
     <span>${mandPass}/${mand.length} ทักษะ (${pct}%)</span>
     <div class="progress-bar"><div class="progress-fill"></div></div>
   </div>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:11px;color:#92400e;">
+  <span style="font-size:14px;">ℹ️</span>
+  <span>รายงานนี้แสดงผลการประเมินจากอาจารย์ทุกท่าน | คะแนน Rubric ที่แสดง = ค่าเฉลี่ยของอาจารย์ทั้งหมด | วันที่พิมพ์: <b>${today}</b></span>
 </div>
 
 <div class="summary-row">
@@ -794,32 +833,24 @@ function openPDF(){
   <div class="summary-box s-prog"><div class="num">${skills.length}</div><div class="lbl">ทั้งหมด</div></div>
 </div>
 
-${mand.length?`
-<div class="section-title">⭐ ทักษะบังคับ</div>
-<table>
-  <thead><tr><th style="width:30px">#</th><th>ชื่อทักษะ</th><th style="width:80px;text-align:center">สถานะ</th><th style="width:50px;text-align:center">Rubric</th><th style="width:90px">สถานที่</th><th style="width:80px">อาจารย์</th><th style="width:70px">วันที่</th></tr></thead>
-  <tbody>${skillRows(mand)}</tbody>
-</table>`:''}
+${mand.length?`<div class="section-title">⭐ ทักษะบังคับ (${mand.length} ทักษะ)</div>
+${mand.map((s,i)=>skillBlock(s,i)).join('')}`:''}
 
-${skills.filter(s=>s.type==='elective').length?`
-<div class="section-title">📝 ทักษะเลือก</div>
-<table>
-  <thead><tr><th style="width:30px">#</th><th>ชื่อทักษะ</th><th style="width:80px;text-align:center">สถานะ</th><th style="width:50px;text-align:center">Rubric</th><th style="width:90px">สถานที่</th><th style="width:80px">อาจารย์</th><th style="width:70px">วันที่</th></tr></thead>
-  <tbody>${skillRows(skills.filter(s=>s.type==='elective'))}</tbody>
-</table>`:''}
+${skills.filter(sk=>sk.type==='elective').length?`<div class="section-title">📝 ทักษะเลือก (${skills.filter(sk=>sk.type==='elective').length} ทักษะ)</div>
+${skills.filter(sk=>sk.type==='elective').map((s,i)=>skillBlock(s,i)).join('')}`:''}
 
 <div class="signature-area">
   <div class="sig-box">
     <div class="sig-line"></div>
     <div class="sig-label">อาจารย์ที่ปรึกษา / ผู้รับรอง</div>
-    <div class="sig-name" style="margin-top:4px;">(.......................................)</div>
-    <div class="sig-label" style="margin-top:3px;">วันที่ ............../............../.................</div>
+    <div style="margin-top:3px;font-size:10px;">(.......................................)</div>
+    <div style="font-size:10px;color:#64748b;margin-top:2px;">วันที่ ............../............../.................</div>
   </div>
   <div class="sig-box">
     <div class="sig-line"></div>
     <div class="sig-label">นักศึกษา</div>
-    <div class="sig-name" style="margin-top:4px;">(${user.fullName})</div>
-    <div class="sig-label" style="margin-top:3px;">รหัส ${user.studentCode||'-'}</div>
+    <div style="margin-top:3px;font-size:11px;font-weight:600;">(${user.fullName})</div>
+    <div style="font-size:10px;color:#64748b;">รหัส ${user.studentCode||'-'}</div>
   </div>
 </div>
 
@@ -830,25 +861,4 @@ ${skills.filter(s=>s.type==='elective').length?`
   win.document.write(html);
   win.document.close();
 }
-async function changePassword(){
-  const cur=document.getElementById('pwCurrent').value;
-  const nw=document.getElementById('pwNew').value;
-  const cf=document.getElementById('pwConfirm').value;
-  const al=document.getElementById('pwAlert');
-  const btn=document.getElementById('pwBtn');
-  function showAl(msg,ok){al.textContent=msg;al.style.display='block';al.style.background=ok?'#dcfce7':'#fee2e2';al.style.color=ok?'#166534':'#991b1b';al.style.border=ok?'1px solid #86efac':'1px solid #fca5a5';setTimeout(()=>al.style.display='none',5000);}
-  if(!cur||!nw||!cf){showAl('❌ กรุณากรอกให้ครบ');return;}
-  if(nw.length<6){showAl('❌ รหัสผ่านใหม่ต้องมี 6 ตัว');return;}
-  if(nw!==cf){showAl('❌ รหัสผ่านใหม่ไม่ตรงกัน');return;}
-  btn.disabled=true;btn.textContent='กำลังเปลี่ยน...';
-  const{data,error}=await sb.from('students').select('id').eq('id',user.profileId).eq('password',cur).single();
-  if(error||!data){showAl('❌ รหัสผ่านปัจจุบันไม่ถูกต้อง');btn.disabled=false;btn.textContent='🔑 เปลี่ยนรหัสผ่าน';return;}
-  const{error:upErr}=await sb.from('students').update({password:nw}).eq('id',user.profileId);
-  if(upErr){showAl('❌ '+upErr.message);}
-  else{showAl('✅ เปลี่ยนรหัสผ่านสำเร็จ!',true);['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');}
-  btn.disabled=false;btn.textContent='🔑 เปลี่ยนรหัสผ่าน';
-}
-init();
-</script>
-</body>
-</html>
+
