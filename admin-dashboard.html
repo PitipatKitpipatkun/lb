@@ -313,7 +313,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="table-wrap">
       <div class="table-head"><span class="table-title" id="cCount">ทักษะ</span><input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('cTbl',this.value)"></div>
       <div class="tbl-scroll">
-        <table id="cTbl"><thead><tr><th>ชื่อทักษะ</th><th>หมวดหมู่</th><th>ประเภท</th><th>จัดการ</th></tr></thead>
+        <table id="cTbl"><thead><tr><th>ชื่อทักษะ</th><th>หมวดหมู่</th><th>สาขา</th><th>ประเภท</th><th>จัดการ</th></tr></thead>
         <tbody id="cTbody"></tbody></table>
       </div>
     </div>
@@ -534,17 +534,28 @@ async function loadOverview(){
   const mIds=(comps.data||[]).map(c=>c.id);
   const evSet=new Set((evals.data||[]).map(e=>e.student_id+'_'+e.competency_id));
   const el=document.getElementById('overviewContent');
+  // Per-dept summary
+  const deptSummary=await sb.from('departments').select('id,name,code');
+  const deptMap={};(deptSummary.data||[]).forEach(d=>{deptMap[d.id]=d;});
+
   if(!mIds.length){el.innerHTML='<div class="empty"><span class="empty-icon">⭐</span><p>ยังไม่มีทักษะบังคับ</p></div>';return;}
   if(!(students.data||[]).length){el.innerHTML='<div class="empty"><span class="empty-icon">👨‍🎓</span><p>ยังไม่มีนักศึกษา</p></div>';return;}
   const rows=(students.data||[]).map(s=>{
-    const done=mIds.filter(cid=>evSet.has(s.id+'_'+cid)).length;
-    const pct=Math.round(done/mIds.length*100);
+    const stuDept=s.department_id?deptMap[s.department_id]?.name||'—':'ทุกสาขา';
+    const stuMandIds=mIds.filter(mid=>{
+      const comp=comps.data?.find(cp=>cp.id===mid);
+      return !comp?.department_id||comp.department_id===s.department_id;
+    });
+    const done=stuMandIds.filter(cid=>evSet.has(s.id+'_'+cid)).length;
+    const total=stuMandIds.length||mIds.length;
+    const pct=total>0?Math.round(done/total*100):0;
     return `<tr><td>${s.full_name}</td><td style="font-family:monospace;font-size:12px;color:var(--slate-m)">${s.student_code||'-'}</td>
-      <td>${done}/${mIds.length}</td>
+      <td style="font-size:11px;color:var(--slate-m)">${stuDept}</td>
+      <td>${done}/${total}</td>
       <td style="min-width:100px"><div style="background:var(--border);border-radius:100px;height:7px;overflow:hidden"><div style="background:var(--teal);height:7px;border-radius:100px;width:${pct}%;transition:width 0.8s ease"></div></div></td>
       <td style="font-weight:700;color:${pct===100?'var(--pass)':'var(--amber)'}">${pct}%</td></tr>`;
   });
-  el.innerHTML=`<div class="tbl-scroll"><table><thead><tr><th>นักศึกษา</th><th>รหัส</th><th>ผ่าน</th><th>ความคืบหน้า</th><th>%</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+  el.innerHTML=`<div class="tbl-scroll"><table><thead><tr><th>นักศึกษา</th><th>รหัส</th><th>สาขา</th><th>ผ่าน</th><th>ความคืบหน้า</th><th>%</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
 }
 
 // ===== ACTIVITY LOG =====
@@ -706,7 +717,7 @@ async function delTeacher(id){
 }
 
 async function loadComps(){
-  const{data}=await sb.from('competencies').select('*');
+  const{data}=await sb.from('competencies').select('*,departments(name,code)');
   cData=(data||[]).sort((a,b)=>{
     const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
     if(ca!==0)return ca;
@@ -717,6 +728,7 @@ async function loadComps(){
     <tr>
       <td style="max-width:180px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</td>
       <td style="font-size:12px;color:var(--slate-m);white-space:nowrap">${c.category||'—'}</td>
+      <td>${c.department_id?`<span style="background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;">${c.departments?.code||c.departments?.name||'สาขา'}</span>`:'<span style="background:#fef9c3;color:#854d0e;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;">🌐 ทุกสาขา</span>'}</td>
       <td><span class="type-badge ${c.type==='mandatory'?'tb-m':'tb-e'}">${c.type==='mandatory'?'⭐':'📝'}</span></td>
       <td style="display:flex;gap:5px;">
         <button class="act-btn ab-edit" onclick="openEditC('${c.id}')">✏️</button>
