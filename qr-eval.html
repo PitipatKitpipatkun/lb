@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>QR ประเมินทักษะ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Prompt:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--teal:#0d9488;--teal-d:#0f766e;--teal-l:#ccfbf1;--teal-50:#f0fdfa;--slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;--border:#e2e8f0;--bg:#f8fafc;--white:#fff;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#0d9488 0%,#065f46 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{background:white;border-radius:24px;padding:28px 24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.header{text-align:center;margin-bottom:24px;}
+.icon{font-size:48px;margin-bottom:12px;}
+h1{font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;color:var(--slate);}
+.sub{font-size:13px;color:var(--slate-l);margin-top:4px;}
+.info-box{background:var(--teal-50);border:1px solid var(--teal-l);border-radius:14px;padding:16px;margin-bottom:20px;}
+.info-label{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.info-val{font-size:15px;font-weight:700;color:var(--slate);}
+.info-val2{font-size:13px;color:var(--slate-m);margin-top:2px;}
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;}
+.fi{width:100%;padding:12px 13px;border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;outline:none;transition:all 0.2s;background:var(--bg);}
+.fi:focus{border-color:var(--teal);box-shadow:0 0 0 4px rgba(13,148,136,0.1);background:white;}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-bottom:10px;}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;box-shadow:0 4px 12px rgba(13,148,136,0.3);}
+.btn-primary:hover{filter:brightness(0.95);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-secondary{background:var(--bg);color:var(--slate-m);border:2px solid var(--border);}
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:14px;display:none;}
+.alert.on{display:block;}
+.alert-ok{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+.alert-err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.waiting-box{text-align:center;padding:20px;background:var(--teal-50);border-radius:14px;}
+.waiting-icon{font-size:48px;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.waiting-text{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;color:var(--teal);margin-top:12px;}
+.waiting-sub{font-size:13px;color:var(--slate-m);margin-top:6px;}
+.queue-pos{font-size:28px;font-weight:800;color:var(--teal);font-family:'Prompt',sans-serif;}
+.loader{text-align:center;padding:40px;color:var(--slate-l);}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="loadingView" class="loader"><div class="spinner"></div></div>
+
+  <!-- Token invalid -->
+  <div id="invalidView" style="display:none;text-align:center;">
+    <div class="icon">❌</div>
+    <h1>QR Code หมดอายุหรือไม่ถูกต้อง</h1>
+    <p class="sub" style="margin-top:8px;">กรุณาขอ QR Code ใหม่จากอาจารย์</p>
+  </div>
+
+  <!-- Login form (before joining) -->
+  <div id="loginView" style="display:none;">
+    <div class="header">
+      <div class="icon">📱</div>
+      <h1>เข้าร่วมคิวประเมิน</h1>
+      <p class="sub">กรอกข้อมูลเพื่อเข้าร่วมคิว</p>
+    </div>
+    <div id="compInfoBox" class="info-box" style="margin-bottom:20px;"></div>
+    <div id="loginAlert" class="alert"></div>
+    <div class="fg">
+      <label class="fl">รหัสนักศึกษา</label>
+      <input class="fi" type="text" id="stCode" placeholder="เช่น 64010001" inputmode="text">
+    </div>
+    <div class="fg">
+      <label class="fl">รหัสผ่าน</label>
+      <input class="fi" type="password" id="stPw" placeholder="••••••" maxlength="6" inputmode="numeric">
+    </div>
+    <button class="btn btn-primary" id="joinBtn" onclick="joinQueue()">✅ เข้าร่วมคิว</button>
+  </div>
+
+  <!-- Waiting view -->
+  <div id="waitingView" style="display:none;">
+    <div class="header">
+      <div class="icon">🎓</div>
+      <h1 id="waitStudentName">—</h1>
+      <p class="sub" id="waitStudentCode"></p>
+    </div>
+    <div id="compInfoBox2" class="info-box" style="margin-bottom:20px;"></div>
+    <div class="waiting-box">
+      <div class="waiting-icon">⏳</div>
+      <div class="waiting-text">กำลังรอประเมิน</div>
+      <div style="margin-top:10px;"><span style="font-size:13px;color:var(--slate-m);">ลำดับที่ </span><span class="queue-pos" id="queuePos">—</span></div>
+      <div class="waiting-sub" id="waitingCount"></div>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:14px;" onclick="cancelQueue()">ยกเลิกการเข้าร่วมคิว</button>
+  </div>
+
+  <!-- Done view -->
+  <div id="doneView" style="display:none;text-align:center;">
+    <div class="icon">✅</div>
+    <h1 style="color:var(--teal);">ได้รับการประเมินแล้ว!</h1>
+    <p class="sub" style="margin-top:8px;">กลับไปดูผลได้ที่หน้า Log Book</p>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="window.location.href='student-dashboard.html'">📊 ดูผลการประเมิน</button>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
+const params=new URLSearchParams(window.location.search);
+const token=params.get('token');
+let tokenData=null,currentStudent=null,queueId=null,pollTimer=null;
+
+function show(id){['loadingView','invalidView','loginView','waitingView','doneView'].forEach(v=>{document.getElementById(v).style.display=v===id?'block':'none';});}
+function showAlert(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className='alert on alert-'+type;setTimeout(()=>el.classList.remove('on'),5000);}
+
+async function init(){
+  if(!token){show('invalidView');return;}
+  const{data,error}=await sb.from('qr_tokens').select('*,teachers(full_name),competencies(name,type,category)').eq('token',token).eq('is_active',true).single();
+  if(error||!data){show('invalidView');return;}
+  tokenData=data;
+  // Fill comp info boxes
+  const compHtml=`<div class="info-label">ทักษะที่จะประเมิน</div>
+    <div class="info-val">${data.competencies.name}</div>
+    <div class="info-val2">👩‍🏫 อ.${data.teachers.full_name} ${data.competencies.category?'| '+data.competencies.category:''}</div>`;
+  document.getElementById('compInfoBox').innerHTML=compHtml;
+  document.getElementById('compInfoBox2').innerHTML=compHtml;
+  // Check if already logged in
+  const stored=localStorage.getItem('lb_user');
+  if(stored){
+    const u=JSON.parse(stored);
+    if(u.role==='student'){
+      currentStudent={id:u.profileId,full_name:u.fullName,student_code:u.studentCode};
+      await checkExisting();return;
+    }
+  }
+  show('loginView');
+}
+async function checkExisting(){
+  // Check if already in queue
+  const{data}=await sb.from('qr_queue').select('*').eq('token_id',tokenData.id).eq('student_id',currentStudent.id).single();
+  if(data){
+    queueId=data.id;
+    if(data.status==='evaluated'){show('doneView');return;}
+    showWaiting();return;
+  }
+  show('loginView');
+}
+async function joinQueue(){
+  const code=document.getElementById('stCode').value.trim();
+  const pw=document.getElementById('stPw').value;
+  if(!code||!pw){showAlert('loginAlert','❌ กรุณากรอกข้อมูล','err');return;}
+  const btn=document.getElementById('joinBtn');btn.disabled=true;btn.textContent='กำลังเข้าร่วม...';
+  const{data,error}=await sb.from('students').select('*').eq('student_code',code).eq('password',pw).single();
+  if(error||!data){showAlert('loginAlert','❌ รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง','err');btn.disabled=false;btn.textContent='✅ เข้าร่วมคิว';return;}
+  currentStudent=data;
+  localStorage.setItem('lb_user',JSON.stringify({role:'student',fullName:data.full_name,profileId:data.id,studentCode:data.student_code,username:data.student_code}));
+  const{data:q,error:qErr}=await sb.from('qr_queue').insert({token_id:tokenData.id,student_id:data.id}).select().single();
+  if(qErr&&qErr.code==='23505'){
+    // Already in queue
+    const{data:existing}=await sb.from('qr_queue').select('*').eq('token_id',tokenData.id).eq('student_id',data.id).single();
+    queueId=existing?.id;
+  } else if(q){
+    queueId=q.id;
+  }
+  showWaiting();
+  btn.disabled=false;btn.textContent='✅ เข้าร่วมคิว';
+}
+function showWaiting(){
+  document.getElementById('waitStudentName').textContent=currentStudent.full_name;
+  document.getElementById('waitStudentCode').textContent='รหัส: '+currentStudent.student_code;
+  show('waitingView');
+  updateQueuePos();
+  pollTimer=setInterval(updateQueuePos,5000);
+}
+async function updateQueuePos(){
+  const{data}=await sb.from('qr_queue').select('*').eq('token_id',tokenData.id).eq('status','waiting').order('joined_at');
+  const me=data?.findIndex(q=>q.student_id===currentStudent.id);
+  if(me===-1){
+    // Check if evaluated
+    const{data:myQ}=await sb.from('qr_queue').select('status').eq('id',queueId).single();
+    if(myQ?.status==='evaluated'){clearInterval(pollTimer);show('doneView');}
+    return;
+  }
+  document.getElementById('queuePos').textContent=me+1;
+  document.getElementById('waitingCount').textContent='มีนักศึกษารอทั้งหมด '+(data?.length||0)+' คน';
+}
+async function cancelQueue(){
+  if(queueId)await sb.from('qr_queue').update({status:'skipped'}).eq('id',queueId);
+  clearInterval(pollTimer);
+  show('loginView');
+}
+init();
+</script>
+</body>
+</html>
