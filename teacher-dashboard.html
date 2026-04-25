@@ -250,32 +250,43 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
 
     <div class="card">
-      <div class="card-head"><span class="card-title">สร้าง QR Code</span></div>
+      <div class="card-head">
+        <span class="card-title">เลือกทักษะและสร้าง QR</span>
+        <span id="qrSelCount" style="font-size:12px;color:var(--rose);font-weight:700;"></span>
+      </div>
       <div class="card-body">
-        <div style="margin-bottom:12px;">
-          <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">เลือกทักษะที่จะประเมิน</label>
-          <select class="search-input" id="qrCompSelect" style="margin-bottom:0;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;">
-            <option value="">— เลือกทักษะ —</option>
-          </select>
+        <!-- Search filter -->
+        <input class="search-input" id="qrCompSearch" placeholder="🔍 ค้นหาทักษะ..." oninput="filterQRComps()" style="margin-bottom:10px;">
+
+        <!-- Multi-select checkbox list -->
+        <div id="qrCompList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-bottom:14px;"></div>
+
+        <!-- Selected tags -->
+        <div id="qrSelectedTags" style="display:none;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button onclick="selectAllQRComps()" style="flex:1;padding:7px;background:var(--teal-l);color:var(--teal);border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">เลือกทั้งหมด</button>
+          <button onclick="clearAllQRComps()" style="flex:1;padding:7px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ล้างทั้งหมด</button>
         </div>
-        <button onclick="createQR()"
-          style="width:100%;padding:12px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+
+        <button onclick="createQR()" id="createQRBtn" disabled
+          style="width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;opacity:0.5;box-shadow:0 4px 12px rgba(225,29,72,0.3);transition:all 0.2s;">
           📲 สร้าง QR Code
         </button>
       </div>
     </div>
 
-    <!-- Active QR codes -->
+    <!-- Active QR sessions -->
     <div id="activeQRs"></div>
 
-    <!-- QR display modal-like -->
+    <!-- QR display -->
     <div id="qrDisplay" style="display:none;background:white;border-radius:18px;border:1px solid var(--border);padding:20px;margin-top:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <div style="font-size:14px;font-weight:700;" id="qrCompName"></div>
-        <button onclick="deactivateQR()" style="padding:5px 12px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
-          ❌ ปิด QR
-        </button>
+        <button onclick="deactivateQR()" style="padding:5px 12px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">❌ ปิด QR</button>
       </div>
+      <!-- Skills in this session -->
+      <div id="qrSkillBadges" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;"></div>
       <div style="text-align:center;margin-bottom:16px;">
         <div id="qrCodeDiv" style="display:inline-block;padding:12px;background:white;border-radius:12px;border:2px solid var(--border);"></div>
         <div style="font-size:11px;color:var(--slate-l);margin-top:8px;" id="qrUrlText"></div>
@@ -284,12 +295,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
         👨‍🎓 นักศึกษาที่รอประเมิน (<span id="queueCount">0</span> คน)
         <button onclick="refreshQueue()" style="margin-left:8px;padding:4px 10px;background:var(--teal-l);color:var(--teal);border:none;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">🔄</button>
       </div>
-      <!-- Batch eval bar -->
       <div id="queueBatchBar" style="display:none;align-items:center;justify-content:space-between;background:var(--rose-50);border:1.5px solid var(--rose-l);border-radius:11px;padding:10px 13px;margin-bottom:10px;gap:10px;flex-wrap:wrap;">
         <span id="queueBatchCount" style="font-size:13px;font-weight:700;color:var(--rose-d);flex:1;">เลือกนักศึกษาเพื่อประเมินกลุ่ม</span>
-        <button id="batchEvalBtn" onclick="batchEvalFromQueue()" disabled style="padding:8px 14px;background:var(--rose);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;opacity:0.5;">
-          👥 ประเมินกลุ่ม
-        </button>
+        <button id="batchEvalBtn" onclick="batchEvalFromQueue()" disabled style="padding:8px 14px;background:var(--rose);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;opacity:0.5;">👥 ประเมินกลุ่ม</button>
       </div>
       <div id="queueList" style="display:flex;flex-direction:column;gap:7px;"></div>
     </div>
@@ -457,7 +465,7 @@ function filterStudents(){
   const q=document.getElementById('stSearch').value.toLowerCase();
   renderStudents(students.filter(s=>s.full_name.toLowerCase().includes(q)||(s.student_code||'').toLowerCase().includes(q)));
 }
-async function selectStudent(id, qrCompId){
+async function selectStudent(id, qrCompId, qrCompIds){
   selStudent=students.find(s=>s.id===id);decisions={};
   filterStudents();
   document.getElementById('selBadge').textContent='✓ '+selStudent.full_name;
@@ -465,7 +473,7 @@ async function selectStudent(id, qrCompId){
   document.getElementById('printStudentBtn').style.display='inline';
   document.getElementById('evalSection').style.display='block';
   document.getElementById('evalSection').scrollIntoView({behavior:'smooth',block:'start'});
-  await renderComps(qrCompId||null);
+  await renderComps(qrCompId||null, qrCompIds||null);
 }
 function buildHistoryHTML(hist){
   if(!hist||hist.length<=1)return '';
@@ -481,7 +489,7 @@ function buildHistoryHTML(hist){
   }).join('');
   return '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--slate-m);margin-bottom:5px;">📊 ประวัติ '+hist.length+' ครั้ง</div>'+rows+'</div>';
 }
-async function renderComps(qrCompId){
+async function renderComps(qrCompId, qrCompIds){
   const el=document.getElementById('compList');
   el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
   const[evalRes,histRes]=await Promise.all([
@@ -510,12 +518,14 @@ async function renderComps(qrCompId){
     if(filter==='pass')return st==='pass';
     return true;
   });
-  // QR mode: show only the specific skill
-  if(qrCompId)filtered=filtered.filter(c=>c.id===qrCompId);
-  if(qrCompId&&filtered.length===0){
-    // skill might be filtered out by status filter — show it anyway
-    const qrComp=sorted.find(c=>c.id===qrCompId);
-    if(qrComp)filtered=[qrComp];
+  // QR mode: filter to selected skills only
+  const qrIds=qrCompIds&&qrCompIds.length?qrCompIds:(qrCompId?[qrCompId]:null);
+  if(qrIds&&qrIds.length){
+    filtered=filtered.filter(c=>qrIds.includes(c.id));
+    if(!filtered.length){
+      // Skills might be filtered out by status filter — show them anyway
+      filtered=sorted.filter(c=>qrIds.includes(c.id));
+    }
   }
   if(!filtered.length){el.innerHTML='<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะในหมวดนี้</p></div>';updateBar();return;}
 
@@ -892,15 +902,14 @@ function switchTab(tab){
 }
 
 // ===== QR EVALUATION =====
-let activeQRToken=null,activeQRCompId=null,qrPollTimer=null;
+let activeQRToken=null,activeQRCompId=null,activeQRCompIds=[],qrPollTimer=null;
+let qrSelectedIds=new Set();
 const BASE_URL=window.location.origin+window.location.pathname.replace('teacher-dashboard.html','');
 
 async function initQRTab(){
-  // Populate competency select
-  const sel=document.getElementById('qrCompSelect');
-  if(sel.options.length<=1){
-    comps.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name+(c.category?' ('+c.category+')':'');sel.appendChild(o);});
-  }
+  // Render multi-select comp list
+  renderQRCompList(comps);
+  updateQRSelCount();
   // Load active QR tokens for this teacher
   const{data}=await sb.from('qr_tokens')
     .select('*,competencies(name)')
@@ -909,45 +918,112 @@ async function initQRTab(){
     .order('created_at',{ascending:false});
   const el=document.getElementById('activeQRs');
   if(data?.length){
-    el.innerHTML='<div style="font-size:13px;font-weight:700;margin-bottom:10px;margin-top:4px;">📋 QR ที่เปิดอยู่</div>'+
-    data.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:white;border:1.5px solid var(--teal-l);border-radius:12px;margin-bottom:8px;">
-      <span style="font-size:20px;">📲</span>
-      <div style="flex:1;font-size:13px;font-weight:600;">${t.competencies?.name||'-'}</div>
-      <button onclick="showActiveQR('${t.id}','${t.token}','${t.competencies?.name||''}','${t.competency_id||''}')"
-        style="padding:6px 12px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ดู QR</button>
-      <button onclick="closeQRToken('${t.id}')"
-        style="padding:6px 10px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ปิด</button>
-    </div>`).join('');
+    el.innerHTML='<div style="font-size:13px;font-weight:700;margin:14px 0 8px;">📋 QR Sessions ที่เปิดอยู่</div>'+
+    data.map(t=>{
+      const ids=t.competency_ids||[];
+      const names=ids.length>1
+        ?ids.slice(0,2).map(id=>comps.find(c=>c.id===id)?.name||'').filter(Boolean).join(', ')+(ids.length>2?` +${ids.length-2} ทักษะ`:'')
+        :t.competencies?.name||'-';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:white;border:1.5px solid var(--teal-l);border-radius:12px;margin-bottom:8px;">
+        <span style="font-size:20px;">📲</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">${names}</div>
+          <div style="font-size:11px;color:var(--slate-l);margin-top:1px;">${ids.length} ทักษะ</div>
+        </div>
+        <button onclick="showActiveQR('${t.id}','${t.token}',${JSON.stringify(ids)
+          .replace(/"/g,'&quot;')})"
+          style="padding:6px 12px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ดู QR</button>
+        <button onclick="closeQRToken('${t.id}')"
+          style="padding:6px 10px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ปิด</button>
+      </div>`;
+    }).join('');
   }else{
     el.innerHTML='';
   }
 }
 
-async function createQR(){
-  const compId=document.getElementById('qrCompSelect').value;
-  if(!compId){showToast('❌ กรุณาเลือกทักษะ','err');return;}
-  const{data,error}=await sb.from('qr_tokens').insert({teacher_id:user.profileId,competency_id:compId}).select().single();
-  if(error){showToast('❌ '+error.message,'err');return;}
-  const compName=comps.find(c=>c.id===compId)?.name||'ทักษะ';
-  showActiveQR(data.id,data.token,compName,compId);
-  initQRTab();
+function renderQRCompList(list){
+  const el=document.getElementById('qrCompList');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:16px;color:var(--slate-l);font-size:13px;">ไม่พบทักษะ</div>';return;}
+  // Group by category
+  const cats={};
+  list.forEach(c=>{const cat=c.category||'ทั่วไป';if(!cats[cat])cats[cat]=[];cats[cat].push(c);});
+  el.innerHTML=Object.entries(cats).map(([cat,items])=>`
+    <div style="margin-bottom:4px;">
+      <div style="font-size:11px;font-weight:700;color:var(--slate-l);padding:4px 8px;text-transform:uppercase;letter-spacing:0.5px;">${cat}</div>
+      ${items.map(comp=>`
+        <label style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:${qrSelectedIds.has(comp.id)?'var(--rose-50)':'var(--bg)'};border:1.5px solid ${qrSelectedIds.has(comp.id)?'var(--rose)':'var(--border)'};border-radius:10px;cursor:pointer;transition:all 0.15s;margin-bottom:4px;">
+          <input type="checkbox" ${qrSelectedIds.has(comp.id)?'checked':''} onchange="toggleQRComp('${comp.id}',this)"
+            style="width:17px;height:17px;accent-color:var(--rose);flex-shrink:0;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${comp.name}</div>
+            <div style="font-size:10px;color:var(--slate-l);margin-top:1px;">${comp.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</div>
+          </div>
+        </label>`).join('')}
+    </div>`).join('');
 }
 
-function showActiveQR(tokenId,token,compName,compId){
+function filterQRComps(){
+  const q=document.getElementById('qrCompSearch').value.toLowerCase();
+  renderQRCompList(comps.filter(c=>c.name.toLowerCase().includes(q)||(c.category||'').toLowerCase().includes(q)));
+}
+function toggleQRComp(id,cb){
+  if(cb.checked)qrSelectedIds.add(id);else qrSelectedIds.delete(id);
+  updateQRSelCount();
+  filterQRComps();
+}
+function selectAllQRComps(){comps.forEach(c=>qrSelectedIds.add(c.id));filterQRComps();updateQRSelCount();}
+function clearAllQRComps(){qrSelectedIds.clear();filterQRComps();updateQRSelCount();}
+function updateQRSelCount(){
+  const n=qrSelectedIds.size;
+  const lbl=document.getElementById('qrSelCount');
+  const btn=document.getElementById('createQRBtn');
+  if(lbl)lbl.textContent=n>0?n+' ทักษะที่เลือก':'';
+  if(btn){btn.disabled=n===0;btn.style.opacity=n>0?'1':'0.5';}
+}
+
+async function createQR(){
+  if(qrSelectedIds.size===0){showToast('❌ กรุณาเลือกอย่างน้อย 1 ทักษะ','err');return;}
+  const btn=document.getElementById('createQRBtn');
+  btn.disabled=true;btn.textContent='กำลังสร้าง...';
+  const ids=[...qrSelectedIds];
+  // Use first selected as primary FK, store all in competency_ids
+  const primaryId=ids[0];
+  const{data,error}=await sb.from('qr_tokens')
+    .insert({teacher_id:user.profileId,competency_id:primaryId,competency_ids:ids})
+    .select().single();
+  if(error){showToast('❌ '+error.message,'err');btn.disabled=false;btn.textContent='📲 สร้าง QR Code';return;}
+  showActiveQR(data.id,data.token,ids);
+  qrSelectedIds.clear();
+  updateQRSelCount();
+  filterQRComps();
+  initQRTab();
+  btn.disabled=false;btn.textContent='📲 สร้าง QR Code';
+}
+
+function showActiveQR(tokenId,token,compIds){
   activeQRToken=tokenId;
-  activeQRCompId=compId||null;
+  // compIds can be array or JSON string
+  if(typeof compIds==='string'){try{compIds=JSON.parse(compIds.replace(/&quot;/g,'"'));}catch{compIds=[compIds];}}
+  activeQRCompIds=Array.isArray(compIds)?compIds:[compIds];
+  activeQRCompId=activeQRCompIds[0]||null;
   clearInterval(qrPollTimer);
   const url=BASE_URL+'qr-eval.html?token='+token;
-  document.getElementById('qrCompName').textContent='📋 '+compName;
+  // Build skill name header
+  const names=activeQRCompIds.map(id=>comps.find(c=>c.id===id)?.name||'').filter(Boolean);
+  const header=names.length===1?names[0]:names.length+' ทักษะ: '+names.slice(0,2).join(', ')+(names.length>2?'...':'');
+  document.getElementById('qrCompName').textContent='📋 '+header;
+  // Skill badges
+  const badges=document.getElementById('qrSkillBadges');
+  if(badges)badges.innerHTML=names.map(n=>`<span style="background:var(--teal-l);color:var(--teal-d);padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;">${n}</span>`).join('');
   document.getElementById('qrUrlText').textContent=url;
   document.getElementById('qrDisplay').style.display='block';
-  // Generate QR
+  // QR Code
   const qrDiv=document.getElementById('qrCodeDiv');
   qrDiv.innerHTML='';
   if(window.QRCode){
     new QRCode(qrDiv,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
-  } else {
-    // fallback: qr via API
+  }else{
     qrDiv.innerHTML=`<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" width="180" height="180">`;
   }
   refreshQueue();
@@ -977,12 +1053,11 @@ async function refreshQueue(){
         <div style="font-size:13px;font-weight:600;">${q.students?.full_name||'-'}</div>
         <div style="font-size:11px;color:var(--slate-l);">${q.students?.student_code||''}</div>
       </div>
-      <button onclick="evalFromQueue('${q.student_id}','${q.id}','${activeQRCompId||''}')"
+      <button onclick="evalFromQueue('${q.student_id}','${q.id}',${JSON.stringify(activeQRCompIds)})"
         style="padding:6px 12px;background:var(--rose);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">✍️</button>
       <button onclick="skipQueue('${q.id}')"
         style="padding:6px 10px;background:var(--bg);color:var(--slate-m);border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">ข้าม</button>
     </div>`).join('');
-  // Batch bar
   document.getElementById('queueBatchBar').style.display='flex';
 }
 
@@ -997,32 +1072,33 @@ async function batchEvalFromQueue(){
   const checked=[...document.querySelectorAll('[id^=qchk-]:checked')];
   if(!checked.length)return;
   const selectedIds=checked.map(cb=>cb.getAttribute('data-sid'));
-  // Override gSelectedIds and switch to group eval
   gSelectedIds=new Set(selectedIds);
   gDecisions={};
-  // Mark as evaluating in queue
   for(const cb of checked){
     await sb.from('qr_queue').update({status:'evaluated'}).eq('id',cb.getAttribute('data-qid'));
   }
   switchTab('group');
-  // Show eval section
   document.getElementById('editGroupCard').style.display='none';
   document.getElementById('gGroupLabel').textContent='👥 จาก QR คิว ('+selectedIds.length+' คน)';
   document.getElementById('gEvalSection').style.display='block';
+  // Filter group comps to QR skills only
+  gQRCompIds=activeQRCompIds.length?[...activeQRCompIds]:null;
   renderGComps();
   showToast('✅ โหลด '+selectedIds.length+' คนจากคิว','ok');
 }
 
-async function evalFromQueue(studentId,queueEntryId,compId){
+async function evalFromQueue(studentId,queueEntryId,compIds){
   const st=students.find(s=>s.id===studentId);
   if(!st){showToast('ไม่พบข้อมูลนักศึกษา','err');return;}
   await sb.from('qr_queue').update({status:'evaluated'}).eq('id',queueEntryId);
-  // Switch to evaluate tab, select student, filter to only the QR skill
   switchTab('evaluate');
   document.getElementById('stSearch').value=st.full_name;
   filterStudents();
-  // Pass compId so renderComps knows to show only this skill
-  setTimeout(()=>selectStudent(studentId, compId||activeQRCompId),200);
+  // Normalize compIds
+  let ids=compIds;
+  if(typeof ids==='string'){try{ids=JSON.parse(ids);}catch{ids=[ids];}}
+  ids=Array.isArray(ids)?ids:[ids];
+  setTimeout(()=>selectStudent(studentId, ids.length===1?ids[0]:null, ids),200);
 }
 
 async function skipQueue(queueEntryId){
@@ -1031,21 +1107,19 @@ async function skipQueue(queueEntryId){
 }
 
 async function closeQRToken(tokenId){
-  if(!confirm('ปิด QR นี้? นักศึกษาจะไม่สามารถ scan ได้อีก'))return;
+  if(!confirm('ปิด QR Session นี้? นักศึกษาจะไม่สามารถ scan ได้อีก'))return;
   await sb.from('qr_tokens').update({is_active:false}).eq('id',tokenId);
   clearInterval(qrPollTimer);
   document.getElementById('qrDisplay').style.display='none';
-  activeQRToken=null;
+  activeQRToken=null;activeQRCompIds=[];activeQRCompId=null;
   initQRTab();
   showToast('✅ ปิด QR สำเร็จ','ok');
 }
+async function deactivateQR(){if(activeQRToken)await closeQRToken(activeQRToken);}
 
-async function deactivateQR(){
-  if(activeQRToken)await closeQRToken(activeQRToken);
-}
 
 // ===== GROUP EVALUATION (localStorage-based) =====
-let gSelectedIds=new Set();let gDecisions={};
+let gSelectedIds=new Set();let gDecisions={};let gQRCompIds=null;
 let editingGroupIdx=-1; // -1 = new group
 
 function groupStorageKey(){return 'lb_groups_'+user.profileId;}
@@ -1173,7 +1247,8 @@ function updateGSelCount(){
 }
 function renderGComps(){
   const el=document.getElementById('gCompList');
-  el.innerHTML=comps.map((c,i)=>{
+  const gCompsToRender=gQRCompIds&&gQRCompIds.length?comps.filter(c=>gQRCompIds.includes(c.id)):comps;
+  el.innerHTML=gCompsToRender.map((c,i)=>{
     const rubric=c.rubric_criteria||DEF_RUBRIC;
     return `<div class="comp-card" style="animation-delay:${i*0.04}s" id="gcc-${c.id}">
       <div class="comp-head">
