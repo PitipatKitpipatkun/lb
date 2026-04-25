@@ -445,75 +445,22 @@ const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
 let user=null,skills=[];
 
 async function init(){
-  const s=localStorage.getItem('lb_user');
-  if(!s){window.location.href='index.html';return;}
-  user=JSON.parse(s);
-  if(user.role!=='student'){window.location.href='index.html';return;}
-  document.getElementById('sbName').textContent=user.fullName;
-  document.getElementById('sbCode').textContent=user.studentCode||user.username||'';
-  document.getElementById('welcomeTitle').textContent='สวัสดี, '+user.fullName;
-  document.getElementById('repName').textContent=user.fullName;
-  document.getElementById('repCode').textContent='รหัสนักศึกษา: '+(user.studentCode||'-');
-  document.getElementById('repDate').textContent='วันที่พิมพ์: '+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-  // Verify session is still valid
-  const{data:chk}=await sb.from('students').select('id').eq('id',user.profileId).single();
-  if(!chk){localStorage.removeItem('lb_user');window.location.href='index.html';return;}
-  await loadData();
-}
-async function loadData(){
-  // Show loading state
-  ['recentList','mandatoryList','electiveList','reportList'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
-  });
   try{
-    const deptId=user.departmentId||null;
-    const[cr,er,hr]=await Promise.all([
-      sb.from('competencies').select('*'),
-      sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId),
-      sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false})
-    ]);
-    if(cr.error)throw new Error('competencies: '+cr.error.message);
-    if(er.error)throw new Error('evaluations: '+er.error.message);
-    // evaluation_history error is non-fatal — just use empty
-    const comps=cr.data||[],evals=er.data||[],hist=hr.data||[];
-    const histByComp={};
-    hist.forEach(h=>{
-      if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];
-      histByComp[h.competency_id].push(h);
-    });
-    const filteredComps=comps.filter(comp=>!comp.department_id||comp.department_id===deptId);
-    const sortedComps=filteredComps.sort((a,b)=>{
-      const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
-      if(ca!==0)return ca;
-      return(a.name||'').localeCompare(b.name||'','th');
-    });
-    skills=sortedComps.map(comp=>{
-      const e=evals.find(ev=>ev.competency_id===comp.id)||null;
-      return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};
-    });
-    // Render each section with individual error handling
-    safeRender('renderStats',renderStats);
-    safeRender('renderRecent',renderRecent);
-    safeRender('renderMandatory',()=>renderMandatory('all'));
-    safeRender('renderElective',()=>renderElective('all'));
-    safeRender('renderReport',renderReport);
-  }catch(err){
-    console.error('loadData error:',err);
-    showLoadError(err.message||String(err));
-  }
-}
-function safeRender(name,fn){
-  try{fn();}
-  catch(e){
-    console.error(name+' error:',e);
-    // Show error in relevant container
-    const map={renderStats:null,renderRecent:'recentList',renderMandatory:'mandatoryList',renderElective:'electiveList',renderReport:'reportList'};
-    const id=Object.entries(map).find(([k])=>name.includes(k.replace('render','').toLowerCase()))?.[1];
-    if(id){
-      document.getElementById(id).innerHTML=`<div class="empty"><span class="empty-icon">⚠️</span><p style="color:#dc2626;font-size:12px;">${name} error:<br>${e.message}</p></div>`;
-    }
-    showLoadError(name+': '+e.message);
+    const s=localStorage.getItem('lb_user');
+    if(!s){window.location.href='index.html';return;}
+    user=JSON.parse(s);
+    if(user.role!=='student'){window.location.href='index.html';return;}
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+    set('sbName',user.fullName||'');
+    set('sbCode',user.studentCode||user.username||'');
+    set('welcomeTitle','สวัสดี, '+user.fullName);
+    set('repName',user.fullName);
+    set('repCode','รหัสนักศึกษา: '+(user.studentCode||'-'));
+    set('repDate','วันที่พิมพ์: '+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}));
+    await loadData();
+  }catch(e){
+    console.error('init error:',e);
+    showLoadError('init error: '+e.message);
   }
 }
 function showLoadError(msg){
@@ -521,11 +468,49 @@ function showLoadError(msg){
   if(!bar){
     bar=document.createElement('div');
     bar.id='loadErrorBar';
-    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999;background:#dc2626;color:white;padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:white;padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:Sarabun,sans-serif;';
     document.body.prepend(bar);
   }
-  bar.innerHTML=`<span>⚠️ ${msg}</span><div style="display:flex;gap:8px;"><button onclick="loadData()" style="padding:4px 12px;background:white;color:#dc2626;border:none;border-radius:6px;font-family:Sarabun,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 ลองใหม่</button><button onclick="this.parentElement.parentElement.remove()" style="padding:4px 10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:6px;cursor:pointer;">✕</button></div>`;
+  bar.innerHTML='<span>⚠️ '+msg+'</span>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="loadData()" style="padding:4px 12px;background:white;color:#dc2626;border:none;border-radius:6px;font-family:Sarabun,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 ลองใหม่</button>'
+    +'<button onclick="document.getElementById(\'loadErrorBar\').remove()" style="padding:4px 10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:6px;cursor:pointer;">✕</button>'
+    +'</div>';
 }
+async function loadData(){
+  const listIds=['recentList','mandatoryList','electiveList','reportList'];
+  const spinHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+  const errHTML=msg=>'<div class="empty"><span class="empty-icon">⚠️</span><p style="color:#dc2626;font-size:12px;">'+msg+'</p><button onclick="loadData()" style="margin-top:10px;padding:8px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:Sarabun,sans-serif;font-size:13px;cursor:pointer;">🔄 ลองใหม่</button></div>';
+  listIds.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=spinHTML;});
+  let step='init';
+  try{
+    step='fetch competencies';
+    const{data:comps,error:e1}=await sb.from('competencies').select('*');
+    if(e1)throw new Error(e1.message);
+    step='fetch evaluations';
+    const{data:evals,error:e2}=await sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId);
+    if(e2)throw new Error(e2.message);
+    step='fetch history';
+    const{data:hist=[]}=await sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false});
+    step='process data';
+    const deptId=user.departmentId||null;
+    const histByComp={};
+    (hist||[]).forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
+    const filtered=(comps||[]).filter(c=>!c.department_id||c.department_id===deptId);
+    filtered.sort((a,b)=>{const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');return ca!==0?ca:(a.name||'').localeCompare(b.name||'','th');});
+    skills=filtered.map(comp=>{const e=(evals||[]).find(ev=>ev.competency_id===comp.id)||null;return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};});
+    step='renderStats';  try{renderStats();}    catch(e){console.error(step,e);showLoadError(step+': '+e.message);}
+    step='renderRecent'; try{renderRecent();}   catch(e){console.error(step,e);document.getElementById('recentList').innerHTML=errHTML(step+': '+e.message);}
+    step='renderMandatory';try{renderMandatory();}catch(e){console.error(step,e);document.getElementById('mandatoryList').innerHTML=errHTML(step+': '+e.message);}
+    step='renderElective';try{renderElective();}catch(e){console.error(step,e);document.getElementById('electiveList').innerHTML=errHTML(step+': '+e.message);}
+    step='renderReport'; try{renderReport();}   catch(e){console.error(step,e);document.getElementById('reportList').innerHTML=errHTML(step+': '+e.message);}
+  }catch(err){
+    console.error('loadData ['+step+']:',err);
+    listIds.forEach(id=>{const el=document.getElementById(id);if(el&&el.innerHTML.includes('spinner'))el.innerHTML=errHTML('ล้มเหลว: '+step);});
+    showLoadError('ล้มเหลวที่: '+step+' — '+err.message);
+  }
+}
+
 function skillHTML(sk,delay=0){
   const sm={pass:{icon:'✅',cls:'d-pass',b:'b-pass',txt:'ผ่าน'},fail:{icon:'❌',cls:'d-fail',b:'b-fail',txt:'ไม่ผ่าน'},pending:{icon:'⏳',cls:'d-pend',b:'b-pend',txt:'รอประเมิน'}};
   const s=sm[sk.status]||sm.pending;
@@ -915,4 +900,6 @@ ${skills.filter(sk=>sk.type==='elective').map((s,i)=>skillBlock(s,i)).join('')}`
   win.document.write(html);
   win.document.close();
 }
-
+</script>
+</body>
+</html>
