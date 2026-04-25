@@ -673,17 +673,30 @@ async function submitAll(){
     .eq('student_id',selStudent.id)
     .in('competency_id',compIds);
 
-  // 3. Build upsert rows using history data (parallel)
+  // 3. Build upsert rows using history data
   const upsertRows=toSubmit.map(([cid,d])=>{
     const hist=(allHist||[]).filter(h=>h.competency_id===cid);
     const validScores=hist.filter(h=>h.rubric_score!=null).map(h=>h.rubric_score);
-    const avgScore=validScores.length?Math.round(validScores.reduce((a,b)=>a+b,0)/validScores.length):d.rubric_score||null;
+    // Average: keep 1 decimal, e.g. (2+5)/2 = 3.5
+    const rawAvg=validScores.length
+      ?validScores.reduce((a,b)=>a+b,0)/validScores.length
+      :d.rubric_score||null;
+    const avgScore=rawAvg!=null?Math.round(rawAvg*10)/10:null;
     const passCount=hist.filter(h=>h.status==='pass').length;
-    const finalStatus=hist.length>0&&passCount>=hist.length/2?'pass':hist.length>0?'fail':d.status;
-    return{student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,
-      status:finalStatus,rubric_score:avgScore,avg_rubric_score:avgScore,
-      eval_count:hist.length||1,location:d.location||null,notes:d.notes||null,
-      feedback:d.feedback||null,evaluated_at:now};
+    // Majority rule: ≥50% pass → pass
+    const finalStatus=hist.length>0?( passCount/hist.length>=0.5?'pass':'fail'):d.status;
+    return{
+      student_id:selStudent.id,competency_id:cid,
+      // keep last teacher who touched it
+      teacher_id:user.profileId,
+      status:finalStatus,
+      rubric_score:avgScore,
+      avg_rubric_score:avgScore,
+      eval_count:hist.length||1,
+      // store latest teacher's meta (full per-teacher data is in history)
+      location:d.location||null,notes:d.notes||null,feedback:d.feedback||null,
+      evaluated_at:now
+    };
   });
 
   const{error:upsertErr}=await sb.from('evaluations').upsert(upsertRows,{onConflict:'student_id,competency_id'});
