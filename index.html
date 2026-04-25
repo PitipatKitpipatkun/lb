@@ -246,7 +246,7 @@ input[type="password"].fi::placeholder{letter-spacing:0;font-size:15px;}
       <div class="fg">
         <label class="fl">เลขตำแหน่งอาจารย์</label>
         <div class="input-wrap"><span class="ii">🏫</span>
-          <input class="fi fi-t" type="text" id="teacherUsername" placeholder="เลข 5 หลัก" autocomplete="username">
+          <input class="fi fi-t" type="text" id="teacherUsername" placeholder="เช่น T001" autocomplete="username">
         </div>
       </div>
       <div class="fg">
@@ -342,18 +342,19 @@ async function handleLogin(role,btn){
       showAlert(alertId,'ยินดีต้อนรับ '+p.full_name,'ok');
       setTimeout(()=>{window.location.href='admin-dashboard.html';},800);
     }else if(role==='student'){
-      const{data,error}=await sb.from('students').select('*').eq('student_code',username).eq('password',password).single();
+      const{data,error}=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).single();
       if(error||!data){showAlert(alertId,'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง','err');return;}
-      localStorage.setItem('lb_user',JSON.stringify({role:'student',fullName:data.full_name,profileId:data.id,studentCode:data.student_code,username}));
+      localStorage.setItem('lb_user',JSON.stringify({role:'student',fullName:data.full_name,profileId:data.id,studentCode:data.student_code,username,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
       logLogin('student',data.full_name,data.student_code||username);
       showAlert(alertId,'ยินดีต้อนรับ '+data.full_name,'ok');
       setTimeout(()=>{window.location.href='student-dashboard.html';},800);
     }else{
-      const{data,error}=await sb.from('teachers').select('*').eq('teacher_code',username).eq('password',password).single();
+      const{data,error}=await sb.from('teachers').select('*,departments(name)').eq('teacher_code',username).eq('password',password).single();
       if(error||!data){showAlert(alertId,'เลขตำแหน่งหรือรหัสผ่านไม่ถูกต้อง','err');return;}
-      localStorage.setItem('lb_user',JSON.stringify({role:'teacher',fullName:data.full_name,profileId:data.id,teacherCode:data.teacher_code,username}));
+      const isTA=data.is_admin===true;
+      localStorage.setItem('lb_user',JSON.stringify({role:'teacher',fullName:data.full_name,profileId:data.id,teacherCode:data.teacher_code,username,isAdmin:isTA,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
       logLogin('teacher',data.full_name,data.teacher_code||username);
-      showAlert(alertId,'ยินดีต้อนรับ '+data.full_name,'ok');
+      showAlert(alertId,'ยินดีต้อนรับ '+data.full_name,(isTA?' (Teacher Admin)':''),'ok');
       setTimeout(()=>{window.location.href='teacher-dashboard.html';},800);
     }
   }catch(e){showAlert(alertId,'เกิดข้อผิดพลาด: '+e.message,'err');}
