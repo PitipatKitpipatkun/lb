@@ -458,6 +458,7 @@ async function init(){
   await loadData();
 }
 async function loadData(){
+  const deptId=user.departmentId||null;
   const[cr,er,hr]=await Promise.all([
     sb.from('competencies').select('*'),
     sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId),
@@ -465,7 +466,11 @@ async function loadData(){
   ]);
   const comps=cr.data||[],evals=er.data||[],hist=hr.data||[];
   const histByComp={};hist.forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
-  const sortedComps=(comps||[]).sort((a,b)=>{
+  // Filter: show global (null) + own department
+  const filteredComps=(comps||[]).filter(comp=>
+    !comp.department_id || comp.department_id===deptId
+  );
+  const sortedComps=(filteredComps||[]).sort((a,b)=>{
     const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
     if(ca!==0)return ca;
     return (a.name||'').localeCompare(b.name||'','th');
@@ -482,7 +487,7 @@ function skillHTML(sk,delay=0){
     <div class="skill-dot ${s.cls}">${s.icon}</div>
     <div class="skill-info">
       <div class="skill-name">${sk.name}</div>
-      <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>${sk.category?` <span class="skill-type" style="background:#f1f5f9;color:var(--slate-m)">${sk.category}</span>`:''}
+      <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>${sk.category?` <span class="skill-type" style="background:#f1f5f9;color:var(--slate-m)">${sk.category}</span>`:''}${sk.department_id?'':' <span class="skill-type" style="background:#fef9c3;color:#854d0e;font-size:9px;">🌐 ทุกสาขา</span>'}
       ${date?`<div class="skill-meta">${date}${loc}${tea}</div>`:''}
       ${buildHistoryDetail(sk)}
     </div>
