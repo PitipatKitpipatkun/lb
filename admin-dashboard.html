@@ -169,6 +169,20 @@ tr:hover td{background:var(--amber-50);}
 <body>
 <div id="toast" class="toast"></div>
 
+<!-- DEPARTMENT MODAL -->
+<div class="modal-ov" id="deptModal">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title" id="dmTitle">เพิ่มสาขา</span><button class="modal-close" onclick="closeM('deptModal')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="d_id">
+      <div class="fg"><label class="fl">ชื่อสาขา *</label><input class="fi" id="d_name" placeholder="สัตวแพทยศาสตร์"></div>
+      <div class="fg"><label class="fl">รหัสสาขา</label><input class="fi" id="d_code" placeholder="VET"></div>
+      <div class="fg"><label class="fl">คำอธิบาย</label><input class="fi" id="d_desc" placeholder="หลักสูตรสัตวแพทยศาสตรบัณฑิต"></div>
+    </div>
+    <div class="modal-ft"><button class="cancel-btn" onclick="closeM('deptModal')">ยกเลิก</button><button class="save-btn" id="dBtn" onclick="saveDept()">💾 บันทึก</button></div>
+  </div>
+</div>
+
 <!-- STUDENT MODAL -->
 <div class="modal-ov" id="studentModal">
   <div class="modal">
@@ -177,6 +191,7 @@ tr:hover td{background:var(--amber-50);}
       <input type="hidden" id="s_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="s_name" placeholder="นายสมชาย ใจดี"></div>
       <div class="fg"><label class="fl">รหัสนักศึกษา * (ใช้เป็น Username)</label><input class="fi" id="s_code" placeholder="64010001" inputmode="text"><p class="fhint">นักศึกษาจะใช้รหัสนี้เข้าระบบ</p></div>
+      <div class="fg"><label class="fl">สาขาวิชา</label><select class="fs" id="s_dept"><option value="">— ไม่ระบุ —</option></select></div>
       <div class="fg"><label class="fl" id="s_pwGrpLabel">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="s_pw" placeholder="••••••" maxlength="6" inputmode="numeric"><p class="fhint">ตัวเลข 6 หลัก</p></div>
     </div>
     <div class="modal-ft"><button class="cancel-btn" onclick="closeM('studentModal')">ยกเลิก</button><button class="save-btn" id="sBtn" onclick="saveStudent()">💾 บันทึก</button></div>
@@ -191,6 +206,11 @@ tr:hover td{background:var(--amber-50);}
       <input type="hidden" id="t_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="t_name" placeholder="ผศ.ดร.วิภา สุขใส"></div>
       <div class="fg"><label class="fl">เลขตำแหน่ง * (ใช้เป็น Username)</label><input class="fi" id="t_code" placeholder="T001"><p class="fhint">อาจารย์จะใช้เลขนี้เข้าระบบ</p></div>
+      <div class="fg"><label class="fl">สาขาวิชา</label><select class="fs" id="t_dept"><option value="">— ไม่ระบุ —</option></select></div>
+      <div class="fg" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--amber-50);border-radius:10px;border:1px solid var(--amber-l);">
+        <input type="checkbox" id="t_isAdmin" style="width:18px;height:18px;accent-color:var(--amber);">
+        <div><label for="t_isAdmin" style="font-size:13px;font-weight:700;color:var(--amber-d);cursor:pointer;">⚙️ Teacher Admin</label><p style="font-size:11px;color:var(--slate-l);margin-top:2px;">อาจารย์ท่านนี้สามารถเข้าถึง Admin Settings ได้</p></div>
+      </div>
       <div class="fg"><label class="fl" id="t_pwGrpLabel">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="t_pw" placeholder="••••••" maxlength="6" inputmode="numeric"></div>
     </div>
     <div class="modal-ft"><button class="cancel-btn" onclick="closeM('teacherModal')">ยกเลิก</button><button class="save-btn" id="tBtn" onclick="saveTeacher()">💾 บันทึก</button></div>
@@ -209,6 +229,7 @@ tr:hover td{background:var(--amber-50);}
       <div class="fg"><label class="fl">ประเภท *</label>
         <select class="fs" id="c_type"><option value="mandatory">⭐ ทักษะบังคับ</option><option value="elective">📝 ทักษะเลือก</option></select>
       </div>
+      <div class="fg"><label class="fl">สาขาวิชา (ถ้าระบุ = ทักษะเฉพาะสาขา)</label><select class="fs" id="c_dept"><option value="">— ทุกสาขา —</option></select></div>
       <div class="fg"><label class="fl">Rubric Scale</label>
         <div id="rbBuilder"></div>
         <button class="add-rb-btn" onclick="addRB()" style="margin-top:8px;">+ เพิ่มระดับ</button>
@@ -234,6 +255,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="nav-item" onclick="showTab('students')" id="ni-students"><span class="nav-icon">👨‍🎓</span> นักศึกษา</div>
     <div class="nav-item" onclick="showTab('teachers')" id="ni-teachers"><span class="nav-icon">👩‍🏫</span> อาจารย์</div>
     <div class="nav-item" onclick="showTab('competencies')" id="ni-competencies"><span class="nav-icon">📋</span> ทักษะ</div>
+    <div class="nav-item" onclick="showTab('departments')" id="ni-departments"><span class="nav-icon">🏫</span> สาขาวิชา</div>
     <div class="nav-item" onclick="showTab('logs')" id="ni-logs"><span class="nav-icon">📜</span> บันทึกกิจกรรม</div>
     <div class="nav-item" onclick="showTab('backup')" id="ni-backup"><span class="nav-icon">💾</span> สำรองข้อมูล</div>
     <div class="nav-item" onclick="showTab('settings')" id="ni-settings"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
@@ -267,7 +289,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="table-wrap">
       <div class="table-head"><span class="table-title" id="sCount">นักศึกษา</span><input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('sTbl',this.value)"></div>
       <div class="tbl-scroll">
-        <table id="sTbl"><thead><tr><th>ชื่อ-นามสกุล</th><th>รหัส</th><th>จัดการ</th></tr></thead>
+        <table id="sTbl"><thead><tr><th>ชื่อ-นามสกุล</th><th>รหัส</th><th>สาขา</th><th>จัดการ</th></tr></thead>
         <tbody id="sTbody"></tbody></table>
       </div>
     </div>
@@ -279,7 +301,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="table-wrap">
       <div class="table-head"><span class="table-title" id="tCount">อาจารย์</span><input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('tTbl',this.value)"></div>
       <div class="tbl-scroll">
-        <table id="tTbl"><thead><tr><th>ชื่อ-นามสกุล</th><th>เลขตำแหน่ง</th><th>จัดการ</th></tr></thead>
+        <table id="tTbl"><thead><tr><th>ชื่อ-นามสกุล</th><th>เลขตำแหน่ง</th><th>สาขา</th><th>Admin</th><th>จัดการ</th></tr></thead>
         <tbody id="tTbody"></tbody></table>
       </div>
     </div>
@@ -317,6 +339,21 @@ tr:hover td{background:var(--amber-50);}
           <thead><tr><th>เวลา</th><th>ชื่อ</th><th>บทบาท</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead>
           <tbody id="logTbody"><tr><td colspan="5"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPARTMENTS -->
+  <div id="tab-departments" class="tab-view">
+    <div class="page-header">
+      <div><div class="page-title">🏫 สาขาวิชา</div><div class="page-sub">จัดการสาขาในคณะ</div></div>
+      <button class="add-btn ab-t" onclick="openAddDept()">+ เพิ่มสาขา</button>
+    </div>
+    <div class="table-wrap">
+      <div class="table-head"><span class="table-title" id="dCount">สาขา</span></div>
+      <div class="tbl-scroll">
+        <table><thead><tr><th>ชื่อสาขา</th><th>รหัส</th><th>คำอธิบาย</th><th>นศ.</th><th>อาจารย์</th><th>จัดการ</th></tr></thead>
+        <tbody id="dTbody"></tbody></table>
       </div>
     </div>
   </div>
@@ -447,6 +484,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="bn-item" onclick="showTab('students')" id="bn-students"><span class="bn-icon">👨‍🎓</span><span class="bn-label">นักศึกษา</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('teachers')" id="bn-teachers"><span class="bn-icon">👩‍🏫</span><span class="bn-label">อาจารย์</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('competencies')" id="bn-competencies"><span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="showTab('departments')" id="bn-departments"><span class="bn-icon">🏫</span><span class="bn-label">สาขา</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('logs')" id="bn-logs"><span class="bn-icon">📜</span><span class="bn-label">บันทึก</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('backup')" id="bn-backup"><span class="bn-icon">💾</span><span class="bn-label">Backup</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('settings')" id="bn-settings"><span class="bn-icon">🔑</span><span class="bn-label">ตั้งค่า</span><div class="bn-dot"></div></div>
@@ -466,7 +504,16 @@ async function init(){
   user=JSON.parse(s);
   if(user.role!=='admin'){window.location.href='index.html';return;}
   document.getElementById('sbName').textContent=user.fullName;
-  await Promise.all([loadOverview(),loadStudents(),loadTeachers(),loadComps()]);
+  await Promise.all([loadOverview(),loadStudents(),loadTeachers(),loadComps(),loadDeptOptions()]);
+}
+
+
+async function toggleTeacherAdmin(id,newVal){
+  const t=tData.find(x=>x.id===id);
+  if(!confirm(`${newVal?'ให้':'ยกเลิก'} สิทธิ์ Teacher Admin สำหรับ "${t?.full_name}"?`))return;
+  const{error}=await sb.from('teachers').update({is_admin:newVal}).eq('id',id);
+  if(error){showToast('❌ '+error.message,'err');}
+  else{showToast(`✅ ${newVal?'เพิ่ม':'ยกเลิก'}สิทธิ์ Admin สำเร็จ`,'ok');loadTeachers();}
 }
 
 async function loadOverview(){
@@ -526,11 +573,12 @@ async function loadLogs(){
 }
 
 async function loadStudents(){
-  const{data}=await sb.from('students').select('*').order('full_name');
+  const{data}=await sb.from('students').select('*,departments(name)').order('full_name');
   sData=data||[];
   document.getElementById('sCount').textContent=`นักศึกษา (${sData.length} คน)`;
   document.getElementById('sTbody').innerHTML=sData.length?sData.map(s=>`
     <tr><td>${s.full_name}</td><td style="font-family:monospace;font-size:12px">${s.student_code||'-'}</td>
+    <td style="font-size:12px;color:var(--slate-m)">${s.departments?.name||'—'}</td>
     <td style="display:flex;gap:5px;">
       <button class="act-btn ab-edit" onclick="openEditS('${s.id}')">✏️ แก้ไข</button>
       <button class="act-btn ab-del" onclick="delStudent('${s.id}')">🗑️ ลบ</button>
@@ -553,6 +601,7 @@ function openEditS(id){
   document.getElementById('s_pw').value='';
   document.getElementById('s_pwGrpLabel').textContent='รหัสผ่านใหม่ (ว่างไว้ = ไม่เปลี่ยน)';
   document.getElementById('s_pw').required=false;
+  document.getElementById('s_dept').value=s.department_id||'';
   openM('studentModal');
 }
 async function saveStudent(){
@@ -565,13 +614,15 @@ async function saveStudent(){
   if(!editId&&(!pw||pw.length<6)){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
   if(editId){
-    const payload={full_name:name,student_code:code,student_id:code};
+    const deptId=document.getElementById('s_dept').value||null;
+    const payload={full_name:name,student_code:code,student_id:code,department_id:deptId};
     if(pw&&pw.length>=6)payload.password=pw;
     const{error}=await sb.from('students').update(payload).eq('id',editId);
     if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ แก้ไขสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('แก้ไขนักศึกษา',`${name} (${code})`);}
   }else{
-    const{error}=await sb.from('students').insert({full_name:name,student_code:code,student_id:code,email:code+'@student.lb',password:pw});
+    const deptId=document.getElementById('s_dept').value||null;
+    const{error}=await sb.from('students').insert({full_name:name,student_code:code,student_id:code,email:code+'@student.lb',password:pw,department_id:deptId});
     if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ เพิ่มนักศึกษาสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('เพิ่มนักศึกษา',`${name} (${code})`);}
   }
@@ -586,11 +637,17 @@ async function delStudent(id){
 }
 
 async function loadTeachers(){
-  const{data}=await sb.from('teachers').select('*').order('full_name');
+  const{data}=await sb.from('teachers').select('*,departments(name)').order('full_name');
   tData=data||[];
   document.getElementById('tCount').textContent=`อาจารย์ (${tData.length} คน)`;
   document.getElementById('tTbody').innerHTML=tData.length?tData.map(t=>`
     <tr><td>${t.full_name}</td><td style="font-family:monospace;font-size:12px">${t.teacher_code||'-'}</td>
+    <td style="font-size:12px;color:var(--slate-m)">${t.departments?.name||'—'}</td>
+    <td style="text-align:center;">
+      <button onclick="toggleTeacherAdmin('${t.id}',${!t.is_admin})" style="padding:3px 10px;border-radius:100px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:${t.is_admin?'var(--amber-l)':'var(--bg)'};color:${t.is_admin?'var(--amber-d)':'var(--slate-l)'};">
+        ${t.is_admin?'⚙️ Admin':'—'}
+      </button>
+    </td>
     <td style="display:flex;gap:5px;">
       <button class="act-btn ab-edit" onclick="openEditT('${t.id}')">✏️ แก้ไข</button>
       <button class="act-btn ab-del" onclick="delTeacher('${t.id}')">🗑️ ลบ</button>
@@ -611,6 +668,8 @@ function openEditT(id){
   document.getElementById('t_code').value=t.teacher_code||'';
   document.getElementById('t_pw').value='';
   document.getElementById('t_pwGrpLabel').textContent='รหัสผ่านใหม่ (ว่างไว้ = ไม่เปลี่ยน)';
+  document.getElementById('t_dept').value=t.department_id||'';
+  document.getElementById('t_isAdmin').checked=t.is_admin||false;
   openM('teacherModal');
 }
 async function saveTeacher(){
@@ -623,13 +682,17 @@ async function saveTeacher(){
   if(!editId&&(!pw||pw.length<6)){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
   if(editId){
-    const payload={full_name:name,teacher_code:code,teacher_id:code};
+    const deptIdT=document.getElementById('t_dept').value||null;
+    const isAdm=document.getElementById('t_isAdmin').checked;
+    const payload={full_name:name,teacher_code:code,teacher_id:code,department_id:deptIdT,is_admin:isAdm};
     if(pw&&pw.length>=6)payload.password=pw;
     const{error}=await sb.from('teachers').update(payload).eq('id',editId);
     if(error){showToast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ แก้ไขสำเร็จ','ok');closeM('teacherModal');loadTeachers();logActivity('แก้ไขอาจารย์',`${name} (${code})`);}
   }else{
-    const{error}=await sb.from('teachers').insert({full_name:name,teacher_code:code,teacher_id:code,email:code+'@teacher.lb',password:pw});
+    const deptIdT=document.getElementById('t_dept').value||null;
+    const isAdm=document.getElementById('t_isAdmin').checked;
+    const{error}=await sb.from('teachers').insert({full_name:name,teacher_code:code,teacher_id:code,email:code+'@teacher.lb',password:pw,department_id:deptIdT,is_admin:isAdm});
     if(error){showToast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ เพิ่มอาจารย์สำเร็จ','ok');closeM('teacherModal');loadTeachers();logActivity('เพิ่มอาจารย์',`${name} (${code})`);}
   }
@@ -667,6 +730,7 @@ async function loadComps(){
 function openAddC(){
   document.getElementById('cmTitle').textContent='เพิ่มทักษะใหม่';
   ['c_id','c_name','c_cat','c_desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c_dept').value='';
   document.getElementById('c_type').value='mandatory';
   rbRows=JSON.parse(JSON.stringify(DEF_RB));renderRB();openM('compModal');
 }
@@ -676,6 +740,7 @@ function openEditC(id){
   document.getElementById('c_id').value=id;
   document.getElementById('c_name').value=c.name;
   document.getElementById('c_cat').value=c.category||'';
+  document.getElementById('c_dept').value=c.department_id||'';
   document.getElementById('c_desc').value=c.description||'';
   document.getElementById('c_type').value=c.type;
   rbRows=JSON.parse(JSON.stringify(c.rubric_criteria||DEF_RB));
@@ -697,7 +762,7 @@ async function saveComp(){
   const editId=document.getElementById('c_id').value;
   if(!name){showToast('❌ กรุณากรอกชื่อทักษะ','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
-  const payload={name,category:document.getElementById('c_cat').value.trim(),description:document.getElementById('c_desc').value.trim(),type:document.getElementById('c_type').value,rubric_criteria:rbRows};
+  const payload={name,category:document.getElementById('c_cat').value.trim(),department_id:document.getElementById('c_dept').value||null,description:document.getElementById('c_desc').value.trim(),type:document.getElementById('c_type').value,rubric_criteria:rbRows};
   const{error}=editId?await sb.from('competencies').update(payload).eq('id',editId):await sb.from('competencies').insert(payload);
   if(error){showToast('❌ '+error.message,'err');}
   else{showToast('✅ บันทึกสำเร็จ','ok');closeM('compModal');loadComps();loadOverview();}
@@ -742,7 +807,80 @@ function showTab(tab){
   document.getElementById('bn-'+tab)?.classList.add('active');
   if(tab==='logs')loadLogs();
   if(tab==='backup')initBackup();
+  if(tab==='departments')loadDepts();
   closeSidebar();
+}
+
+
+// ===== DEPARTMENTS =====
+let dData=[];
+async function loadDepts(){
+  const{data}=await sb.from('departments').select('*').order('name');
+  dData=data||[];
+  // Count members
+  const[sc,tc]=await Promise.all([
+    sb.from('students').select('department_id'),
+    sb.from('teachers').select('department_id')
+  ]);
+  const sCounts={};(sc.data||[]).forEach(s=>{if(s.department_id)sCounts[s.department_id]=(sCounts[s.department_id]||0)+1;});
+  const tCounts={};(tc.data||[]).forEach(t=>{if(t.department_id)tCounts[t.department_id]=(tCounts[t.department_id]||0)+1;});
+  document.getElementById('dCount').textContent=`สาขา (${dData.length})`;
+  document.getElementById('dTbody').innerHTML=dData.length?dData.map(d=>`
+    <tr>
+      <td style="font-weight:600;">${d.name}</td>
+      <td><span style="font-family:monospace;background:var(--amber-50);padding:2px 8px;border-radius:6px;font-size:12px;">${d.code||'—'}</span></td>
+      <td style="font-size:12px;color:var(--slate-m);">${d.description||'—'}</td>
+      <td style="text-align:center;font-weight:700;color:var(--teal);">${sCounts[d.id]||0}</td>
+      <td style="text-align:center;font-weight:700;color:var(--rose);">${tCounts[d.id]||0}</td>
+      <td style="display:flex;gap:5px;">
+        <button class="act-btn ab-edit" onclick="openEditDept('${d.id}')">✏️</button>
+        <button class="act-btn ab-del" onclick="delDept('${d.id}')">🗑️</button>
+      </td>
+    </tr>`).join(''):
+    '<tr><td colspan="6"><div class="empty"><span class="empty-icon">🏫</span><p>ยังไม่มีสาขา</p></div></td></tr>';
+  // Reload dept options in all selects
+  await loadDeptOptions();
+}
+async function loadDeptOptions(){
+  const{data}=await sb.from('departments').select('id,name').order('name');
+  const opts=['<option value="">— ไม่ระบุ —</option>',...(data||[]).map(d=>`<option value="${d.id}">${d.name}</option>`)].join('');
+  const opts2=['<option value="">— ทุกสาขา —</option>',...(data||[]).map(d=>`<option value="${d.id}">${d.name}</option>`)].join('');
+  document.getElementById('s_dept').innerHTML=opts;
+  document.getElementById('t_dept').innerHTML=opts;
+  document.getElementById('c_dept').innerHTML=opts2;
+}
+function openAddDept(){
+  document.getElementById('dmTitle').textContent='เพิ่มสาขา';
+  ['d_id','d_name','d_code','d_desc'].forEach(id=>document.getElementById(id).value='');
+  openM('deptModal');
+}
+function openEditDept(id){
+  const d=dData.find(x=>x.id===id);if(!d)return;
+  document.getElementById('dmTitle').textContent='แก้ไขสาขา';
+  document.getElementById('d_id').value=id;
+  document.getElementById('d_name').value=d.name;
+  document.getElementById('d_code').value=d.code||'';
+  document.getElementById('d_desc').value=d.description||'';
+  openM('deptModal');
+}
+async function saveDept(){
+  const btn=document.getElementById('dBtn');
+  const name=document.getElementById('d_name').value.trim();
+  const editId=document.getElementById('d_id').value;
+  if(!name){showToast('❌ กรุณากรอกชื่อสาขา','err');return;}
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  const payload={name,code:document.getElementById('d_code').value.trim()||null,description:document.getElementById('d_desc').value.trim()||null};
+  const{error}=editId?await sb.from('departments').update(payload).eq('id',editId):await sb.from('departments').insert(payload);
+  if(error){showToast('❌ '+(error.code==='23505'?'ชื่อหรือรหัสสาขานี้มีอยู่แล้ว':error.message),'err');}
+  else{showToast('✅ บันทึกสำเร็จ','ok');closeM('deptModal');loadDepts();}
+  btn.disabled=false;btn.textContent='💾 บันทึก';
+}
+async function delDept(id){
+  const d=dData.find(x=>x.id===id);
+  if(!confirm(`ลบสาขา "${d?.name}"? นักศึกษาและอาจารย์ในสาขาจะไม่ถูกลบ แต่ department_id จะเป็น null`))return;
+  const{error}=await sb.from('departments').delete().eq('id',id);
+  if(error){showToast('❌ '+error.message,'err');return;}
+  showToast('✅ ลบสำเร็จ','ok');loadDepts();
 }
 
 // ===== BACKUP =====
