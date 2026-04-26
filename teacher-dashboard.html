@@ -367,6 +367,31 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <!-- KPI Sections accordion -->
     <div id="wlSections"></div>
 
+    <!-- ภาระงานอื่น ๆ -->
+    <div class="wl-section" style="border:2px dashed #cbd5e1;background:white;">
+      <div class="wl-sec-head" onclick="toggleWLSection('misc')">
+        <div class="wl-sec-title">
+          <span>📁</span>
+          <div>
+            <div>ภาระงานอื่น ๆ (พักไว้ก่อน)</div>
+            <div style="font-size:11px;font-weight:400;color:var(--slate-l);">อัปโหลดภาพหลักฐาน Event ที่ยังไม่ได้จัดหมวดหมู่</div>
+          </div>
+        </div>
+        <div class="wl-sec-meta">
+          <span id="wlMiscCount" style="background:#f1f5f9;color:var(--slate-m);padding:3px 9px;border-radius:100px;font-size:12px;font-weight:700;">0 รายการ</span>
+          <span class="wl-sec-arrow" id="wl-arr-misc">▸</span>
+        </div>
+      </div>
+      <div class="wl-sec-body" id="wl-body-misc" style="display:none;">
+        <div id="wlMiscImgs" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;"></div>
+        <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--teal-50);border:1.5px dashed var(--teal-l);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--teal);">
+          📷 เพิ่มหลักฐาน / Event ใหม่
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="handleEvidenceUpload('_misc',this)">
+        </label>
+        <div style="margin-top:10px;font-size:11px;color:var(--slate-l);">💡 ภายหลังสามารถย้ายรูปเข้าตัวชี้วัดที่ต้องการได้ในหน้าจัดการ</div>
+      </div>
+    </div>
+
     <div style="height:80px;"></div>
   </div>
 
@@ -1331,6 +1356,7 @@ function confirmEvidenceUpload(){
   saveWLEvidence();
   const el=document.getElementById('wlimgs-'+_uploadKpiId);
   if(el)el.innerHTML=renderEvidenceImgs(_uploadKpiId);
+  if(_uploadKpiId==='_misc')renderMiscSection();
   cancelEvidenceUpload();
   showToast('✅ บันทึกหลักฐาน '+_pendingFiles.length+' รูป','ok');
 }
@@ -1476,6 +1502,19 @@ thead th{background:#7c3aed;color:white;padding:7px 9px;text-align:left;}
     }
 
     // --- 3. Add README ---
+        // Add misc evidence
+    const miscImgs=wlEvidence['_misc']||[];
+    if(miscImgs.length){
+      const miscFolder=zip.folder('หลักฐาน/ภาระงานอื่นๆ');
+      miscImgs.forEach((img,i)=>{
+        const b64=img.img.split(',')[1];
+        const ext=img.type&&img.type.includes('png')?'png':'jpg';
+        const fname=`${i+1}_${(img.name||'event').replace(/[/\\?%*:|"<>]/g,'_')}_${img.date||''}.${ext}`;
+        miscFolder.file(fname,b64,{base64:true});
+        imgCount++;
+      });
+    }
+
     const readme=`ภาระงาน — ${user.fullName}
 วันที่ Export: ${today}
 ${periodTxt}
@@ -1509,8 +1548,29 @@ function initWorkload(){
   const pd=wlData._period||'';
   if(pd){const r=document.getElementById('wlPeriod'+pd);if(r)r.checked=true;}
   renderWLSections();
+  renderMiscSection();
 }
-
+function renderMiscSection(){
+  const imgs=wlEvidence['_misc']||[];
+  const countEl=document.getElementById('wlMiscCount');
+  if(countEl)countEl.textContent=imgs.length+' รายการ';
+  const el=document.getElementById('wlMiscImgs');
+  if(!el)return;
+  if(!imgs.length){el.innerHTML='<div style="font-size:13px;color:var(--slate-l);padding:8px 0;">ยังไม่มีหลักฐาน กด "+ เพิ่ม" เพื่อเพิ่มรูปภาพ</div>';return;}
+  el.innerHTML=imgs.map((img,i)=>`
+    <div style="position:relative;width:100px;">
+      <img src="${img.img}" style="width:100px;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--border);">
+      <div style="margin-top:4px;font-size:10px;font-weight:600;color:var(--slate-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${img.name||'—'}</div>
+      <div style="font-size:10px;color:var(--slate-l);">${img.date||''}</div>
+      <button onclick="deleteMiscEvidence(${i})" style="position:absolute;top:2px;right:2px;background:rgba(220,38,38,0.85);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:1;">×</button>
+    </div>`).join('');
+}
+function deleteMiscEvidence(idx){
+  if(!confirm('ลบหลักฐานนี้?'))return;
+  (wlEvidence['_misc']||[]).splice(idx,1);
+  saveWLEvidence();
+  renderMiscSection();
+}
 function renderWLSections(){
   const el=document.getElementById('wlSections');
   el.innerHTML=WL_KPIS.map(sec=>{
