@@ -418,4 +418,401 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       </button>
     </div>
   </div>
+<script>
+const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const{createClient}=window.supabase;
+const sb=createClient(SB_URL,SB_KEY);
+let user=null,skills=[],qrStream=null,qrTimer=null;
+
+// ─── Debug ───
+function dbg(msg,color){
+  if(localStorage.getItem('_dbgEnabled')!=='1')return;
+  const bar=document.getElementById('_dbgBar');if(!bar)return;
+  const line=document.createElement('div');line.style.color=color||'#4ade80';
+  line.textContent='['+new Date().toLocaleTimeString('th-TH')+'] '+msg;
+  bar.appendChild(line);
+  if(bar.style.display!=='none')bar.scrollTop=bar.scrollHeight;
+  console.log('[DBG]',msg);
 }
+function showLoadError(msg){
+  let bar=document.getElementById('loadErrorBar');
+  if(!bar){bar=document.createElement('div');bar.id='loadErrorBar';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:white;padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:Sarabun,sans-serif;';
+    document.body.prepend(bar);}
+  bar.innerHTML='<span>⚠️ '+msg+'</span>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="loadData()" style="padding:4px 12px;background:white;color:#dc2626;border:none;border-radius:6px;font-family:Sarabun,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 ลองใหม่</button>'
+    +'<button onclick="document.getElementById(\'loadErrorBar\').remove()" style="padding:4px 10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:6px;cursor:pointer;">✕</button>'
+    +'</div>';
+}
+
+// ─── Init ───
+async function init(){
+  try{
+    const s=localStorage.getItem('lb_user');
+    if(!s){window.location.href='index.html';return;}
+    user=JSON.parse(s);
+    if(user.role!=='student'){window.location.href='index.html';return;}
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+    set('sbName',user.fullName||'');
+    set('sbCode',user.studentCode||user.username||'');
+    set('welcomeTitle','สวัสดี, '+user.fullName);
+    set('repName',user.fullName);
+    set('repCode','รหัสนักศึกษา: '+(user.studentCode||'-'));
+    set('repDate','วันที่พิมพ์: '+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}));
+    dbg('init: '+user.fullName);
+    await loadData();
+  }catch(e){
+    console.error('init error:',e);
+    showLoadError('init: '+e.message);
+  }
+}
+
+// ─── Load Data ───
+async function loadData(){
+  const listIds=['recentList','mandatoryList','electiveList','reportList'];
+  const spinHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+  listIds.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=spinHTML;});
+  let step='start';
+  try{
+    step='fetch competencies';dbg(step);
+    const{data:comps,error:e1}=await sb.from('competencies').select('*');
+    if(e1)throw new Error(e1.message);
+    dbg('competencies: '+comps.length);
+    step='fetch evaluations';dbg(step);
+    const{data:evals,error:e2}=await sb.from('evaluations').select('*,teachers(full_name)').eq('student_id',user.profileId);
+    if(e2)throw new Error(e2.message);
+    dbg('evaluations: '+evals.length);
+    step='fetch history';dbg(step);
+    const{data:histRaw}=await sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',user.profileId).order('evaluated_at',{ascending:false});
+    const hist=histRaw||[];
+    dbg('history: '+hist.length);
+    step='process';
+    const deptId=user.departmentId||null;
+    const histByComp={};
+    hist.forEach(h=>{if(!histByComp[h.competency_id])histByComp[h.competency_id]=[];histByComp[h.competency_id].push(h);});
+    const filtered=(comps||[]).filter(c=>!c.department_id||c.department_id===deptId);
+    filtered.sort((a,b)=>{const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');return ca!==0?ca:(a.name||'').localeCompare(b.name||'','th');});
+    skills=filtered.map(comp=>{const e=(evals||[]).find(ev=>ev.competency_id===comp.id)||null;return{...comp,evaluation:e,status:e?e.status:'pending',history:histByComp[comp.id]||[]};});
+    dbg('skills: '+skills.length);
+    step='renderStats';  try{renderStats();}    catch(e){dbg('ERR '+step+': '+e.message,'#f87171');}
+    step='renderRecent'; try{renderRecent();}   catch(e){dbg('ERR '+step+': '+e.message,'#f87171');document.getElementById('recentList').innerHTML='<p style="color:red;padding:12px">'+e.message+'</p>';}
+    step='renderMandatory';try{renderMandatory();}catch(e){dbg('ERR '+step+': '+e.message,'#f87171');document.getElementById('mandatoryList').innerHTML='<p style="color:red;padding:12px">'+e.message+'</p>';}
+    step='renderElective';try{renderElective();}catch(e){dbg('ERR '+step+': '+e.message,'#f87171');document.getElementById('electiveList').innerHTML='<p style="color:red;padding:12px">'+e.message+'</p>';}
+    step='renderReport'; try{renderReport();}   catch(e){dbg('ERR '+step+': '+e.message,'#f87171');}
+    dbg('DONE ✅');
+  }catch(err){
+    dbg('loadData ['+step+']: '+err.message,'#f87171');
+    const errHTML='<div style="padding:16px;text-align:center;color:#dc2626;font-size:13px;">⚠️ '+step+': '+err.message+'<br><button onclick="loadData()" style="margin-top:10px;padding:8px 18px;background:#0d9488;color:white;border:none;border-radius:9px;font-family:Sarabun,sans-serif;font-size:13px;cursor:pointer;">🔄 ลองใหม่</button></div>';
+    listIds.forEach(id=>{const el=document.getElementById(id);if(el&&el.innerHTML.includes('spinner'))el.innerHTML=errHTML;});
+    showLoadError('['+step+'] '+err.message);
+  }
+}
+
+// ─── Render Stats ───
+function renderStats(){
+  const mand=skills.filter(s=>s.type==='mandatory');
+  const pass=skills.filter(s=>s.status==='pass').length;
+  const fail=skills.filter(s=>s.status==='fail').length;
+  const pend=skills.filter(s=>s.status==='pending').length;
+  const mandPass=mand.filter(s=>s.status==='pass').length;
+  const pct=mand.length?Math.round(mandPass/mand.length*100):0;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('stPass',pass);set('stFail',fail);set('stPend',pend);set('stTotal',skills.length);
+  set('progText',mandPass+'/'+mand.length+' ทักษะบังคับ');
+  set('progPct',pct+'%');
+  const pf=document.getElementById('progFill');if(pf)pf.style.width=pct+'%';
+}
+
+// ─── Render Recent ───
+function renderRecent(){
+  const el=document.getElementById('recentList');
+  const recent=skills.filter(s=>s.status!=='pending').slice(0,5);
+  if(!recent.length){el.innerHTML='<div class="empty"><span class="empty-icon">📭</span><p>ยังไม่มีการประเมิน</p></div>';return;}
+  el.innerHTML=recent.map((s,i)=>skillHTML(s,i*0.03)).join('');
+}
+
+// ─── Skill Card HTML ───
+function skillHTML(sk,delay=0){
+  const statusColor=sk.status==='pass'?'var(--pass)':sk.status==='fail'?'var(--fail)':'var(--pend)';
+  const statusBg=sk.status==='pass'?'var(--pass-bg)':sk.status==='fail'?'var(--fail-bg)':'var(--pend-bg)';
+  const statusTxt=sk.status==='pass'?'✅ ผ่าน':sk.status==='fail'?'❌ ไม่ผ่าน':'⏳ รอประเมิน';
+  const hist=sk.history||[];
+  const evalCount=hist.length||(sk.evaluation?1:0);
+  return `<div class="skill-card" style="animation-delay:${delay}s">
+    <div class="skill-header">
+      <div class="skill-info">
+        <div class="skill-name">${sk.name}</div>
+        <div class="skill-meta">
+          <span class="skill-type ${sk.type==='mandatory'?'t-m':'t-e'}">${sk.type==='mandatory'?'⭐ บังคับ':'📝 เลือก'}</span>
+          ${sk.category?`<span class="skill-type" style="background:#f1f5f9;color:var(--slate-m)">${sk.category}</span>`:''}
+          ${sk.department_id?'':'<span class="skill-type" style="background:#fef9c3;color:#854d0e;font-size:9px;">🌐 ทุกสาขา</span>'}
+          ${evalCount>1?`<span class="skill-type" style="background:#f0fdfa;color:#0d9488;">${evalCount} ท่าน</span>`:''}
+        </div>
+      </div>
+      <span class="skill-badge" style="background:${statusBg};color:${statusColor};">${statusTxt}</span>
+    </div>
+    ${sk.status!=='pending'?buildHistoryDetail(sk):''}
+  </div>`;
+}
+
+// ─── History Detail (multi-teacher) ───
+function buildHistoryDetail(sk){
+  const hist=sk.history||[];
+  if(!hist.length&&!sk.evaluation)return'';
+  if(hist.length>0){
+    const avg=sk.evaluation?.avg_rubric_score;
+    return`<div class="skill-history">${avg&&hist.length>1?`<div style="font-size:11px;color:#0d9488;font-weight:600;margin-bottom:6px;">คะแนนเฉลี่ย ${avg}</div>`:''}
+      ${hist.map((h,i)=>`<div style="padding:6px 10px;margin-bottom:5px;border-left:3px solid ${h.status==='pass'?'var(--pass)':'var(--fail)'};background:${h.status==='pass'?'#f0fdf4':'#fff5f5'};border-radius:0 6px 6px 0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;">
+          <span style="font-weight:700;color:${h.status==='pass'?'var(--pass)':'var(--fail)'};">ท่านที่ ${i+1}: ${h.status==='pass'?'✅ ผ่าน':'❌ ไม่ผ่าน'}</span>
+          ${h.rubric_score?`<span>Rubric: <b>${h.rubric_score}</b></span>`:''}
+          <span style="color:#0d9488;font-weight:600;">👤 ${h.teachers?.full_name||'-'}</span>
+          ${h.evaluated_at?`<span style="color:var(--slate-l);">${new Date(h.evaluated_at).toLocaleDateString('th-TH',{year:'2-digit',month:'short',day:'numeric'})}</span>`:''}
+        </div>
+        ${h.location?`<div style="font-size:10px;color:var(--slate-m);margin-top:2px;">📍 ${h.location}</div>`:''}
+        ${h.feedback?`<div style="font-size:10px;color:#0f766e;font-style:italic;margin-top:2px;">💬 ${h.feedback}</div>`:''}
+      </div>`).join('')}
+    </div>`;
+  }
+  const ev=sk.evaluation;
+  return`<div class="skill-history"><div style="padding:6px 10px;border-left:3px solid ${ev.status==='pass'?'var(--pass)':'var(--fail)'};background:${ev.status==='pass'?'#f0fdf4':'#fff5f5'};border-radius:0 6px 6px 0;font-size:11px;">
+    <span style="color:#0d9488;font-weight:600;">👤 ${ev.teachers?.full_name||'-'}</span>
+    ${ev.rubric_score?` · Rubric: <b>${ev.rubric_score}</b>`:''}
+    ${ev.feedback?`<div style="font-style:italic;color:#0f766e;margin-top:2px;">💬 ${ev.feedback}</div>`:''}
+  </div></div>`;
+}
+
+// ─── Render Lists ───
+function renderMandatory(f='all'){
+  const el=document.getElementById('mandatoryList');
+  let list=skills.filter(s=>s.type==='mandatory');
+  if(f==='pass')list=list.filter(s=>s.status==='pass');
+  else if(f==='fail')list=list.filter(s=>s.status==='fail');
+  else if(f==='pending')list=list.filter(s=>s.status==='pending');
+  el.innerHTML=list.length?list.map((s,i)=>skillHTML(s,i*0.02)).join('')
+    :'<div class="empty"><span class="empty-icon">📭</span><p>ไม่พบทักษะ</p></div>';
+}
+function renderElective(f='all'){
+  const el=document.getElementById('electiveList');
+  let list=skills.filter(s=>s.type==='elective');
+  if(f==='pass')list=list.filter(s=>s.status==='pass');
+  else if(f==='pending')list=list.filter(s=>s.status==='pending');
+  el.innerHTML=list.length?list.map((s,i)=>skillHTML(s,i*0.02)).join('')
+    :'<div class="empty"><span class="empty-icon">📭</span><p>ไม่พบทักษะ</p></div>';
+}
+function renderReport(){
+  const el=document.getElementById('reportList');
+  el.innerHTML=skills.length?skills.map((s,i)=>skillHTML(s,i*0.01)).join('')
+    :'<div class="empty"><span class="empty-icon">📭</span><p>ไม่มีทักษะ</p></div>';
+}
+function filterSkills(type,f,btn){
+  btn.closest('.filter-row').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(type==='mandatory')renderMandatory(f);
+  else renderElective(f);
+}
+
+// ─── Switch Tab ───
+function switchSkillsType(type){
+  const isMand=type==='mandatory';
+  const tm=document.getElementById('skillsToggle-mandatory');
+  const te=document.getElementById('skillsToggle-elective');
+  if(tm){tm.style.background=isMand?'var(--teal)':'white';tm.style.color=isMand?'white':'var(--slate-m)';tm.style.borderColor=isMand?'var(--teal)':'var(--border)';}
+  if(te){te.style.background=!isMand?'var(--teal)':'white';te.style.color=!isMand?'white':'var(--slate-m)';te.style.borderColor=!isMand?'var(--teal)':'var(--border)';}
+  const fm=document.getElementById('skills-filter-mandatory');
+  const fe=document.getElementById('skills-filter-elective');
+  const ml=document.getElementById('mandatoryList');
+  const el2=document.getElementById('electiveList');
+  if(fm)fm.style.display=isMand?'':'none';
+  if(fe)fe.style.display=!isMand?'':'none';
+  if(ml)ml.style.display=isMand?'':'none';
+  if(el2)el2.style.display=!isMand?'':'none';
+}
+function switchTab(tab){
+  if(tab==='mandatory'||tab==='elective'){
+    const _t=tab;tab='skills';
+    document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('tab-skills')?.classList.add('active');
+    document.getElementById('ni-skills')?.classList.add('active');
+    document.getElementById('bn-skills')?.classList.add('active');
+    switchSkillsType(_t);
+    return;
+  }
+  document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+tab)?.classList.add('active');
+  document.getElementById('ni-'+tab)?.classList.add('active');
+  document.getElementById('bn-'+tab)?.classList.add('active');
+  if(tab==='qrscan')stopScanner();
+}
+
+// ─── Sidebar ───
+function openSidebar(){
+  document.getElementById('sidebar')?.classList.add('open');
+  document.getElementById('sbOverlay')?.classList.add('on');
+}
+function closeSidebar(){
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sbOverlay')?.classList.remove('on');
+}
+
+// ─── QR Scanner ───
+function startScanner(){
+  document.getElementById('scanStart').style.display='none';
+  document.getElementById('scannerContainer').style.display='block';
+  document.getElementById('scanStatus').style.display='block';
+  document.getElementById('scanStatusText').textContent='กำลังเปิดกล้อง...';
+  document.getElementById('qrAlert').style.display='none';
+  document.getElementById('qrJoined').style.display='none';
+  if(!navigator.mediaDevices?.getUserMedia){
+    showQRAlert('กล้องไม่รองรับ กรุณาใช้ HTTPS','err');return;
+  }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(stream=>{
+      qrStream=stream;
+      const video=document.getElementById('qrVideo');
+      video.srcObject=stream;
+      document.getElementById('scanStatusText').textContent='เล็งกล้องไปที่ QR Code...';
+      qrTimer=setInterval(()=>scanFrame(video),300);
+    })
+    .catch(err=>{showQRAlert('เปิดกล้องไม่ได้: '+err.message,'err');document.getElementById('scanStart').style.display='block';document.getElementById('scannerContainer').style.display='none';document.getElementById('scanStatus').style.display='none';});
+}
+function stopScanner(){
+  clearInterval(qrTimer);qrTimer=null;
+  if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null;}
+  document.getElementById('scannerContainer').style.display='none';
+  document.getElementById('scanStatus').style.display='none';
+  document.getElementById('scanStart').style.display='block';
+}
+function scanAnother(){
+  document.getElementById('qrJoined').style.display='none';
+  document.getElementById('qrAlert').style.display='none';
+  startScanner();
+}
+function scanFrame(video){
+  if(video.readyState!==video.HAVE_ENOUGH_DATA)return;
+  const canvas=document.getElementById('qrCanvas');
+  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+  const img=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
+  const code=window.jsQR?window.jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'}):null;
+  if(code?.data){
+    stopScanner();
+    processQR(code.data);
+  }
+}
+async function processQR(url){
+  document.getElementById('scanStatusText').textContent='กำลังประมวลผล...';
+  document.getElementById('scanStatus').style.display='block';
+  try{
+    const token=url.split('token=')[1];
+    if(!token){showQRAlert('QR ไม่ถูกต้อง','err');return;}
+    const{data:tk,error:e1}=await sb.from('qr_tokens').select('id,is_active,competency_id,competency_ids,teachers(full_name)').eq('token',token).single();
+    if(e1||!tk){showQRAlert('ไม่พบ QR หรือหมดอายุ','err');return;}
+    if(!tk.is_active){showQRAlert('QR นี้ปิดใช้งานแล้ว','err');return;}
+    const{data:existing}=await sb.from('qr_queue').select('id,status').eq('token_id',tk.id).eq('student_id',user.profileId).single().catch(()=>({data:null}));
+    if(existing?.status==='waiting'){
+      showQRJoined(tk,'เข้าร่วมคิวแล้ว (รอประเมิน)');return;
+    }
+    const{error:e2}=await sb.from('qr_queue').upsert({token_id:tk.id,student_id:user.profileId,status:'waiting'},{onConflict:'token_id,student_id'});
+    if(e2){showQRAlert('เกิดข้อผิดพลาด: '+e2.message,'err');return;}
+    showQRJoined(tk,'เข้าร่วมคิวสำเร็จ');
+  }catch(err){showQRAlert('เกิดข้อผิดพลาด: '+err.message,'err');}
+  document.getElementById('scanStatus').style.display='none';
+}
+async function showQRJoined(tk,msg){
+  const{data:queue}=await sb.from('qr_queue').select('id').eq('token_id',tk.id).eq('status','waiting').order('joined_at');
+  const pos=(queue||[]).findIndex(q=>true)+1||1;
+  document.getElementById('qrJoinedInfo').textContent=msg+' | อาจารย์: '+(tk.teachers?.full_name||'-');
+  document.getElementById('qrQueuePos').textContent=pos;
+  document.getElementById('qrJoined').style.display='block';
+  document.getElementById('scanStart').style.display='none';
+}
+function showQRAlert(msg,type){
+  const el=document.getElementById('qrAlert');
+  el.textContent=msg;
+  el.style.display='block';
+  el.style.background=type==='err'?'#fee2e2':'#dcfce7';
+  el.style.color=type==='err'?'#991b1b':'#166534';
+  document.getElementById('scanStart').style.display='block';
+}
+
+// ─── Password ───
+async function changePassword(){
+  const cur=document.getElementById('pwCurrent').value;
+  const nw=document.getElementById('pwNew').value;
+  const cf=document.getElementById('pwConfirm').value;
+  const alert=(msg,t)=>{const el=document.getElementById('pwAlert');el.textContent=msg;el.style.display='block';el.style.background=t==='ok'?'#dcfce7':'#fee2e2';el.style.color=t==='ok'?'#166534':'#991b1b';};
+  if(!cur||!nw||!cf){alert('กรุณากรอกข้อมูลให้ครบ','err');return;}
+  if(nw!==cf){alert('รหัสผ่านใหม่ไม่ตรงกัน','err');return;}
+  if(nw.length<4){alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัว','err');return;}
+  const btn=document.getElementById('pwBtn');btn.disabled=true;btn.textContent='กำลังเปลี่ยน...';
+  const{data:check}=await sb.from('students').select('id').eq('id',user.profileId).eq('password',cur).single();
+  if(!check){alert('รหัสผ่านปัจจุบันไม่ถูกต้อง','err');btn.disabled=false;btn.textContent='🔑 เปลี่ยนรหัสผ่าน';return;}
+  const{error}=await sb.from('students').update({password:nw}).eq('id',user.profileId);
+  if(error){alert('เกิดข้อผิดพลาด: '+error.message,'err');}
+  else{alert('✅ เปลี่ยนรหัสผ่านสำเร็จ','ok');document.getElementById('pwCurrent').value='';document.getElementById('pwNew').value='';document.getElementById('pwConfirm').value='';}
+  btn.disabled=false;btn.textContent='🔑 เปลี่ยนรหัสผ่าน';
+}
+
+// ─── Logout ───
+async function logout(){
+  localStorage.removeItem('lb_user');
+  await sb.auth.signOut();
+  window.location.href='index.html';
+}
+
+// ─── PDF ───
+function openPDF(){
+  const mand=skills.filter(s=>s.type==='mandatory');
+  const mandPass=mand.filter(s=>s.status==='pass').length;
+  const pct=mand.length?Math.round(mandPass/mand.length*100):0;
+  const today=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  function skillBlock(s,i){
+    const hist=s.history||[];const ev=s.evaluation;const evalCount=hist.length||(ev?1:0);
+    const isMulti=evalCount>1;
+    const sColor=s.status==='pass'?'#166534':s.status==='fail'?'#991b1b':'#92400e';
+    const sBg=s.status==='pass'?'#dcfce7':s.status==='fail'?'#fee2e2':'#fef3c7';
+    const sTxt=s.status==='pass'?'✓ ผ่าน':s.status==='fail'?'✗ ไม่ผ่าน':'— รอ';
+    let html=`<div style="margin-bottom:12px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;"><div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;"><span style="font-size:11px;font-weight:700;color:#94a3b8;width:22px;">${i+1}</span><div style="flex:1"><div style="font-size:12px;font-weight:700">${s.name}</div><div style="font-size:10px;color:#94a3b8">${s.category||''}</div></div><span style="background:${sBg};color:${sColor};padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700">${sTxt}</span>${isMulti?`<span style="background:#f0fdfa;color:#0d9488;padding:3px 8px;border-radius:100px;font-size:10px;font-weight:700">${evalCount} ท่าน</span>`:''}</div>`;
+    if(hist.length){html+=`<div style="padding:6px 12px 8px">`;hist.forEach((h,hi)=>{const hP=h.status==='pass';html+=`<div style="border-left:3px solid ${hP?'#16a34a':'#dc2626'};padding:5px 10px;margin-bottom:5px;background:${hP?'#f0fdf4':'#fff5f5'};border-radius:0 6px 6px 0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px"><span style="font-weight:700;color:${hP?'#166534':'#991b1b'}">ท่านที่ ${hi+1}: ${hP?'✓ ผ่าน':'✗ ไม่ผ่าน'}</span><span>Rubric: ${h.rubric_score||'-'}</span><span style="color:#0d9488;font-weight:600">👤 ${h.teachers?.full_name||'-'}</span></div>${h.feedback?`<div style="font-size:10px;color:#0f766e;font-style:italic;margin-top:2px">💬 ${h.feedback}</div>`:''}</div>`;});html+=`</div>`;}
+    else if(ev){html+=`<div style="padding:6px 12px 8px"><div style="border-left:3px solid ${ev.status==='pass'?'#16a34a':'#dc2626'};padding:5px 10px;background:${ev.status==='pass'?'#f0fdf4':'#fff5f5'};border-radius:0 6px 6px 0;font-size:10px"><span style="font-weight:700;color:${ev.status==='pass'?'#166534':'#991b1b'}">${ev.status==='pass'?'✓ ผ่าน':'✗ ไม่ผ่าน'}</span><span style="margin-left:8px;color:#0d9488">👤 ${ev.teachers?.full_name||'-'}</span>${ev.feedback?`<div style="font-style:italic;color:#0f766e;margin-top:2px">💬 ${ev.feedback}</div>`:''}</div></div>`;}
+    html+=`</div>`;return html;
+  }
+  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Log Book — ${user.fullName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@600;700&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:15mm 14mm 18mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Sarabun',sans-serif;font-size:12px;color:#1e293b;background:white;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}button{display:none!important;}}</style></head>
+<body>
+<div style="background:#0d9488;color:white;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <span style="font-family:'Prompt',sans-serif;font-weight:700">📄 ${user.fullName}</span>
+  <button onclick="window.print()" style="background:white;color:#0d9488;border:none;border-radius:8px;padding:6px 14px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer">🖨️ พิมพ์ / PDF</button>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:3px solid #0d9488;margin-bottom:14px">
+  <div><div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:#0d9488">Log Book สมรรถนะทางคลินิก</div>
+  <div style="font-size:10px;color:#64748b;margin-top:2px">คณะสัตวแพทยศาสตร์ มทร.ตะวันออก | ผู้รับการประเมิน: ${user.fullName} | รหัส: ${user.studentCode||'-'} | ${today}</div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px">
+  <div style="background:#dcfce7;border-radius:7px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#16a34a">${skills.filter(s=>s.status==='pass').length}</div><div style="font-size:9px;font-weight:700;color:#166534;text-transform:uppercase">✓ ผ่าน</div></div>
+  <div style="background:#fee2e2;border-radius:7px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#dc2626">${skills.filter(s=>s.status==='fail').length}</div><div style="font-size:9px;font-weight:700;color:#991b1b;text-transform:uppercase">✗ ไม่ผ่าน</div></div>
+  <div style="background:#fef3c7;border-radius:7px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#d97706">${skills.filter(s=>s.status==='pending').length}</div><div style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase">รอประเมิน</div></div>
+  <div style="background:#f0fdfa;border-radius:7px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#0d9488">${pct}%</div><div style="font-size:9px;font-weight:700;color:#0f766e;text-transform:uppercase">บังคับ</div></div>
+</div>
+${mand.length?`<div style="font-family:'Prompt',sans-serif;font-size:12px;font-weight:700;color:#0d9488;padding:7px 11px;background:#f0fdfa;border-left:4px solid #0d9488;margin-bottom:10px;border-radius:0 6px 6px 0">⭐ ทักษะบังคับ (${mand.length} ทักษะ)</div>${mand.map((s,i)=>skillBlock(s,i)).join('')}`:''}
+${skills.filter(s=>s.type==='elective').length?`<div style="font-family:'Prompt',sans-serif;font-size:12px;font-weight:700;color:#0d9488;padding:7px 11px;background:#f0fdfa;border-left:4px solid #0d9488;margin-bottom:10px;border-radius:0 6px 6px 0">📝 ทักษะเลือก</div>${skills.filter(s=>s.type==='elective').map((s,i)=>skillBlock(s,i)).join('')}`:''}
+<div style="margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:36px;border-top:1px dashed #cbd5e1;padding-top:14px">
+  <div style="text-align:center"><div style="border-bottom:1px solid #64748b;margin:36px 16px 5px"></div><div style="font-size:10px;color:#64748b">อาจารย์ที่ปรึกษา / ผู้รับรอง</div></div>
+  <div style="text-align:center"><div style="border-bottom:1px solid #64748b;margin:36px 16px 5px"></div><div style="font-size:10px;color:#64748b">นักศึกษา (${user.fullName}) รหัส ${user.studentCode||'-'}</div></div>
+</div>
+<div style="margin-top:12px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px">ออกโดยระบบ Log Book คณะสัตวแพทยศาสตร์ มทร.ตะวันออก | ${today}</div>
+</body></html>`;
+  const win=window.open('','_blank');win.document.write(html);win.document.close();
+}
+
+init();
+</script>
+</body>
+</html>
