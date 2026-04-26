@@ -418,6 +418,33 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       </button>
     </div>
   </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <div class="bn-items">
+    <div class="bn-item active" onclick="switchTab('overview')" id="bn-overview">
+      <span class="bn-icon">📊</span><span class="bn-label">ภาพรวม</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('skills')" id="bn-skills">
+      <span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="window.location.href='game.html'" id="bn-game">
+      <span class="bn-icon">🎮</span><span class="bn-label">เกม</span><div class="bn-dot" style="opacity:0"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('report')" id="bn-report">
+      <span class="bn-icon">🖨️</span><span class="bn-label">รายงาน</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('qrscan')" id="bn-qrscan">
+      <span class="bn-icon">📲</span><span class="bn-label">QR</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="switchTab('password')" id="bn-password">
+      <span class="bn-icon">🔑</span><span class="bn-label">รหัสผ่าน</span><div class="bn-dot"></div>
+    </div>
+  </div>
+</nav>
+
 <script>
 const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
