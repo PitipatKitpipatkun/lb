@@ -6,6 +6,7 @@
 <title>Log Book — อาจารย์</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -49,10 +50,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:white;border-top:1px solid var(--border);padding:8px 0;padding-bottom:calc(8px + var(--safe-b));box-shadow:0 -4px 20px rgba(0,0,0,0.06);}
 .bn-items{display:flex;justify-content:space-around;}
-.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 20px;cursor:pointer;transition:all 0.2s;border-radius:12px;min-width:80px;}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 8px;cursor:pointer;transition:all 0.2s;border-radius:10px;min-width:52px;flex:1;}
 .bn-item:active{transform:scale(0.92);}
-.bn-icon{font-size:24px;transition:transform 0.2s;}
-.bn-label{font-size:11px;font-weight:600;color:var(--slate-l);}
+.bn-icon{font-size:22px;transition:transform 0.2s;}
+.bn-label{font-size:10px;font-weight:600;color:var(--slate-l);}
 .bn-item.active .bn-icon{transform:scale(1.15);}
 .bn-item.active .bn-label{color:var(--rose);}
 .bn-dot{width:5px;height:5px;border-radius:50%;background:var(--rose);margin-top:2px;opacity:0;transition:opacity 0.2s;}
@@ -334,6 +335,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button onclick="saveWorkload()" style="padding:9px 16px;background:linear-gradient(135deg,var(--teal),#0f766e);color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">💾 บันทึก</button>
+        <button onclick="exportWorkloadZip()" id="exportWLBtn" style="padding:9px 16px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">📦 Export ZIP</button>
         <button onclick="clearWorkload()" style="padding:9px 14px;background:var(--fail-bg);color:var(--fail);border:1.5px solid #fca5a5;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🗑️ ล้าง</button>
       </div>
     </div>
@@ -342,16 +344,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <!-- Header Info -->
     <div class="card" style="margin-bottom:14px;">
       <div class="card-head"><span class="card-title">📝 ข้อมูลทั่วไป</span></div>
-      <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div style="grid-column:1/-1;">
-          <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">รอบการประเมิน</label>
-          <div style="display:flex;gap:12px;">
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="radio" name="wlPeriod" value="1" id="wlPeriod1" style="accent-color:var(--rose);">รอบที่ 1 (1 มิ.ย. – 30 พ.ย.)</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="radio" name="wlPeriod" value="2" id="wlPeriod2" style="accent-color:var(--rose);">รอบที่ 2 (1 ธ.ค. – 31 พ.ค.)</label>
-          </div>
+      <div class="card-body">
+        <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:8px;">รอบการประเมิน</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;">
+            <input type="radio" name="wlPeriod" value="1" id="wlPeriod1" style="accent-color:var(--rose);width:16px;height:16px;">รอบที่ 1 (1 มิ.ย. – 30 พ.ย.)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;">
+            <input type="radio" name="wlPeriod" value="2" id="wlPeriod2" style="accent-color:var(--rose);width:16px;height:16px;">รอบที่ 2 (1 ธ.ค. – 31 พ.ค.)
+          </label>
         </div>
-        <div><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">ปีการศึกษา</label><input class="meta-input" id="wlYear" placeholder="เช่น 2567"></div>
-        <div><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">ชื่อผู้ประเมิน</label><input class="meta-input" id="wlEvaluator" placeholder="ชื่อ-นามสกุลผู้ประเมิน"></div>
       </div>
     </div>
 
@@ -484,6 +486,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
     <div class="bn-item" onclick="switchTab('history')" id="bn-history">
       <span class="bn-icon">📋</span><span class="bn-label">ประวัติ</span><div class="bn-dot"></div>
+    </div>
+    <div class="bn-item" onclick="logout()" id="bn-logout">
+      <span class="bn-icon">🚪</span><span class="bn-label">ออก</span><div class="bn-dot" style="opacity:0"></div>
     </div>
   </div>
 </nav>
@@ -1337,16 +1342,171 @@ function cancelEvidenceUpload(){
 
 function wlStorageKey(){return 'lb_workload_'+user.profileId;}
 
+async function exportWorkloadZip(){
+  const btn=document.getElementById('exportWLBtn');
+  btn.disabled=true;btn.textContent='⏳ กำลัง Export...';
+  try{
+    if(typeof JSZip==='undefined'){showToast('❌ โหลด JSZip ไม่ได้','err');return;}
+    const zip=new JSZip();
+    const allKpis=WL_KPIS.flatMap(s=>s.kpis);
+    const today=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+    const period=document.querySelector('input[name="wlPeriod"]:checked')?.value;
+    const periodTxt=period==='1'?'รอบที่ 1 (1 มิ.ย. – 30 พ.ย.)':period==='2'?'รอบที่ 2 (1 ธ.ค. – 31 พ.ค.)':'ไม่ระบุรอบ';
+
+    // --- 1. Generate HTML Report ---
+    let totalW=0,totalWS=0;
+    allKpis.forEach(kpi=>{
+      const d=wlData[kpi.id]||{};
+      const w=d.weight!==undefined?parseFloat(d.weight)||0:kpi.weight;
+      totalW+=w;
+      if(d.level&&!kpi.naLevels.includes(d.level))totalWS+=w*d.level/70;
+    });
+
+    const secRows=WL_KPIS.map(sec=>{
+      const rows=sec.kpis.map(kpi=>{
+        const d=wlData[kpi.id]||{};
+        const w=d.weight!==undefined?d.weight:kpi.weight;
+        const lvl=d.level||0;
+        const isNa=kpi.naLevels.includes(lvl);
+        const score=lvl&&!isNa?parseFloat(w)*lvl/70:0;
+        const imgCount=(wlEvidence[kpi.id]||[]).length;
+        const reqStyle=kpi.required?'color:#dc2626;font-weight:700':'color:#94a3b8';
+        return `<tr style="background:${d.level?'#f0fdf4':'#fefce8'}">
+          <td style="padding:6px 9px;font-size:11px;font-weight:600;border-bottom:1px solid #e2e8f0;">${kpi.id}<br><small style="${reqStyle}">${kpi.reqNote}</small></td>
+          <td style="padding:6px 9px;font-size:11px;border-bottom:1px solid #e2e8f0;">${kpi.name}</td>
+          <td style="padding:6px 9px;font-size:11px;text-align:center;border-bottom:1px solid #e2e8f0;">${w}%</td>
+          <td style="padding:6px 9px;font-size:11px;text-align:center;border-bottom:1px solid #e2e8f0;">
+            ${lvl?`<span style="background:${!isNa?'#dcfce7':'#f1f5f9'};color:${!isNa?'#166534':'#64748b'};padding:2px 8px;border-radius:100px;font-weight:700;">${lvl}${isNa?' (n/a)':''}</span>`:'<span style="color:#94a3b8;">—</span>'}
+          </td>
+          <td style="padding:6px 9px;font-size:11px;border-bottom:1px solid #e2e8f0;">${d.result||'—'}</td>
+          <td style="padding:6px 9px;font-size:11px;text-align:center;font-weight:700;color:#0d9488;border-bottom:1px solid #e2e8f0;">${score.toFixed(3)}</td>
+          <td style="padding:6px 9px;font-size:11px;border-bottom:1px solid #e2e8f0;">${d.evidence||kpi.evidence}<br>${imgCount?`<span style="color:#7c3aed;font-size:10px;">📷 ${imgCount} รูป</span>`:''}</td>
+        </tr>`;
+      }).join('');
+      const secW=sec.kpis.reduce((s,k)=>{const d=wlData[k.id]||{};return s+(d.weight!==undefined?parseFloat(d.weight)||0:k.weight);},0);
+      const secS=sec.kpis.reduce((s,k)=>{const d=wlData[k.id]||{};const w=d.weight!==undefined?parseFloat(d.weight)||0:k.weight;if(!d.level||k.naLevels.includes(d.level))return s;return s+w*d.level/70;},0);
+      return `<tr style="background:${sec.color}"><td colspan="7" style="padding:8px 12px;font-size:13px;font-weight:700;">${sec.icon} ${sec.label}: ${sec.title} — น้ำหนัก ${sec.rangeMin}–${sec.rangeMax}% | คะแนน: ${secS.toFixed(3)}</td></tr>${rows}`;
+    }).join('');
+
+    const reportHtml=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
+<title>ภาระงาน — ${user.fullName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@600;700&display=swap" rel="stylesheet">
+<style>
+@page{size:A4 landscape;margin:12mm 10mm;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Sarabun',sans-serif;font-size:12px;color:#1e293b;background:white;}
+.header{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:3px solid #7c3aed;margin-bottom:14px;}
+.logo{width:52px;height:52px;object-fit:contain;}
+h1{font-family:'Prompt',sans-serif;font-size:16px;color:#7c3aed;}
+.meta{font-size:12px;color:#64748b;margin-top:2px;}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.sum-box{border-radius:8px;padding:10px;text-align:center;}
+.s1{background:#ede9fe;}.s1 .n{color:#7c3aed;}
+.s2{background:#f0fdfa;}.s2 .n{color:#0d9488;}
+.s3{background:#dcfce7;}.s3 .n{color:#16a34a;}
+.n{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;}
+.lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;margin-top:2px;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+thead th{background:#7c3aed;color:white;padding:7px 9px;text-align:left;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}button{display:none!important;}}
+</style></head>
+<body>
+<div style="background:#7c3aed;color:white;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+  <span style="font-family:'Prompt',sans-serif;font-weight:700;">📊 ภาระงาน — ${user.fullName}</span>
+  <button onclick="window.print()" style="background:white;color:#7c3aed;border:none;border-radius:8px;padding:6px 14px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🖨️ พิมพ์ / บันทึก PDF</button>
+</div>
+<div class="header">
+  <img src="fac.png" class="logo" onerror="this.outerHTML='<div style=width:52px;height:52px;background:#ede9fe;border-radius:8px;display:flex;align-items:center;justify-content:center>📊</div>'">
+  <div>
+    <h1>แบบข้อตกลงการประเมินผลสัมฤทธิ์ของงาน</h1>
+    <div class="meta">คณะสัตวแพทยศาสตร์ มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</div>
+    <div class="meta">ผู้รับการประเมิน: <b>${user.fullName}</b> | ${periodTxt} | พิมพ์: ${today}</div>
+  </div>
+</div>
+<div class="summary">
+  <div class="sum-box s1"><div class="n">${totalW}%</div><div class="lbl">น้ำหนักรวมที่กำหนด</div></div>
+  <div class="sum-box s2"><div class="n">${totalWS.toFixed(2)}</div><div class="lbl">คะแนนถ่วงน้ำหนักรวม</div></div>
+  <div class="sum-box s3"><div class="n">${totalWS.toFixed(2)}</div><div class="lbl">คะแนนส่วน 70%</div></div>
+</div>
+<table>
+  <thead><tr>
+    <th style="width:70px">รหัส/ประเภท</th>
+    <th>ชื่อตัวชี้วัด</th>
+    <th style="width:60px">น้ำหนัก%</th>
+    <th style="width:70px">ระดับที่ได้</th>
+    <th style="width:100px">ผลดำเนินงาน</th>
+    <th style="width:70px">คะแนนถ่วงน้ำหนัก</th>
+    <th>หลักฐาน</th>
+  </tr></thead>
+  <tbody>${secRows}</tbody>
+  <tfoot>
+    <tr style="background:#0f172a;color:white;font-weight:700;">
+      <td colspan="2" style="padding:8px 12px;">รวมทั้งหมด</td>
+      <td style="padding:8px 12px;text-align:center;">${totalW}%</td>
+      <td colspan="2"></td>
+      <td style="padding:8px 12px;text-align:center;font-size:14px;">${totalWS.toFixed(3)}</td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+<div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:40px;">
+  <div style="text-align:center;"><div style="border-bottom:1px solid #64748b;margin:36px 20px 6px;"></div><div style="font-size:11px;color:#64748b;">ผู้ประเมิน (......................................................................)</div></div>
+  <div style="text-align:center;"><div style="border-bottom:1px solid #64748b;margin:36px 20px 6px;"></div><div style="font-size:11px;color:#64748b;">ผู้รับการประเมิน (${user.fullName})</div></div>
+</div>
+<div style="margin-top:12px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px;">ออกโดยระบบ Log Book คณะสัตวแพทยศาสตร์ มทร.ตะวันออก | ${today}</div>
+</body></html>`;
+
+    zip.file('รายงานภาระงาน.html', reportHtml);
+
+    // --- 2. Add all evidence images ---
+    let imgCount=0;
+    for(const sec of WL_KPIS){
+      for(const kpi of sec.kpis){
+        const imgs=wlEvidence[kpi.id]||[];
+        if(!imgs.length)continue;
+        const folder=zip.folder(`หลักฐาน/${kpi.id}_${kpi.name.slice(0,20)}`);
+        imgs.forEach((img,i)=>{
+          const b64=img.img.split(',')[1];
+          const ext=img.type.includes('png')?'png':'jpg';
+          const fname=`${i+1}_${(img.name||'หลักฐาน').replace(/[/\\?%*:|"<>]/g,'_')}_${img.date||''}.${ext}`;
+          folder.file(fname, b64, {base64:true});
+          imgCount++;
+        });
+      }
+    }
+
+    // --- 3. Add README ---
+    const readme=`ภาระงาน — ${user.fullName}
+วันที่ Export: ${today}
+${periodTxt}
+
+ไฟล์ในชุดนี้:
+- รายงานภาระงาน.html  → เปิดในเบราว์เซอร์แล้วกด "พิมพ์" เพื่อบันทึกเป็น PDF
+- โฟลเดอร์ "หลักฐาน/"  → รูปภาพหลักฐาน ${imgCount} รูป แยกตามรหัสตัวชี้วัด
+`;
+    zip.file('README.txt', readme);
+
+    // --- 4. Download ZIP ---
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const dateStr=new Date().toISOString().slice(0,10);
+    a.href=url;a.download=`ภาระงาน_${user.fullName}_${dateStr}.zip`;a.click();
+    URL.revokeObjectURL(url);
+    showToast(`✅ Export สำเร็จ — รายงาน + ${imgCount} รูปหลักฐาน`,'ok');
+  }catch(e){
+    console.error('exportWorkloadZip error:',e);
+    showToast('❌ Export ล้มเหลว: '+e.message,'err');
+  }finally{
+    btn.disabled=false;btn.textContent='📦 Export ZIP';
+  }
+}
+
 function initWorkload(){
   loadWLEvidence();
-  const saved = localStorage.getItem(wlStorageKey());
-  if(saved){
-    try{wlData=JSON.parse(saved);}catch(e){wlData={};}
-  }
-  // Restore header
-  const yr=wlData._year||'';const ev=wlData._evaluator||'';const pd=wlData._period||'';
-  const yel=document.getElementById('wlYear');if(yel)yel.value=yr;
-  const evel=document.getElementById('wlEvaluator');if(evel)evel.value=ev;
+  const saved=localStorage.getItem(wlStorageKey());
+  if(saved){try{wlData=JSON.parse(saved);}catch(e){wlData={};}}
+  const pd=wlData._period||'';
   if(pd){const r=document.getElementById('wlPeriod'+pd);if(r)r.checked=true;}
   renderWLSections();
 }
