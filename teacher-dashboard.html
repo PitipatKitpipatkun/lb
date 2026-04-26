@@ -167,6 +167,27 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   }
 }
 @media(min-width:769px){.toast{bottom:20px;right:24px;left:auto;width:320px;text-align:left;}}
+
+/* ===== WORKLOAD TAB ===== */
+.wl-section{background:white;border:1px solid var(--border);border-radius:16px;margin-bottom:10px;overflow:hidden;}
+.wl-sec-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;user-select:none;transition:background 0.15s;}
+.wl-sec-head:hover{background:var(--bg);}
+.wl-sec-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.wl-sec-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--slate-m);}
+.wl-sec-arrow{font-size:14px;transition:transform 0.2s;color:var(--slate-l);}
+.wl-sec-body{padding:0 14px 14px;border-top:1px solid var(--border);}
+.wl-kpi{padding:12px;border-radius:10px;background:var(--bg);margin-top:10px;border:1px solid var(--border);}
+.wl-kpi-name{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--slate);}
+.wl-kpi-name small{font-weight:400;color:var(--slate-l);font-size:11px;display:block;margin-top:2px;}
+.wl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.wl-field label{font-size:11px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;}
+.wl-field input,.wl-field select,.wl-field textarea{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;background:white;outline:none;transition:border-color 0.2s;}
+.wl-field input:focus,.wl-field select:focus,.wl-field textarea:focus{border-color:var(--teal);}
+.wl-level-btns{display:flex;gap:4px;flex-wrap:wrap;}
+.wl-level-btn{padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;background:white;transition:all 0.15s;color:var(--slate-m);}
+.wl-level-btn.sel{background:var(--rose);border-color:var(--rose);color:white;}
+.wl-score-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;background:var(--teal-50);border-radius:8px;font-size:12px;}
+.wl-evidence{font-size:11px;color:var(--slate-l);margin-top:4px;font-style:italic;}
 </style>
 </head>
 <body>
@@ -185,6 +206,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="nav-item" onclick="switchTab('qreval')" id="ni-qreval"><span class="nav-icon">📲</span> QR ประเมิน</div>
     <div class="nav-item" onclick="switchTab('group')" id="ni-group"><span class="nav-icon">👥</span> ประเมินเป็นกลุ่ม</div>
     <div class="nav-item" onclick="switchTab('history')" id="ni-history"><span class="nav-icon">📋</span> ประวัติ</div>
+    <div class="nav-item" onclick="switchTab('workload')" id="ni-workload"><span class="nav-icon">📊</span> ภาระงาน</div>
     <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
   </nav>
   <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
@@ -303,6 +325,49 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
   </div>
 
+  <!-- WORKLOAD -->
+  <div id="tab-workload" class="tab-view">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+      <div>
+        <div class="page-title">📊 ภาระงาน</div>
+        <div class="page-sub">แบบข้อตกลงการประเมินผลสัมฤทธิ์ของงาน (70%)</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="saveWorkload()" style="padding:9px 16px;background:linear-gradient(135deg,var(--teal),#0f766e);color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">💾 บันทึก</button>
+        <button onclick="clearWorkload()" style="padding:9px 14px;background:var(--fail-bg);color:var(--fail);border:1.5px solid #fca5a5;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🗑️ ล้าง</button>
+      </div>
+    </div>
+    <div id="wlSaveStatus" style="display:none;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+
+    <!-- Header Info -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-head"><span class="card-title">📝 ข้อมูลทั่วไป</span></div>
+      <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="grid-column:1/-1;">
+          <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">รอบการประเมิน</label>
+          <div style="display:flex;gap:12px;">
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="radio" name="wlPeriod" value="1" id="wlPeriod1" style="accent-color:var(--rose);">รอบที่ 1 (1 มิ.ย. – 30 พ.ย.)</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;"><input type="radio" name="wlPeriod" value="2" id="wlPeriod2" style="accent-color:var(--rose);">รอบที่ 2 (1 ธ.ค. – 31 พ.ค.)</label>
+          </div>
+        </div>
+        <div><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">ปีการศึกษา</label><input class="meta-input" id="wlYear" placeholder="เช่น 2567"></div>
+        <div><label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:5px;">ชื่อผู้ประเมิน</label><input class="meta-input" id="wlEvaluator" placeholder="ชื่อ-นามสกุลผู้ประเมิน"></div>
+      </div>
+    </div>
+
+    <!-- Summary bar -->
+    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--slate-l);margin-bottom:3px;">น้ำหนักรวมที่กำหนด</div><div id="wlTotalWeight" style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--slate);">0%</div></div>
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--slate-l);margin-bottom:3px;">คะแนนถ่วงน้ำหนักรวม</div><div id="wlTotalScore" style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--teal);">0.00</div></div>
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--slate-l);margin-bottom:3px;">คะแนนส่วน 70%</div><div id="wlFinalScore" style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--rose);">0.00</div></div>
+    </div>
+
+    <!-- KPI Sections accordion -->
+    <div id="wlSections"></div>
+
+    <div style="height:80px;"></div>
+  </div>
+
   <!-- HISTORY -->
   <div id="tab-history" class="tab-view">
     <div style="margin-bottom:18px;">
@@ -414,11 +479,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="bn-item" onclick="switchTab('group')" id="bn-group">
       <span class="bn-icon">👥</span><span class="bn-label">กลุ่ม</span><div class="bn-dot"></div>
     </div>
+    <div class="bn-item" onclick="switchTab('workload')" id="bn-workload">
+      <span class="bn-icon">📊</span><span class="bn-label">ภาระงาน</span><div class="bn-dot"></div>
+    </div>
     <div class="bn-item" onclick="switchTab('history')" id="bn-history">
       <span class="bn-icon">📋</span><span class="bn-label">ประวัติ</span><div class="bn-dot"></div>
-    </div>
-    <div class="bn-item" onclick="switchTab('password')" id="bn-password">
-      <span class="bn-icon">🔑</span><span class="bn-label">รหัสผ่าน</span><div class="bn-dot"></div>
     </div>
   </div>
 </nav>
@@ -889,6 +954,253 @@ async function loadHistory(){
     <span style="font-size:12px;font-weight:700;color:${e.status==='pass'?'var(--pass)':'var(--fail)'}">${e.status==='pass'?'ผ่าน':'ไม่ผ่าน'}</span>
   </div>`).join('');
 }
+
+// ===== WORKLOAD =====
+const WL_KPIS = [
+  {
+    id:'s1', label:'ภาระงานที่ 1', title:'การเรียนการสอน', icon:'📚',
+    note:'น้ำหนัก 25-35% (ตัวชี้วัด 1.1, 1.2, 1.11 เป็นตัวบังคับ)',
+    color:'#dbeafe', kpis:[
+      {id:'1.1',name:'มีจำนวนชั่วโมงสอนไม่น้อยกว่าภาระงานขั้นต่ำ',weight:10,required:true,
+       levels:['ต่ำกว่า 4 ชม./สป.','ต่ำกว่า 1-3 ชม./สป.','ตามภาระงานขั้นต่ำ','สูงกว่า 1-3 ชม./สป.','สูงกว่า 4+ ชม./สป.'],
+       evidence:'ตารางสอน'},
+      {id:'1.2',name:'มีประมวลรายวิชา/แผนการสอน (5 ข้อ)',weight:5,required:true,
+       levels:['1 ข้อ','2 ข้อ','3 ข้อ','4 ข้อ','5 ข้อ'],
+       evidence:'ประมวลรายวิชา/แผนการสอน, บันทึกนำส่ง'},
+      {id:'1.3',name:'มีการประเมินผล/ทดสอบตามแผน',weight:5,required:true,
+       levels:['1 ข้อ','2 ข้อ','3 ข้อ','4 ข้อ','5 ข้อ'],
+       evidence:'ผลการประเมิน/ทดสอบ'},
+      {id:'1.4',name:'มีการใช้สื่อ/นวัตกรรมการเรียนการสอน',weight:5,required:false,
+       levels:['1 ข้อ','2 ข้อ','3 ข้อ','4 ข้อ','5 ข้อ'],
+       evidence:'สื่อการสอน/นวัตกรรม'},
+      {id:'1.5',name:'มีการจัดการเรียนการสอนแบบ Active Learning',weight:5,required:false,
+       levels:['1 ข้อ','2 ข้อ','3 ข้อ','4 ข้อ','5 ข้อ'],
+       evidence:'แผนการสอน/รายงาน'},
+      {id:'1.11',name:'มีผลการประเมินการสอนโดยนักศึกษา',weight:5,required:true,
+       levels:['น้อยกว่า 2.5','2.5-2.99','3.0-3.49','3.5-3.99','4.0 ขึ้นไป'],
+       evidence:'ผลประเมินการสอนจากนักศึกษา'},
+    ]
+  },
+  {
+    id:'s2', label:'ภาระงานที่ 2', title:'การวิจัย', icon:'🔬',
+    note:'น้ำหนัก 15-25%', color:'#d1fae5', kpis:[
+      {id:'2.1',name:'มีผลงานวิจัยที่ได้รับการตีพิมพ์/เผยแพร่',weight:15,required:false,
+       levels:['ไม่มี','อยู่ระหว่างดำเนินการ','ส่งเพื่อตีพิมพ์/เผยแพร่','ตีพิมพ์/เผยแพร่ระดับชาติ','ตีพิมพ์/เผยแพร่ระดับนานาชาติ'],
+       evidence:'บทความวิจัย/หนังสือยืนยันการรับตีพิมพ์'},
+      {id:'2.2',name:'มีโครงการวิจัยที่ได้รับทุน',weight:5,required:false,
+       levels:['ไม่มี','1 โครงการ','2 โครงการ','3 โครงการ','4 โครงการขึ้นไป'],
+       evidence:'สัญญารับทุน/หนังสืออนุมัติโครงการ'},
+      {id:'2.3',name:'มีการนำผลวิจัยมาใช้พัฒนาการเรียนการสอน',weight:5,required:false,
+       levels:['ไม่มี','อยู่ระหว่างดำเนินการ','นำมาใช้บางส่วน','นำมาใช้ในรายวิชา','เป็นส่วนหนึ่งของหลักสูตร'],
+       evidence:'แผนการสอน/รายงาน'},
+    ]
+  },
+  {
+    id:'s3', label:'ภาระงานที่ 3', title:'การบริการวิชาการ', icon:'🤝',
+    note:'น้ำหนัก 5-10%', color:'#fef9c3', kpis:[
+      {id:'3.1',name:'มีการให้บริการวิชาการแก่สังคม/ชุมชน',weight:5,required:false,
+       levels:['ไม่มี','1 ครั้ง','2 ครั้ง','3 ครั้ง','4 ครั้งขึ้นไป'],
+       evidence:'โครงการ/กิจกรรมบริการวิชาการ'},
+      {id:'3.2',name:'มีการเป็นวิทยากร/ที่ปรึกษาภายนอก',weight:5,required:false,
+       levels:['ไม่มี','1 ครั้ง','2 ครั้ง','3 ครั้ง','4 ครั้งขึ้นไป'],
+       evidence:'หนังสือเชิญ/หนังสือขอบคุณ'},
+    ]
+  },
+  {
+    id:'s4', label:'ภาระงานที่ 4', title:'ทำนุบำรุงศิลปวัฒนธรรม', icon:'🎭',
+    note:'น้ำหนัก 5%', color:'#fce7f3', kpis:[
+      {id:'4.1',name:'มีส่วนร่วมในกิจกรรมทำนุบำรุงศิลปวัฒนธรรม',weight:5,required:false,
+       levels:['ไม่มี','1 กิจกรรม','2 กิจกรรม','3 กิจกรรม','4 กิจกรรมขึ้นไป'],
+       evidence:'คำสั่ง/หนังสือเชิญ/ภาพถ่ายกิจกรรม'},
+    ]
+  },
+  {
+    id:'s5', label:'ภาระงานที่ 5', title:'กิจกรรมพัฒนาสถาบัน', icon:'🏛️',
+    note:'น้ำหนัก 5-10%', color:'#ede9fe', kpis:[
+      {id:'5.1',name:'มีการเป็นอาจารย์ที่ปรึกษาให้คำแนะนำนักศึกษา',weight:5,required:false,
+       levels:['ไม่มี','มีบ้าง','สม่ำเสมอ','บ่อยครั้ง','สม่ำเสมอและมีหลักฐาน'],
+       evidence:'บันทึกการให้คำปรึกษา'},
+      {id:'5.2',name:'เป็นกรรมการในคณะกรรมการต่างๆ',weight:5,required:false,
+       levels:['ไม่มี','1 คณะ','2 คณะ','3 คณะ','4 คณะขึ้นไป'],
+       evidence:'คำสั่งแต่งตั้ง'},
+      {id:'5.3',name:'มีการพัฒนาตนเอง/เข้าอบรม/สัมมนา',weight:5,required:false,
+       levels:['ไม่มี','1 ครั้ง','2 ครั้ง','3 ครั้ง','4 ครั้งขึ้นไป'],
+       evidence:'ใบประกาศ/หลักฐานการอบรม'},
+    ]
+  }
+];
+
+let wlData = {}; // {kpiId: {weight, level, result, evidence}}
+
+function wlStorageKey(){return 'lb_workload_'+user.profileId;}
+
+function initWorkload(){
+  const saved = localStorage.getItem(wlStorageKey());
+  if(saved){
+    try{wlData=JSON.parse(saved);}catch(e){wlData={};}
+  }
+  // Restore header
+  const yr=wlData._year||'';const ev=wlData._evaluator||'';const pd=wlData._period||'';
+  const yel=document.getElementById('wlYear');if(yel)yel.value=yr;
+  const evel=document.getElementById('wlEvaluator');if(evel)evel.value=ev;
+  if(pd){const r=document.getElementById('wlPeriod'+pd);if(r)r.checked=true;}
+  renderWLSections();
+}
+
+function renderWLSections(){
+  const el=document.getElementById('wlSections');
+  el.innerHTML=WL_KPIS.map(sec=>{
+    const secWeight=sec.kpis.reduce((s,k)=>{
+      const d=wlData[k.id];
+      return s+(d&&d.weight?parseFloat(d.weight):k.weight);
+    },0);
+    const secWeighted=sec.kpis.reduce((s,k)=>{
+      const d=wlData[k.id];
+      if(!d||!d.level)return s;
+      const w=d.weight||k.weight;
+      return s+(d.level*w/70);
+    },0);
+    return `<div class="wl-section" id="wls-${sec.id}">
+      <div class="wl-sec-head" onclick="toggleWLSection('${sec.id}')">
+        <div class="wl-sec-title">
+          <span>${sec.icon}</span>
+          <div>
+            <div>${sec.label}: ${sec.title}</div>
+            <div style="font-size:11px;font-weight:400;color:var(--slate-l);">${sec.note}</div>
+          </div>
+        </div>
+        <div class="wl-sec-meta">
+          <span style="background:${sec.color};padding:3px 9px;border-radius:100px;font-weight:700;">${secWeighted.toFixed(2)} คะแนน</span>
+          <span class="wl-sec-arrow" id="wl-arr-${sec.id}">▸</span>
+        </div>
+      </div>
+      <div class="wl-sec-body" id="wl-body-${sec.id}" style="display:none;">
+        ${sec.kpis.map(kpi=>renderWLKPI(kpi)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  updateWLSummary();
+}
+
+function renderWLKPI(kpi){
+  const d=wlData[kpi.id]||{};
+  const w=d.weight!==undefined?d.weight:kpi.weight;
+  const lvl=d.level||0;
+  const score=lvl?parseFloat(w)*lvl/70:0;
+  return `<div class="wl-kpi">
+    <div class="wl-kpi-name">${kpi.id} ${kpi.name}${kpi.required?' <span style="color:var(--rose);font-size:10px;">●บังคับ</span>':''}
+      <small>หลักฐาน: ${kpi.evidence}</small>
+    </div>
+    <div class="wl-row">
+      <div class="wl-field"><label>น้ำหนัก (%)</label>
+        <input type="number" min="0" max="35" value="${w}" id="wlw-${kpi.id}" onchange="updateWLField('${kpi.id}','weight',this.value)" placeholder="${kpi.weight}">
+      </div>
+      <div class="wl-field"><label>ผลดำเนินงาน</label>
+        <input type="text" value="${d.result||''}" id="wlr-${kpi.id}" onchange="updateWLField('${kpi.id}','result',this.value)" placeholder="ระบุผล...">
+      </div>
+    </div>
+    <div style="margin-top:8px;">
+      <div style="font-size:11px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ระดับค่าเป้าหมาย</div>
+      <div class="wl-level-btns">
+        ${kpi.levels.map((lbl,i)=>`<button class="wl-level-btn${lvl===i+1?' sel':''}" onclick="setWLLevel('${kpi.id}',${i+1},this)" title="${lbl}">${i+1}</button>`).join('')}
+      </div>
+      ${lvl?`<div style="font-size:11px;color:var(--slate-m);margin-top:4px;">ระดับ ${lvl}: ${kpi.levels[lvl-1]}</div>`:''}
+    </div>
+    <div class="wl-field" style="margin-top:8px;"><label>หลักฐาน/เอกสารประกอบ</label>
+      <input type="text" value="${d.evidence||''}" id="wle-${kpi.id}" onchange="updateWLField('${kpi.id}','evidence',this.value)" placeholder="${kpi.evidence}">
+    </div>
+    <div class="wl-score-row">
+      <span>💯 คะแนนถ่วงน้ำหนัก:</span>
+      <span id="wls-score-${kpi.id}" style="font-weight:700;color:var(--teal);">${score.toFixed(3)}</span>
+      <span style="color:var(--slate-l);">(${w}% × ระดับ ${lvl||'-'} ÷ 70)</span>
+    </div>
+  </div>`;
+}
+
+function toggleWLSection(id){
+  const body=document.getElementById('wl-body-'+id);
+  const arr=document.getElementById('wl-arr-'+id);
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  arr.style.transform=open?'':'rotate(90deg)';
+}
+
+function updateWLField(kpiId,field,val){
+  if(!wlData[kpiId])wlData[kpiId]={};
+  wlData[kpiId][field]=val;
+  updateWLKPIScore(kpiId);
+  updateWLSummary();
+}
+
+function setWLLevel(kpiId,level,btn){
+  if(!wlData[kpiId])wlData[kpiId]={};
+  const prev=wlData[kpiId].level;
+  wlData[kpiId].level=prev===level?0:level; // toggle off if same
+  // Update buttons
+  btn.closest('.wl-level-btns').querySelectorAll('.wl-level-btn').forEach((b,i)=>{
+    b.classList.toggle('sel',wlData[kpiId].level===i+1);
+  });
+  // Update label
+  const allKpis=WL_KPIS.flatMap(s=>s.kpis);
+  const kpi=allKpis.find(k=>k.id===kpiId);
+  const lbl=btn.closest('.wl-kpi').querySelector('.wl-level-btns+div');
+  if(lbl)lbl.textContent=wlData[kpiId].level?'ระดับ '+wlData[kpiId].level+': '+kpi.levels[wlData[kpiId].level-1]:'';
+  updateWLKPIScore(kpiId);
+  updateWLSummary();
+}
+
+function updateWLKPIScore(kpiId){
+  const d=wlData[kpiId]||{};
+  const allKpis=WL_KPIS.flatMap(s=>s.kpis);
+  const kpi=allKpis.find(k=>k.id===kpiId);
+  const w=d.weight!==undefined?parseFloat(d.weight):kpi.weight;
+  const lvl=d.level||0;
+  const score=lvl?w*lvl/70:0;
+  const el=document.getElementById('wls-score-'+kpiId);
+  if(el)el.textContent=score.toFixed(3);
+}
+
+function updateWLSummary(){
+  const allKpis=WL_KPIS.flatMap(s=>s.kpis);
+  let totalWeight=0,totalWeighted=0;
+  allKpis.forEach(kpi=>{
+    const d=wlData[kpi.id]||{};
+    const w=d.weight!==undefined?parseFloat(d.weight)||0:kpi.weight;
+    totalWeight+=w;
+    if(d.level)totalWeighted+=w*d.level/70;
+  });
+  const finalScore=totalWeighted;
+  const el1=document.getElementById('wlTotalWeight');
+  const el2=document.getElementById('wlTotalScore');
+  const el3=document.getElementById('wlFinalScore');
+  if(el1)el1.textContent=totalWeight+'%';
+  if(el2)el2.textContent=totalWeighted.toFixed(2);
+  if(el3)el3.textContent=finalScore.toFixed(2);
+  if(el1)el1.style.color=totalWeight>70?'var(--fail)':totalWeight===70?'var(--pass)':'var(--slate)';
+}
+
+function saveWorkload(){
+  wlData._year=document.getElementById('wlYear')?.value||'';
+  wlData._evaluator=document.getElementById('wlEvaluator')?.value||'';
+  const pd=document.querySelector('input[name="wlPeriod"]:checked');
+  wlData._period=pd?pd.value:'';
+  wlData._savedAt=new Date().toISOString();
+  localStorage.setItem(wlStorageKey(),JSON.stringify(wlData));
+  const st=document.getElementById('wlSaveStatus');
+  if(st){
+    st.textContent='✅ บันทึกสำเร็จ — '+new Date().toLocaleString('th-TH');
+    st.style.cssText='display:block;background:#dcfce7;color:#166534;border:1px solid #86efac;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px;';
+    setTimeout(()=>{st.style.display='none';},3000);
+  }
+}
+
+function clearWorkload(){
+  if(!confirm('ล้างข้อมูลภาระงานทั้งหมด?'))return;
+  wlData={};
+  localStorage.removeItem(wlStorageKey());
+  initWorkload();
+}
+
 function switchTab(tab){
   document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
@@ -898,6 +1210,7 @@ function switchTab(tab){
   if(tab==='history')loadHistory();
   if(tab==='group'){gSelectedIds=new Set();gDecisions={};document.getElementById('editGroupCard').style.display='none';document.getElementById('gEvalSection').style.display='none';renderSavedGroups();}
   if(tab==='qreval')initQRTab();
+  if(tab==='workload')initWorkload();
   closeSidebar();
 }
 
