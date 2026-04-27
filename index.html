@@ -209,59 +209,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
       <span style="font-size:36px;">🧮</span>
       <div style="flex:1;">
         <div style="font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:white;">Veterinary Calculator Hub</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-top:1px;">เครื่องคำนวณ 26 รายการ — Fluid, Drug, Renal, Lab ฯลฯ</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-top:1px;">เครื่องคำนวณ 30+ รายการ — กด ★ เพื่อปักหมุดที่หน้านี้</div>
       </div>
       <span style="color:rgba(255,255,255,0.7);font-size:18px;">›</span>
     </div>
-    <div class="tool-grid">
-      <div class="tool-card" onclick="openTool('drugs')">
-        <div class="tc-icon">💊</div>
-        <div class="tc-title">Common 100 Drugs</div>
-      </div>
-      <div class="tool-card" onclick="openTool('emergency')">
-        <div class="tc-icon">🚨</div>
-        <div class="tc-title">Emergency Drugs</div>
-      </div>
-      <div class="tool-card" onclick="openTool('anesthesia')">
-        <div class="tc-icon">💉</div>
-        <div class="tc-title">Anesthetics</div>
-      </div>
-      <div class="tool-card" onclick="openTool('fluid')">
-        <div class="tc-icon">💧</div>
-        <div class="tc-title">Fluid Therapy</div>
-      </div>
-      <div class="tool-card" onclick="openTool('cri')">
-        <div class="tc-icon">⏱️</div>
-        <div class="tc-title">CRI Calculator</div>
-      </div>
-      <div class="tool-card" onclick="openTool('transfusion')">
-        <div class="tc-icon">🩸</div>
-        <div class="tc-title">Transfusion</div>
-      </div>
-      <div class="tool-card" onclick="openTool('unit')">
-        <div class="tc-icon">📐</div>
-        <div class="tc-title">Unit Conversion</div>
-      </div>
-      <div class="tool-card" onclick="openTool('glucose')">
-        <div class="tc-icon">📈</div>
-        <div class="tc-title">Glucose Curve</div>
-      </div>
-      <div class="tool-card" onclick="openTool('petage')">
-        <div class="tc-icon">🎂</div>
-        <div class="tc-title">Pet Age</div>
-      </div>
-      <div class="tool-card" onclick="openTool('pain')">
-        <div class="tc-icon">😣</div>
-        <div class="tc-title">Pain Scale</div>
-      </div>
-      <div class="tool-card" onclick="openTool('iris')">
-        <div class="tc-icon">🫘</div>
-        <div class="tc-title">IRIS Staging</div>
-      </div>
-      <div class="tool-card" onclick="openTool('bsa')">
-        <div class="tc-icon">🐕</div>
-        <div class="tc-title">BSA / m²</div>
-      </div>
+    <!-- Pinned tools (dynamic from localStorage) -->
+    <div id="pinnedSection" style="display:none;">
+      <div style="font-size:11px;font-weight:700;color:var(--slate-l);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">★ เครื่องมือที่ปักหมุดไว้</div>
+      <div id="pinnedGrid" class="tool-grid"></div>
     </div>
   </div>
 
@@ -808,6 +763,43 @@ function searchDrugs(q){
   if(q)list=list.filter(d=>d[0].toLowerCase().includes(q.toLowerCase())||d[1].toLowerCase().includes(q.toLowerCase()));
   document.getElementById('drugList').innerHTML=renderDrugRows(list);
 }
+
+
+// ── Load pinned tools from calculators hub ──
+(function loadPinned(){
+  const CALC_META = {
+    fluid:{icon:'🩺',name:'Fluid Therapy'},cri:{icon:'⏱️',name:'CRI'},
+    transfusion:{icon:'🩸',name:'Blood Transfusion'},shock:{icon:'🚨',name:'Shock Fluid'},
+    oxygen:{icon:'🫁',name:'O₂ Flow Rate'},dilution:{icon:'🧪',name:'Drug Dilution'},
+    dose:{icon:'💉',name:'Drug Dose'},anesthesia:{icon:'😴',name:'Anesthesia'},
+    chemo:{icon:'🔬',name:'Chemotherapy'},insulin:{icon:'🍬',name:'Insulin'},
+    map:{icon:'📊',name:'MAP'},shockindex:{icon:'⚡',name:'Shock Index'},
+    iris:{icon:'🏥',name:'IRIS CKD'},upc:{icon:'🧫',name:'UPC Ratio'},
+    fe:{icon:'⚗️',name:'Fractional Exc.'},feline_ckd:{icon:'🐈',name:'Feline CKD'},
+    aniongap:{icon:'🔭',name:'Anion Gap'},osmolality:{icon:'🌡️',name:'Osmolality'},
+    corrca:{icon:'🦴',name:'Corrected Ca'},rer:{icon:'🍽️',name:'RER/DER'},
+    bcs:{icon:'⚖️',name:'BCS Target BW'},glucose_curve:{icon:'📈',name:'Glucose Curve'},
+    bsa:{icon:'📐',name:'BSA/m²'},petage:{icon:'🎂',name:'Pet Age'},
+    unit:{icon:'🔄',name:'Unit Convert'},pain:{icon:'😣',name:'Pain Scale'},
+    drugs_ref:{icon:'💊',name:'Common 100 Drugs'},emergency_ref:{icon:'🚨',name:'Emergency Drugs'},
+    anesthetics_ref:{icon:'💉',name:'Anesthetics Ref'},fluid_types:{icon:'🧴',name:'Fluid Types'},
+  };
+  try{
+    const pins = JSON.parse(localStorage.getItem('vet_calc_pins')||'[]');
+    if(!pins.length) return;
+    const grid = document.getElementById('pinnedGrid');
+    const section = document.getElementById('pinnedSection');
+    if(!grid||!section) return;
+    grid.innerHTML = pins.map(id=>{
+      const m = CALC_META[id]||{icon:'🧮',name:id};
+      return '<div class="tool-card" onclick="window.location.href=\'calculators.html?tool='+id+'\'">'
+        +'<div class="tc-icon">'+m.icon+'</div>'
+        +'<div class="tc-title">'+m.name+'</div>'
+        +'</div>';
+    }).join('');
+    section.style.display = 'block';
+  }catch(e){}
+})();
 
 </script>
 </body>

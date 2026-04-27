@@ -51,6 +51,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .calc-desc{font-size:10px;color:var(--slate-l);margin-top:3px;line-height:1.4;}
 .calc-card.hidden{display:none;}
 
+/* ── Pin button ── */
+.calc-card{position:relative;}
+.pin-btn{position:absolute;top:8px;right:8px;background:none;border:none;font-size:16px;cursor:pointer;opacity:0.4;transition:opacity 0.2s;z-index:2;line-height:1;}
+.pin-btn:hover{opacity:1;}
+.pin-btn.pinned{opacity:1;}
+.pin-count{font-size:10px;font-weight:700;color:var(--teal);margin-left:auto;}
+
+.dfbtn{padding:3px 10px;border-radius:100px;border:1.5px solid var(--border);background:white;color:var(--slate-m);font-family:'Sarabun',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.dfbtn.dfactive{background:var(--teal);color:white;border-color:var(--teal);}
+.tool-row{display:flex;align-items:baseline;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.tool-row:last-child{border-bottom:none;}
+.tool-row .lbl{color:var(--slate-m);flex:1;}
+.tool-row .val{font-weight:700;color:var(--teal);text-align:right;}
+.warn-box{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:10px 12px;font-size:11px;color:#92400e;line-height:1.5;}
+
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
 .modal-overlay.on{display:flex;}
@@ -96,7 +111,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <button class="hdr-back" onclick="window.location.href='index.html'">←</button>
     <div>
       <div class="hdr-title">🧮 Veterinary Calculators</div>
-      <div class="hdr-sub">เครื่องคำนวณทางสัตวแพทย์ 20+ รายการ</div>
+      <div class="hdr-sub">เครื่องคำนวณ 30+ รายการ | ★ ปักหมุดได้ <span id="pinCount">0</span>/6 รายการ</div>
     </div>
   </div>
   <div class="search-bar">
@@ -115,32 +130,32 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
-    <div class="calc-card cc-fluid" onclick="open('fluid')" data-name="fluid therapy dehydration">
+    <div class="calc-card cc-fluid" data-id="fluid" onclick="openCalc('fluid')" data-name="fluid therapy dehydration">
       <div class="calc-icon">🩺</div>
       <div class="calc-name">Fluid Therapy</div>
       <div class="calc-desc">Deficit + Maintenance + Ongoing loss</div>
     </div>
-    <div class="calc-card cc-fluid" onclick="open('cri')" data-name="cri constant rate infusion drip">
+    <div class="calc-card cc-fluid" data-id="cri" onclick="openCalc('cri')" data-name="cri constant rate infusion drip">
       <div class="calc-icon">⏱️</div>
       <div class="calc-name">CRI Calculator</div>
       <div class="calc-desc">Fentanyl, Lidocaine, Dopamine ฯลฯ</div>
     </div>
-    <div class="calc-card cc-fluid" onclick="open('transfusion')" data-name="blood transfusion">
+    <div class="calc-card cc-fluid" data-id="transfusion" onclick="openCalc('transfusion')" data-name="blood transfusion">
       <div class="calc-icon">🩸</div>
       <div class="calc-name">Blood Transfusion</div>
       <div class="calc-desc">ปริมาณเลือดที่ต้องให้</div>
     </div>
-    <div class="calc-card cc-fluid" onclick="open('shock')" data-name="shock fluid rate resuscitation">
+    <div class="calc-card cc-fluid" data-id="shock" onclick="openCalc('shock')" data-name="shock fluid rate resuscitation">
       <div class="calc-icon">🚨</div>
       <div class="calc-name">Shock Fluid Rate</div>
       <div class="calc-desc">Bolus ฉุกเฉินตามชนิด shock</div>
     </div>
-    <div class="calc-card cc-fluid" onclick="open('oxygen')" data-name="oxygen flow rate fio2">
+    <div class="calc-card cc-fluid" data-id="oxygen" onclick="openCalc('oxygen')" data-name="oxygen flow rate fio2">
       <div class="calc-icon">🫁</div>
       <div class="calc-name">O₂ Flow Rate</div>
       <div class="calc-desc">%FiO₂ ตามชนิดอุปกรณ์</div>
     </div>
-    <div class="calc-card cc-fluid" onclick="open('dilution')" data-name="drug dilution concentration">
+    <div class="calc-card cc-fluid" data-id="dilution" onclick="openCalc('dilution')" data-name="drug dilution concentration">
       <div class="calc-icon">🧪</div>
       <div class="calc-name">Drug Dilution</div>
       <div class="calc-desc">คำนวณการเจือจางยา</div>
@@ -156,22 +171,22 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
-    <div class="calc-card cc-drug" onclick="open('dose')" data-name="drug dose calculator weight">
+    <div class="calc-card cc-drug" data-id="dose" onclick="openCalc('dose')" data-name="drug dose calculator weight">
       <div class="calc-icon">💉</div>
       <div class="calc-name">Drug Dose</div>
       <div class="calc-desc">ป้อน BW → คำนวณปริมาณยาทันที</div>
     </div>
-    <div class="calc-card cc-drug" onclick="open('anesthesia')" data-name="anesthesia premedication induction">
+    <div class="calc-card cc-drug" data-id="anesthesia" onclick="openCalc('anesthesia')" data-name="anesthesia premedication induction">
       <div class="calc-icon">😴</div>
       <div class="calc-name">Anesthesia Drugs</div>
       <div class="calc-desc">Premedication + Induction รวม</div>
     </div>
-    <div class="calc-card cc-drug" onclick="open('chemo')" data-name="chemotherapy bsa doxorubicin vincristine">
+    <div class="calc-card cc-drug" data-id="chemo" onclick="openCalc('chemo')" data-name="chemotherapy bsa doxorubicin vincristine">
       <div class="calc-icon">🔬</div>
       <div class="calc-name">Chemotherapy</div>
       <div class="calc-desc">BSA-based dosing</div>
     </div>
-    <div class="calc-card cc-drug" onclick="open('insulin')" data-name="insulin dose diabetes glucose">
+    <div class="calc-card cc-drug" data-id="insulin" onclick="openCalc('insulin')" data-name="insulin dose diabetes glucose">
       <div class="calc-icon">🍬</div>
       <div class="calc-name">Insulin Dose</div>
       <div class="calc-desc">DM + Glucose curve guide</div>
@@ -187,12 +202,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
-    <div class="calc-card cc-cardiac" onclick="open('map')" data-name="mean arterial pressure blood pressure">
+    <div class="calc-card cc-cardiac" data-id="map" onclick="openCalc('map')" data-name="mean arterial pressure blood pressure">
       <div class="calc-icon">📊</div>
       <div class="calc-name">MAP Calculator</div>
       <div class="calc-desc">Mean Arterial Pressure</div>
     </div>
-    <div class="calc-card cc-cardiac" onclick="open('shockindex')" data-name="shock index heart rate blood pressure">
+    <div class="calc-card cc-cardiac" data-id="shockindex" onclick="openCalc('shockindex')" data-name="shock index heart rate blood pressure">
       <div class="calc-icon">⚡</div>
       <div class="calc-name">Shock Index</div>
       <div class="calc-desc">HR ÷ Systolic BP</div>
@@ -208,22 +223,22 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
-    <div class="calc-card cc-renal" onclick="open('iris')" data-name="iris ckd staging creatinine sdma">
+    <div class="calc-card cc-renal" data-id="iris" onclick="openCalc('iris')" data-name="iris ckd staging creatinine sdma">
       <div class="calc-icon">🏥</div>
       <div class="calc-name">IRIS CKD Staging</div>
       <div class="calc-desc">Creatinine + SDMA + UPC + BP</div>
     </div>
-    <div class="calc-card cc-renal" onclick="open('upc')" data-name="upc urine protein creatinine">
+    <div class="calc-card cc-renal" data-id="upc" onclick="openCalc('upc')" data-name="upc urine protein creatinine">
       <div class="calc-icon">🧫</div>
       <div class="calc-name">UPC Ratio</div>
       <div class="calc-desc">Urine Protein:Creatinine</div>
     </div>
-    <div class="calc-card cc-renal" onclick="open('fe')" data-name="fractional excretion electrolytes sodium">
+    <div class="calc-card cc-renal" data-id="fe" onclick="openCalc('fe')" data-name="fractional excretion electrolytes sodium">
       <div class="calc-icon">⚗️</div>
       <div class="calc-name">Fractional Excretion</div>
       <div class="calc-desc">FENa, FEK, FEUN</div>
     </div>
-    <div class="calc-card cc-renal" onclick="open('feline_ckd')" data-name="feline cat kidney disease staging">
+    <div class="calc-card cc-renal" data-id="feline_ckd" onclick="openCalc('feline_ckd')" data-name="feline cat kidney disease staging">
       <div class="calc-icon">🐈</div>
       <div class="calc-name">Feline CKD Guide</div>
       <div class="calc-desc">แนวทาง IRIS แมว</div>
@@ -239,32 +254,32 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
-    <div class="calc-card cc-lab" onclick="open('aniongap')" data-name="anion gap acidosis">
+    <div class="calc-card cc-lab" data-id="aniongap" onclick="openCalc('aniongap')" data-name="anion gap acidosis">
       <div class="calc-icon">🔭</div>
       <div class="calc-name">Anion Gap</div>
       <div class="calc-desc">Na - (Cl + HCO₃)</div>
     </div>
-    <div class="calc-card cc-lab" onclick="open('osmolality')" data-name="osmolality serum calculated">
+    <div class="calc-card cc-lab" data-id="osmolality" onclick="openCalc('osmolality')" data-name="osmolality serum calculated">
       <div class="calc-icon">🌡️</div>
       <div class="calc-name">Serum Osmolality</div>
       <div class="calc-desc">Calculated vs Measured</div>
     </div>
-    <div class="calc-card cc-lab" onclick="open('corrca')" data-name="corrected calcium albumin hypoalbuminemia">
+    <div class="calc-card cc-lab" data-id="corrca" onclick="openCalc('corrca')" data-name="corrected calcium albumin hypoalbuminemia">
       <div class="calc-icon">🦴</div>
       <div class="calc-name">Corrected Calcium</div>
       <div class="calc-desc">ปรับค่า Ca สำหรับ Hypoalbuminemia</div>
     </div>
-    <div class="calc-card cc-lab" onclick="open('rer')" data-name="rer der resting energy requirement nutrition">
+    <div class="calc-card cc-lab" data-id="rer" onclick="openCalc('rer')" data-name="rer der resting energy requirement nutrition">
       <div class="calc-icon">🍽️</div>
       <div class="calc-name">RER / DER</div>
       <div class="calc-desc">Energy requirement ต่อวัน</div>
     </div>
-    <div class="calc-card cc-lab" onclick="open('bcs')" data-name="body condition score target weight obesity">
+    <div class="calc-card cc-lab" data-id="bcs" onclick="openCalc('bcs')" data-name="body condition score target weight obesity">
       <div class="calc-icon">⚖️</div>
       <div class="calc-name">BCS → Target BW</div>
       <div class="calc-desc">คำนวณน้ำหนักเป้าหมาย</div>
     </div>
-    <div class="calc-card cc-lab" onclick="open('glucose_curve')" data-name="glucose curve diabetes interpretation">
+    <div class="calc-card cc-lab" data-id="glucose_curve" onclick="openCalc('glucose_curve')" data-name="glucose curve diabetes interpretation">
       <div class="calc-icon">📈</div>
       <div class="calc-name">Glucose Curve</div>
       <div class="calc-desc">แปลผล + Nadir</div>
@@ -280,28 +295,60 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
-    <div class="calc-card cc-general" onclick="open('bsa')" data-name="bsa body surface area m2">
+    <div class="calc-card cc-general" data-id="bsa" onclick="openCalc('bsa')" data-name="bsa body surface area m2">
       <div class="calc-icon">📐</div>
       <div class="calc-name">BSA / m²</div>
       <div class="calc-desc">Body Surface Area สุนัข/แมว</div>
     </div>
-    <div class="calc-card cc-general" onclick="open('petage')" data-name="pet age human equivalent dog cat">
+    <div class="calc-card cc-general" data-id="petage" onclick="openCalc('petage')" data-name="pet age human equivalent dog cat">
       <div class="calc-icon">🎂</div>
       <div class="calc-name">Pet Age</div>
       <div class="calc-desc">เทียบอายุกับมนุษย์</div>
     </div>
-    <div class="calc-card cc-general" onclick="open('unit')" data-name="unit conversion mg kg lb celsius fahrenheit">
+    <div class="calc-card cc-general" data-id="unit" onclick="openCalc('unit')" data-name="unit conversion mg kg lb celsius fahrenheit">
       <div class="calc-icon">🔄</div>
       <div class="calc-name">Unit Conversion</div>
       <div class="calc-desc">น้ำหนัก อุณหภูมิ ความเข้มข้น</div>
     </div>
-    <div class="calc-card cc-general" onclick="open('pain')" data-name="pain scale csu assessment">
+    <div class="calc-card cc-general" data-id="pain" onclick="openCalc('pain')" data-name="pain scale csu assessment">
       <div class="calc-icon">😣</div>
       <div class="calc-name">Pain Scale</div>
       <div class="calc-desc">CSU Pain Score + NRS</div>
     </div>
   </div>
 </div>
+
+<!-- ── Drugs Reference ── -->
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon">💊</span>
+    <span class="section-name">ยาและข้อมูลอ้างอิง</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-drug" onclick="openCalc('drugs_ref')" data-name="common 100 drugs ยาปฏิชีวนะ nsaid steroid" data-id="drugs_ref">
+      <div class="calc-icon">💊</div>
+      <div class="calc-name">Common 100 Drugs</div>
+      <div class="calc-desc">ค้นหา + กรองยา 100 รายการ</div>
+    </div>
+    <div class="calc-card cc-drug" onclick="openCalc('emergency_ref')" data-name="emergency drugs ยาฉุกเฉิน epinephrine" data-id="emergency_ref">
+      <div class="calc-icon">🚨</div>
+      <div class="calc-name">Emergency Drugs</div>
+      <div class="calc-desc">CPR Seizure Shock ฉุกเฉิน</div>
+    </div>
+    <div class="calc-card cc-drug" onclick="openCalc('anesthetics_ref')" data-name="anesthetics ยาสลบ propofol ketamine" data-id="anesthetics_ref">
+      <div class="calc-icon">💉</div>
+      <div class="calc-name">Anesthetics Ref</div>
+      <div class="calc-desc">ตารางยาสลบและ Reversal</div>
+    </div>
+    <div class="calc-card cc-drug" onclick="openCalc('fluid_types')" data-name="fluid types ชนิดน้ำเกลือ crystalloid colloid" data-id="fluid_types">
+      <div class="calc-icon">🧴</div>
+      <div class="calc-name">Fluid Types</div>
+      <div class="calc-desc">ชนิดและสรรพคุณน้ำเกลือ</div>
+    </div>
+  </div>
+</div>
+
 
 </div><!-- /content -->
 
@@ -318,7 +365,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <script>
-function open(id){
+function openCalc(id){
   const cfg=CALCS[id];
   if(!cfg)return;
   document.getElementById('mTitle').textContent=cfg.title;
@@ -330,6 +377,67 @@ function open(id){
 function closeModal(e){
   if(e.target===e.currentTarget)document.getElementById('modal').classList.remove('on');
 }
+
+// ── PIN SYSTEM ──
+const MAX_PINS = 6;
+const STORAGE_KEY = 'vet_calc_pins';
+
+function getPins(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(e){ return []; } }
+function savePins(pins){ localStorage.setItem(STORAGE_KEY, JSON.stringify(pins)); }
+
+function initPins(){
+  const pins = getPins();
+  document.querySelectorAll('.calc-card[data-id]').forEach(card=>{
+    const id = card.dataset.id;
+    const btn = document.createElement('button');
+    btn.className = 'pin-btn' + (pins.includes(id)?' pinned':'');
+    btn.textContent = pins.includes(id)?'★':'☆';
+    btn.title = pins.includes(id)?'ยกเลิกปักหมุด':'ปักหมุดที่หน้าหลัก';
+    btn.onclick = (e) => { e.stopPropagation(); togglePin(id, btn, card); };
+    card.appendChild(btn);
+  });
+  updatePinHeader();
+}
+
+function togglePin(id, btn, card){
+  let pins = getPins();
+  if(pins.includes(id)){
+    pins = pins.filter(p=>p!==id);
+    btn.textContent = '☆'; btn.classList.remove('pinned'); btn.title='ปักหมุดที่หน้าหลัก';
+    toast('ยกเลิกปักหมุดแล้ว');
+  } else {
+    if(pins.length >= MAX_PINS){ toast('⚠️ ปักหมุดได้สูงสุด '+MAX_PINS+' รายการ'); return; }
+    pins.push(id);
+    btn.textContent = '★'; btn.classList.add('pinned'); btn.title='ยกเลิกปักหมุด';
+    toast('★ ปักหมุดแล้ว — แสดงที่หน้าหลัก');
+  }
+  savePins(pins);
+  updatePinHeader();
+}
+
+function updatePinHeader(){
+  const pins = getPins();
+  const el = document.getElementById('pinCount');
+  if(el) el.textContent = pins.length + '/' + MAX_PINS;
+}
+
+function toast(msg){
+  let t=document.getElementById('calcToast');
+  if(!t){ t=document.createElement('div'); t.id='calcToast';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:500;opacity:0;transition:opacity 0.3s;white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.opacity='0',2200);
+}
+
+// Auto-open if URL has ?tool=id
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const toolId=params.get('tool');
+  if(toolId) setTimeout(()=>openCalc(toolId),300);
+})();
+
 function searchCalc(q){
   document.querySelectorAll('.calc-card').forEach(c=>{
     const name=c.dataset.name||'';
@@ -341,6 +449,9 @@ function searchCalc(q){
     s.style.display=visible?'':'none';
   });
 }
+
+// Initialize pins
+document.addEventListener("DOMContentLoaded", initPins);
 
 // ═══ CALCULATORS ═══
 const CALCS = {
@@ -958,9 +1069,199 @@ pain:{
   <div class="info-box" style="margin-top:6px;">👁️ Orbital tightening | 👃 Nose/cheek flattening | 😬 Muzzle tension | 👂 Ear rotation | 🐱 Whiskers change</div>`,
 },
 
+
+// ── Drug Reference Cards ──
+drugs_ref:{
+  title:'💊 Common 100 Drugs',sub:'ยาใช้บ่อยในสัตว์เลี้ยง 100 รายการ',
+  html:`<div style="font-size:12px;color:var(--slate-l);margin-bottom:6px;">กรองตามกลุ่มหรือค้นหาชื่อยา</div>
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;" id="drugFilterWrap">
+  <button onclick="filterDrugs('all',this)" class="dfbtn dfactive">ทั้งหมด</button>
+  <button onclick="filterDrugs('ยาปฏิชีวนะ',this)" class="dfbtn">ยาปฏิชีวนะ</button>
+  <button onclick="filterDrugs('NSAID',this)" class="dfbtn">NSAID</button>
+  <button onclick="filterDrugs('Corticosteroid',this)" class="dfbtn">Steroid</button>
+  <button onclick="filterDrugs('Opioid',this)" class="dfbtn">Opioid</button>
+  <button onclick="filterDrugs('Cardiac',this)" class="dfbtn">หัวใจ</button>
+  <button onclick="filterDrugs('Anticonvulsant',this)" class="dfbtn">ชัก</button>
+  <button onclick="filterDrugs('Anthelmintic',this)" class="dfbtn">พยาธิ</button>
+  <button onclick="filterDrugs('Emergency',this)" class="dfbtn">ฉุกเฉิน</button>
+</div>
+<input id="drugSearch" oninput="searchDrugs(this.value)" placeholder="🔍 ค้นหาชื่อยา..." style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;margin-bottom:8px;outline:none;">
+<div id="drugList" style="max-height:55vh;overflow-y:auto;"></div>`,
+  init:()=>{ setTimeout(()=>{ const dl=document.getElementById('drugList'); if(dl&&typeof ALL_DRUGS!=='undefined') dl.innerHTML=renderDrugRows(ALL_DRUGS); },30); }
+},
+emergency_ref:{
+  title:'🚨 Emergency Drugs',sub:'ขนาดยาฉุกเฉิน — ปรึกษาสัตวแพทย์ก่อนใช้เสมอ',
+  html:buildEmergencyHTML()
+},
+anesthetics_ref:{
+  title:'💉 Anesthetics Reference',sub:'ยาสลบ Induction + Premedication + Reversal',
+  html:buildAnestheticsHTML()
+},
+fluid_types:{
+  title:'🧴 Fluid Types',sub:'ชนิด สรรพคุณ และข้อบ่งชี้ของน้ำเกลือ',
+  html:`<table class="ref-table">
+    <tr><th>Fluid</th><th>Tonicity</th><th>ข้อบ่งชี้</th></tr>
+    <tr><td>LRS (Lactated Ringer's)</td><td>Isotonic</td><td>ใช้บ่อยที่สุด Balanced electrolytes</td></tr>
+    <tr><td>0.9% NaCl (NSS)</td><td>Isotonic</td><td>Hypochloremia, ยาที่ต้อง dilute ใน NaCl</td></tr>
+    <tr><td>Plasma-Lyte</td><td>Isotonic</td><td>ใกล้เคียงพลาสมา ดีกว่า NSS</td></tr>
+    <tr><td>D5W (5% Dextrose)</td><td>Hypotonic</td><td>Hypernatremia, Free water</td></tr>
+    <tr><td>D5LRS / D5NSS</td><td>Isotonic→Hypotonic</td><td>Maintenance ที่ต้องการพลังงาน</td></tr>
+    <tr><td>0.45% NaCl (½NSS)</td><td>Hypotonic</td><td>Hypernatremia correction</td></tr>
+    <tr><td>7.5% NaCl (Hypertonic)</td><td>Hypertonic</td><td>Shock resuscitation 4 mL/kg</td></tr>
+    <tr><td>Hetastarch (Colloid)</td><td>Colloid</td><td>Hypoproteinemia, Shock 5-20 mL/kg</td></tr>
+    <tr><td>Fresh Frozen Plasma</td><td>Colloid</td><td>Coagulopathy, Hypoprotein</td></tr>
+    <tr><td>pRBC</td><td>Colloid</td><td>Anemia PCV < 15-20%</td></tr>
+  </table>
+  <div class="info-box" style="margin-top:10px;">Maintenance สุนัข 40-60 mL/kg/day | แมว 40-50 mL/kg/day</div>`
+},
+
+
 };
 
+function buildEmergencyHTML(){
+  const drugs=[['Epinephrine (CPR)','0.01 mg/kg IV/IT q3-5min'],['Atropine (Bradycardia)','0.02-0.04 mg/kg IV/IM'],['Lidocaine (VT)','2 mg/kg IV slow bolus'],['Diazepam (Seizure)','0.5 mg/kg IV slow'],['Midazolam (Seizure)','0.2-0.4 mg/kg IM/IN'],['Naloxone (Opioid OD)','0.01-0.04 mg/kg IV/IM'],['Flumazenil (Benzo OD)','0.01 mg/kg IV slow'],['Dextrose 50%','0.5-1 mL/kg IV diluted (Hypoglycemia)'],['NaHCO3 8.4%','1 mEq/kg IV slow (Acidosis)'],['Calcium gluconate 10%','50-150 mg/kg slow IV'],['Mannitol 20%','0.5-1 g/kg IV over 20min (ICP)'],['Vasopressin','0.4-4 mU/kg/min CRI (Shock)'],['Dobutamine','5-10 mcg/kg/min CRI (CHF)'],['Dopamine','5-10 mcg/kg/min CRI (Shock)'],['Furosemide (Edema)','2-4 mg/kg IV/IM'],['Norepinephrine','0.05-1 mcg/kg/min CRI (Shock)'],['Terbutaline (Bronchospasm)','0.01 mg/kg SC q4h'],['Diphenhydramine (Anaphylaxis)','1-2 mg/kg IV slow'],['Dantrolene (Malign.Hyperthermia)','2.5-5 mg/kg IV slow']];
+  return '<div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">สำหรับสัตว์เลี้ยง (สุนัข/แมว)</div>'+
+    drugs.map(([d,r])=>'<div class="tool-row"><span class="lbl">'+d+'</span><span class="val" style="font-size:11px;max-width:55%">'+r+'</span></div>').join('')+
+    '<div class="warn-box" style="margin-top:10px;">⚠️ ควรปรึกษาสัตวแพทย์ผู้ดูแลก่อนใช้เสมอ</div>';
+}
+
+function buildAnestheticsHTML(){
+  const drugs=[['Propofol (Induction)','4-6 mg/kg IV slow'],['Alfaxalone','สุนัข 2 mg/kg IV | แมว 2-3 mg/kg IV'],['Ketamine+Diazepam','5-10 + 0.25-0.5 mg/kg IM'],['Xylazine','สุนัข 0.5-1 mg/kg IM | วัว 0.05-0.1 mg/kg IM'],['Medetomidine','สุนัข 10-40 mcg/kg IM | แมว 50-80 mcg/kg IM'],['Dexmedetomidine','5-20 mcg/kg IM'],['Acepromazine (PreMed)','0.01-0.05 mg/kg IM/SC'],['Butorphanol','0.2-0.4 mg/kg IV/IM'],['Buprenorphine','0.01-0.02 mg/kg IV/IM/Buccal'],['Isoflurane (Maint.)','1.5-2.5% inhalation'],['Sevoflurane (Maint.)','2.0-3.5% inhalation'],['Atipamezole (Rev. α2)','5× Medetomidine dose IM'],['Naloxone (Rev. Opioid)','0.01-0.04 mg/kg IV/IM'],['Flumazenil (Rev. Benzo)','0.01 mg/kg IV slow']];
+  return drugs.map(([d,r])=>'<div class="tool-row"><span class="lbl">'+d+'</span><span class="val" style="font-size:11px;max-width:55%">'+r+'</span></div>').join('');
+}
+
+
 // ════ CALC FUNCTIONS ════
+
+const ALL_DRUGS=[
+  ['Amoxicillin','สุนัข/แมว: 10–20 mg/kg PO q8–12h','ยาปฏิชีวนะ'],
+  ['Amoxicillin-Clavulanate','12.5–25 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Ampicillin','22 mg/kg IV/IM q6–8h','ยาปฏิชีวนะ'],
+  ['Enrofloxacin','สุนัข: 5–20 mg/kg PO/SC q24h | แมว: 5 mg/kg q24h','ยาปฏิชีวนะ'],
+  ['Marbofloxacin','สุนัข: 2–5.5 mg/kg PO q24h | แมว: 2 mg/kg q24h','ยาปฏิชีวนะ'],
+  ['Doxycycline','5–10 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Metronidazole','10–15 mg/kg PO/IV q12h','ยาปฏิชีวนะ'],
+  ['Trimethoprim-Sulfonamide','15–30 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Cephalexin','22–30 mg/kg PO q8–12h','ยาปฏิชีวนะ'],
+  ['Cefazolin','22 mg/kg IV/IM q8h','ยาปฏิชีวนะ'],
+  ['Cefovecin (Convenia)','8 mg/kg SC ครั้งเดียว (14 วัน)','ยาปฏิชีวนะ'],
+  ['Gentamicin','6–9 mg/kg IV/SC q24h ระวังไต','ยาปฏิชีวนะ'],
+  ['Clindamycin','11–22 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Azithromycin','5–10 mg/kg PO q24h 3–5 วัน','ยาปฏิชีวนะ'],
+  ['Chloramphenicol','สุนัข: 50 mg/kg PO q8h (ห้ามในอาหาร)','ยาปฏิชีวนะ'],
+  ['Meloxicam','สุนัข: 0.1 mg/kg PO/SC q24h | แมว: 0.05 mg/kg q24h','NSAID'],
+  ['Carprofen','สุนัข: 4.4 mg/kg PO q24h หรือ 2.2 q12h','NSAID'],
+  ['Robenacoxib (Onsior)','สุนัข: 1–2 mg/kg PO q24h | แมว: 1 mg/kg q24h ≤6 วัน','NSAID'],
+  ['Grapiprant (Galliprant)','สุนัข: 2 mg/kg PO q24h','NSAID'],
+  ['Ketoprofen','1–2 mg/kg PO/SC q24h ≤5 วัน','NSAID'],
+  ['Dexamethasone','0.1–0.5 mg/kg IV/IM/PO q12–24h','Corticosteroid'],
+  ['Prednisolone','สุนัข: 1–2 mg/kg PO q24h | แมว: 1–4 mg/kg q24h','Corticosteroid'],
+  ['Methylprednisolone sodium succinate','Shock: 30 mg/kg IV slow','Corticosteroid'],
+  ['Tramadol','สุนัข: 2–5 mg/kg PO q8–12h | แมว: 1–2 mg/kg q12h','Opioid-like'],
+  ['Buprenorphine','0.01–0.02 mg/kg IV/IM/Buccal q6–12h','Opioid'],
+  ['Methadone','0.1–0.3 mg/kg IV/IM q4–8h','Opioid'],
+  ['Fentanyl CRI','Induction: 2–5 mcg/kg IV | CRI: 0.005–0.04 mcg/kg/min','Opioid'],
+  ['Gabapentin','สุนัข: 5–10 mg/kg PO q8–12h | แมว: 5–10 mg/kg q12h','Analgesic'],
+  ['Maropitant (Cerenia)','สุนัข/แมว: 1 mg/kg SC q24h หรือ 2 mg/kg PO','Antiemetic'],
+  ['Omeprazole','0.5–1 mg/kg PO q24h','PPI'],
+  ['Famotidine','0.5–1 mg/kg PO/IV q12–24h','H2-blocker'],
+  ['Sucralfate','สุนัข: 0.5–1 g PO q8h | แมว: 0.25 g q8h','Gastroprotectant'],
+  ['Ondansetron','0.1–0.3 mg/kg IV/PO q12h','Antiemetic'],
+  ['Metoclopramide','0.2–0.5 mg/kg PO/IM/SC q8h','Prokinetic'],
+  ['Cisapride','0.5 mg/kg PO q8–12h','Prokinetic'],
+  ['Lactulose','สุนัข: 1–5 mL/5 kg PO q8h | แมว: 1–3 mL q8h','Laxative'],
+  ['Loperamide','สุนัข: 0.1 mg/kg PO q8h (ห้ามใน Collie)','Antidiarrheal'],
+  ['Kaolin-Pectin','1–2 mL/kg PO q4–6h','Antidiarrheal'],
+  ['Ursodiol (UDCA)','10–15 mg/kg PO q24h','Hepatoprotective'],
+  ['SAMe','สุนัข: 20 mg/kg PO q24h | แมว: 90–200 mg/cat q24h','Hepatoprotective'],
+  ['Furosemide','1–4 mg/kg IV/IM/PO q8–12h','Diuretic'],
+  ['Spironolactone','1–2 mg/kg PO q12h','Diuretic'],
+  ['Pimobendan','0.25–0.3 mg/kg PO q12h ก่อนอาหาร','Cardiac'],
+  ['Enalapril','0.5 mg/kg PO q12–24h','ACE inhibitor'],
+  ['Benazepril','0.25–0.5 mg/kg PO q24h','ACE inhibitor'],
+  ['Amlodipine','สุนัข: 0.1–0.25 mg/kg PO q24h | แมว: 0.625 mg/cat q24h','CCB'],
+  ['Diltiazem','สุนัข: 0.5–2 mg/kg PO q8h | แมว: 7.5 mg/cat q8h','CCB'],
+  ['Digoxin','สุนัข: 0.005–0.01 mg/kg PO q12h ติดตามระดับยา','Cardiac glycoside'],
+  ['Atenolol','สุนัข: 0.25–1 mg/kg PO q12h | แมว: 6.25–12.5 mg/cat q12h','Beta-blocker'],
+  ['Lidocaine IV','2 mg/kg IV bolus slow | CRI: 40–80 mcg/kg/min','Antiarrhythmic'],
+  ['Aminophylline','10 mg/kg PO/IV q8h สุนัข | 5 mg/kg q12h แมว','Bronchodilator'],
+  ['Terbutaline','0.01 mg/kg SC q4h','Bronchodilator'],
+  ['Dextromethorphan','1–2 mg/kg PO q8h สุนัข (ยาแก้ไอ)','Antitussive'],
+  ['N-Acetylcysteine','70 mg/kg IV q6h (antidote) หรือ nebulize','Mucolytic/Antidote'],
+  ['Phenobarbital','สุนัข: 2–5 mg/kg PO q12h | แมว: 1.5–2.5 mg/kg q12h','Anticonvulsant'],
+  ['Potassium Bromide','สุนัข: 30–40 mg/kg PO q24h (add-on)','Anticonvulsant'],
+  ['Levetiracetam','20 mg/kg PO/IV q8h','Anticonvulsant'],
+  ['Zonisamide','สุนัข: 3–7 mg/kg PO q12h | แมว: 5–10 mg/kg q24h','Anticonvulsant'],
+  ['Diazepam IV','0.5 mg/kg IV slow (seizure ฉุกเฉิน)','Benzodiazepine'],
+  ['Midazolam','0.2–0.4 mg/kg IM/IN (sedation/seizure)','Benzodiazepine'],
+  ['Acepromazine','0.01–0.05 mg/kg IM/SC (pre-med)','Phenothiazine'],
+  ['Trazodone','สุนัข: 3–7 mg/kg PO q12h (anxiety)','Anxiolytic'],
+  ['Ketamine','IM: 5–10 mg/kg | IV induction: 5 mg/kg','Dissociative'],
+  ['Propofol','Induction: 4–6 mg/kg IV slow','TIVA'],
+  ['Alfaxalone','สุนัข: 2 mg/kg IV | แมว: 2–3 mg/kg IV','TIVA'],
+  ['Xylazine','สุนัข: 0.5–1 mg/kg IM | วัว: 0.05–0.1 mg/kg IM','Alpha-2 agonist'],
+  ['Medetomidine','สุนัข: 10–40 mcg/kg IM | แมว: 50–80 mcg/kg IM','Alpha-2 agonist'],
+  ['Atipamezole','5× medetomidine dose IM (reversal)','Alpha-2 antagonist'],
+  ['Butorphanol','0.2–0.4 mg/kg IV/IM q4–6h','Opioid partial agonist'],
+  ['Naloxone','0.01–0.04 mg/kg IV/IM (opioid reversal)','Opioid antagonist'],
+  ['Atropine','0.02–0.04 mg/kg IV/IM (pre-med/bradycardia)','Anticholinergic'],
+  ['Methimazole','แมว: 1.25–2.5 mg/cat PO q12h','Antithyroid'],
+  ['Levothyroxine','สุนัข: 0.02 mg/kg PO q12h','Thyroid hormone'],
+  ['Trilostane','สุนัข: 2–10 mg/kg PO q24h','Adrenal blocker'],
+  ['Fludrocortisone',"สุนัข: 0.01–0.02 mg/kg PO q24h (Addison's)",'Mineralocorticoid'],
+  ['Fenbendazole','50 mg/kg PO q24h × 3–5 วัน','Anthelmintic'],
+  ['Praziquantel','5 mg/kg PO ครั้งเดียว','Anthelmintic'],
+  ['Pyrantel pamoate','5–10 mg/kg PO ครั้งเดียว','Anthelmintic'],
+  ['Ivermectin','สุนัข: 0.006 mg/kg PO (HWx) ห้ามใน MDR1','Antiparasitic'],
+  ['Selamectin','Revolution: 6–12 mg/kg Topical q30 วัน','Antiparasitic'],
+  ['Milbemycin oxime','0.5–1 mg/kg PO q30 วัน','Antiparasitic'],
+  ['Itraconazole','สุนัข: 5 mg/kg PO q24h | แมว: 5–10 mg/kg q24h','Antifungal'],
+  ['Fluconazole','สุนัข/แมว: 2.5–5 mg/kg PO q12h','Antifungal'],
+  ['Terbinafine','สุนัข: 5–10 mg/kg PO q24h','Antifungal'],
+  ['Cyclosporine (Atopica)','สุนัข: 5 mg/kg PO q24h | แมว: 7 mg/kg q24h','Immunosuppressive'],
+  ['Azathioprine','สุนัข: 2 mg/kg PO q24h → q48h (ห้ามในแมว)','Immunosuppressive'],
+  ['Oclacitinib (Apoquel)','สุนัข: 0.4–0.6 mg/kg PO q12h × 14 วัน → q24h','JAK inhibitor'],
+  ["Lactated Ringer's (LRS)",'สุนัข/แมว: Shock 90/60 mL/kg IV | Maint 40–60 mL/kg/day','Crystalloid'],
+  ['0.9% NaCl (NSS)','Shock 90/60 mL/kg IV | ระวัง Hyperchloremia','Crystalloid'],
+  ['Potassium Chloride (KCl)','เสริม K+ ใน Fluids ≤0.5 mEq/kg/hr IV','Electrolyte'],
+  ['Calcium gluconate 10%','สุนัข/แมว: 0.5–1.5 mL/kg IV slow (Hypocalcemia)','Electrolyte'],
+  ['Dextrose 50%','1 mL/kg diluted IV (Hypoglycemia)','Glucose'],
+  ['Mannitol 20%','0.5–1 g/kg IV over 20 min (ICP)','Osmotic diuretic'],
+  ['Vitamin K1','2.5–5 mg/kg PO/SC q12h (anticoagulant antidote)','Vitamin'],
+  ['Diphenhydramine','1–2 mg/kg IM/IV q8h (allergy)','Antihistamine'],
+  ['Epinephrine 1:1000','0.01 mg/kg IV/IM (anaphylaxis/CPR)','Emergency'],
+  ['Dopamine','5–10 mcg/kg/min CRI (shock)','Vasopressor'],
+  ['Dobutamine','2–10 mcg/kg/min CRI (heart failure)','Inotrope'],
+  ['Vasopressin','0.4–4 mU/kg/min CRI (vasodilatory shock)','Vasopressor'],
+  ['Heparin sodium','100–200 IU/kg SC q8h','Anticoagulant'],
+  ['Clopidogrel (Plavix)','แมว: 18.75 mg/cat PO q24h','Antiplatelet'],
+];
+
+function renderDrugRows(list){
+  if(!list.length)return'<div style="padding:20px;text-align:center;color:var(--slate-l);font-size:13px;">ไม่พบยา</div>';
+  const groups={};
+  list.forEach(d=>{if(!groups[d[2]])groups[d[2]]=[];groups[d[2]].push(d);});
+  return Object.entries(groups).map(([g,drugs])=>
+    `<div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;border-top:1px solid var(--border);margin-top:4px;">${g}</div>`+
+    drugs.map(d=>`<div style="padding:7px 0;border-bottom:1px solid var(--bg);"><div style="font-weight:700;font-size:13px;color:var(--slate);">${d[0]}</div><div style="font-size:11px;color:var(--slate-m);margin-top:2px;">${d[1]}</div></div>`).join('')
+  ).join('');
+}
+function filterDrugs(cat,btn){
+  document.querySelectorAll('#drugFilterWrap button').forEach(b=>{b.style.background='';b.style.color='';b.classList.remove('dfactive');});
+  btn.classList.add('dfactive');
+  const q=(document.getElementById('drugSearch')?.value||'').toLowerCase();
+  let list=cat==='all'?ALL_DRUGS:ALL_DRUGS.filter(d=>d[2]===cat||d[2].includes(cat));
+  if(q)list=list.filter(d=>d[0].toLowerCase().includes(q)||d[1].toLowerCase().includes(q));
+  document.getElementById('drugList').innerHTML=renderDrugRows(list);
+}
+function searchDrugs(q){
+  const activeBtn=document.querySelector('#drugFilterWrap button.dfactive');
+  const cat=activeBtn?activeBtn.textContent.trim():'ทั้งหมด';
+  let list=cat==='ทั้งหมด'?ALL_DRUGS:ALL_DRUGS.filter(d=>d[2]===cat||d[2].includes(cat));
+  if(q)list=list.filter(d=>d[0].toLowerCase().includes(q.toLowerCase())||d[1].toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('drugList').innerHTML=renderDrugRows(list);
+}
+
 
 function calcFluid(){
   const bw=+document.getElementById('ft_bw').value||0;
