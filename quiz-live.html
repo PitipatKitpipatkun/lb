@@ -493,6 +493,8 @@ async function joinChannel(asHost){
         await channel.track({ id:myId, name:myName, isHost:asHost, score:0, correct:0 });
         showLobby(asHost);
         hideWait();
+        // Force sync after track
+        setTimeout(()=>{syncPlayers();},500);
       } else if(status==='CHANNEL_ERROR'){
         hideWait();
         document.getElementById('homeErr').textContent='เชื่อมต่อไม่ได้ ลองใหม่';
@@ -525,7 +527,9 @@ function renderPlayerList(){
 function updateStartBtn(){
   const n=Object.keys(players).length;
   const btn=document.getElementById('startBtn');
-  if(btn) btn.disabled=(n<2);
+  if(!btn)return;
+  btn.disabled=(n<1);
+  btn.textContent=n<2?`🚀 เริ่มเกม (${n} คน)`:`🚀 เริ่มเกม (${n} คน)`;
 }
 
 function showLobby(asHost){
@@ -536,6 +540,7 @@ function showLobby(asHost){
   document.getElementById('settingsBox').style.display=asHost?'block':'none';
   document.getElementById('startBtn').style.display=asHost?'block':'none';
   document.getElementById('waitingText').style.display=asHost?'none':'block';
+  if(asHost) setTimeout(updateStartBtn, 200);
 }
 
 async function leaveLobby(full=false){
@@ -546,7 +551,7 @@ async function leaveLobby(full=false){
 }
 
 // ── START GAME ──
-function startGame(){
+async function startGame(){
   const totalQ=parseInt(document.getElementById('settingQ').value)||10;
   const timePerQ=parseInt(document.getElementById('settingT').value)||15;
   const cat=document.getElementById('settingCat').value||'all';
@@ -554,12 +559,25 @@ function startGame(){
   let pool=cat==='all'?RAW_Q:RAW_Q.filter(q=>q.cat===cat);
   if(pool.length<totalQ) pool=[...pool,...RAW_Q].slice(0,totalQ*3);
   gameQ=shuffle(pool).slice(0,totalQ);
-  broadcast({type:'game_start',gameQ,settings});
+  const btn=document.getElementById('startBtn');
+  btn.disabled=true; btn.textContent='⏳ กำลังเริ่ม...';
+  try{
+    await broadcast({type:'game_start',gameQ,settings});
+  }catch(e){
+    toast('❌ เริ่มเกมไม่ได้: '+e.message);
+    btn.disabled=false; btn.textContent='🚀 เริ่มเกม';
+  }
 }
 
 // ── BROADCAST ──
-function broadcast(data){
-  channel.send({type:'broadcast',event:'game_event',payload:data});
+async function broadcast(data){
+  if(!channel){console.warn('No channel');return;}
+  const res=await channel.send({type:'broadcast',event:'game_event',payload:data});
+  if(res==='error'){
+    console.error('Broadcast error, retrying...');
+    await new Promise(r=>setTimeout(r,300));
+    await channel.send({type:'broadcast',event:'game_event',payload:data});
+  }
 }
 
 // ── HANDLE EVENTS ──
