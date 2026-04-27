@@ -258,6 +258,7 @@ tr:hover td{background:var(--amber-50);}
     <div class="nav-item" onclick="showTab('departments')" id="ni-departments"><span class="nav-icon">🏫</span> สาขาวิชา</div>
     <div class="nav-item" onclick="showTab('logs')" id="ni-logs"><span class="nav-icon">📜</span> บันทึกกิจกรรม</div>
     <div class="nav-item" onclick="showTab('backup')" id="ni-backup"><span class="nav-icon">💾</span> สำรองข้อมูล</div>
+    <div class="nav-item" onclick="showTab('feedback')" id="ni-feedback"><span class="nav-icon">💬</span> แนะนำ/ร้องเรียน</div>
     <div class="nav-item" onclick="showTab('settings')" id="ni-settings"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
   </nav>
   <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
@@ -519,6 +520,20 @@ tr:hover td{background:var(--amber-50);}
 
 
   <!-- SETTINGS -->
+  <div id="tab-feedback" class="tab-view">
+    <div class="page-header">
+      <div><div class="page-title">💬 แนะนำ / ร้องเรียน</div><div class="page-sub">ข้อเสนอแนะจากผู้ใช้งาน</div></div>
+      <button onclick="loadFeedback()" style="padding:9px 14px;background:var(--teal-l);color:var(--teal);border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🔄 โหลดใหม่</button>
+    </div>
+    <!-- Filter -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="filter-btn active" onclick="filterFeedback('all',this)">ทั้งหมด</button>
+      <button class="filter-btn" onclick="filterFeedback('💡 แนะนำ',this)">💡 แนะนำ</button>
+      <button class="filter-btn" onclick="filterFeedback('📢 ร้องเรียน',this)">📢 ร้องเรียน</button>
+      <button class="filter-btn" onclick="filterFeedback('💬 อื่นๆ',this)">💬 อื่นๆ</button>
+    </div>
+    <div id="feedbackList"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
   <div id="tab-settings" class="tab-view">
     <div class="page-header"><div><div class="page-title">🔑 เปลี่ยนรหัสผ่าน</div><div class="page-sub">Admin</div></div></div>
     <div class="pw-card">
@@ -570,6 +585,9 @@ tr:hover td{background:var(--amber-50);}
     <div class="bn-item" onclick="showTab('competencies')" id="bn-competencies"><span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('departments')" id="bn-departments"><span class="bn-icon">🏫</span><span class="bn-label">สาขา</span><div class="bn-dot"></div></div>
     <div class="bn-item" onclick="showTab('backup')" id="bn-backup"><span class="bn-icon">💾</span><span class="bn-label">Backup</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="showTab('feedback')" id="bn-feedback">
+      <span class="bn-icon">💬</span><span class="bn-label">แนะนำ</span><div class="bn-dot"></div>
+    </div>
     <div class="bn-item" onclick="showTab('settings')" id="bn-settings"><span class="bn-icon">🔑</span><span class="bn-label">ตั้งค่า</span><div class="bn-dot"></div></div>
   </div>
 </nav>
@@ -920,6 +938,42 @@ async function changePassword(){
 }
 
 function filterTbl(tblId,q){document.getElementById(tblId).querySelectorAll('tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';});}
+
+// ===== FEEDBACK =====
+let allFeedback = [];
+async function loadFeedback(){
+  document.getElementById('feedbackList').innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+  const{data,error}=await sb.from('activity_logs')
+    .select('*')
+    .eq('user_role','feedback')
+    .order('created_at',{ascending:false})
+    .limit(200);
+  if(error){document.getElementById('feedbackList').innerHTML='<p style="color:red;padding:16px">'+error.message+'</p>';return;}
+  allFeedback=data||[];
+  renderFeedback(allFeedback);
+}
+function filterFeedback(type,btn){
+  document.querySelectorAll('#tab-feedback .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const list=type==='all'?allFeedback:allFeedback.filter(f=>f.action===type);
+  renderFeedback(list);
+}
+function renderFeedback(list){
+  const el=document.getElementById('feedbackList');
+  if(!list.length){el.innerHTML='<div class="empty-state"><div style="font-size:48px;margin-bottom:12px;">💬</div><p>ยังไม่มีข้อเสนอแนะ</p></div>';return;}
+  const typeColor={'💡 แนะนำ':'#dbeafe','📢 ร้องเรียน':'#fee2e2','💬 อื่นๆ':'#f1f5f9'};
+  const typeText={'💡 แนะนำ':'#1d4ed8','📢 ร้องเรียน':'#dc2626','💬 อื่นๆ':'#475569'};
+  el.innerHTML=list.map(f=>`
+    <div style="background:white;border-radius:14px;border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="background:${typeColor[f.action]||'#f1f5f9'};color:${typeText[f.action]||'#475569'};padding:3px 10px;border-radius:100px;font-size:12px;font-weight:700;">${f.action}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--slate-m);">👤 ${f.user_name||'ไม่ระบุ'}</span>
+        <span style="font-size:11px;color:var(--slate-l);margin-left:auto;">${f.created_at?new Date(f.created_at).toLocaleString('th-TH',{year:'2-digit',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</span>
+      </div>
+      <div style="font-size:14px;color:var(--slate);line-height:1.6;">${f.details||''}</div>
+    </div>`).join('');
+}
+
 function showTab(tab){
   document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
@@ -927,6 +981,7 @@ function showTab(tab){
   document.getElementById('ni-'+tab)?.classList.add('active');
   document.getElementById('bn-'+tab)?.classList.add('active');
   if(tab==='logs')loadLogs();
+  if(tab==='feedback')loadFeedback();
   if(tab==='backup')initBackup();
   if(tab==='departments')loadDepts();
   if(tab==='settings')initDebugToggle();

@@ -3,292 +3,344 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Log Book — คณะสัตวแพทยศาสตร์</title>
+<title>Log Book — คณะสัตวแพทยศาสตร์ มทร.ตะวันออก</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Prompt:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --teal:#0d9488;--teal-d:#0f766e;--teal-l:#ccfbf1;--teal-50:#f0fdfa;
-  --rose:#e11d48;--rose-l:#ffe4e6;
-  --amber:#d97706;--amber-l:#fef3c7;
+  --rose:#e11d48;--rose-l:#ffe4e6;--rose-50:#fff1f2;
+  --amber:#d97706;--amber-l:#fef3c7;--amber-50:#fffbeb;
+  --violet:#7c3aed;--violet-l:#ede9fe;
   --slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;
-  --bg:#f0fdf8;--white:#fff;--border:#e2e8f0;
-  --r:16px;--r-lg:24px;--shadow:0 8px 32px rgba(13,148,136,0.12);
+  --bg:#f8fafc;--white:#fff;--border:#e2e8f0;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow-x:hidden;}
-body{
-  font-family:'Sarabun',sans-serif;min-height:100vh;
-  background:linear-gradient(160deg,#0d9488 0%,#0f766e 40%,#065f46 100%);
-  display:flex;align-items:center;justify-content:center;padding:16px;
-  padding-bottom:calc(16px + env(safe-area-inset-bottom));
-  position:relative;overflow:hidden;
+html{scroll-behavior:smooth;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh;padding-bottom:24px;}
+
+/* ── Header ── */
+.app-header{
+  background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);
+  padding:24px 20px 28px;position:relative;overflow:hidden;
 }
+.app-header::after{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,0.07);pointer-events:none;}
+.app-header::before{content:'';position:absolute;bottom:-80px;left:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none;}
+.header-logo{width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:14px;overflow:hidden;}
+.header-logo img{width:100%;height:100%;object-fit:contain;}
+.header-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:white;line-height:1.2;margin-bottom:4px;}
+.header-sub{font-size:13px;color:rgba(255,255,255,0.8);}
+.header-session{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:10px;padding:6px 12px;font-size:12px;color:white;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);}
 
-/* Background blobs */
-body::before,body::after{
-  content:'';position:absolute;border-radius:50%;
-  background:rgba(255,255,255,0.06);pointer-events:none;
-}
-body::before{width:500px;height:500px;top:-150px;right:-150px;animation:blob1 8s ease-in-out infinite;}
-body::after{width:400px;height:400px;bottom:-100px;left:-100px;animation:blob2 10s ease-in-out infinite;}
-@keyframes blob1{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.1) rotate(20deg)}}
-@keyframes blob2{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(0.9) rotate(-15deg)}}
+/* ── Content ── */
+.content{padding:0 14px;margin-top:-12px;position:relative;z-index:1;}
 
-.container{width:100%;max-width:400px;position:relative;z-index:1;}
+/* ── Section ── */
+.section{margin-bottom:20px;}
+.section-title{font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:var(--slate-m);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding:0 2px;display:flex;align-items:center;gap:7px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
 
-/* Alert */
-.alert{display:none;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:14px;font-weight:500;animation:slideDown 0.3s ease;}
+/* ── Login Cards ── */
+.login-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.login-card{background:var(--white);border-radius:18px;border:1.5px solid var(--border);padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.18s;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.login-card:active{transform:scale(0.96);}
+.lc-icon{font-size:32px;margin-bottom:8px;}
+.lc-title{font-size:13px;font-weight:700;color:var(--slate);margin-bottom:2px;}
+.lc-sub{font-size:10px;color:var(--slate-l);font-weight:500;}
+.lc-student{border-color:var(--teal-l);}
+.lc-student:hover{background:var(--teal-50);border-color:var(--teal);}
+.lc-teacher{border-color:#dbeafe;}
+.lc-teacher:hover{background:#eff6ff;border-color:#3b82f6;}
+.lc-admin{border-color:var(--amber-l);}
+.lc-admin:hover{background:var(--amber-50);border-color:var(--amber);}
+
+/* ── Game Cards ── */
+.game-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.game-card{background:var(--white);border-radius:18px;border:1.5px solid var(--border);padding:16px;cursor:pointer;transition:all 0.18s;box-shadow:0 2px 8px rgba(0,0,0,0.04);position:relative;overflow:hidden;}
+.game-card:active{transform:scale(0.97);}
+.gc-icon{font-size:28px;margin-bottom:8px;}
+.gc-title{font-size:13px;font-weight:700;color:var(--slate);}
+.gc-sub{font-size:11px;color:var(--slate-l);margin-top:3px;}
+.gc-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;}
+.gc-live{background:#dcfce7;color:#166534;}
+.gc-soon{background:var(--amber-l);color:#92400e;}
+.game-card.gc-vetquiz{border-color:var(--teal-l);background:linear-gradient(135deg,var(--teal-50),white);}
+.game-card.gc-coming{opacity:0.7;}
+
+/* ── Tool Cards ── */
+.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.tool-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:13px 8px;text-align:center;cursor:pointer;transition:all 0.15s;}
+.tool-card:active{transform:scale(0.95);background:var(--bg);}
+.tc-icon{font-size:24px;margin-bottom:6px;}
+.tc-title{font-size:11px;font-weight:700;color:var(--slate);line-height:1.3;}
+
+/* ── Feedback Card ── */
+.feedback-card{background:var(--white);border-radius:18px;border:1.5px solid var(--border);padding:18px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.fb-type-row{display:flex;gap:8px;margin-bottom:12px;}
+.fb-type-btn{flex:1;padding:8px 0;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;color:var(--slate-m);}
+.fb-type-btn.sel{background:var(--teal);border-color:var(--teal);color:white;}
+.fb-textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;resize:none;outline:none;transition:border-color 0.2s;background:var(--bg);}
+.fb-textarea:focus{border-color:var(--teal);background:white;}
+.fb-row{display:flex;gap:8px;margin-top:10px;align-items:center;}
+.fb-name{flex:1;padding:10px 13px;border:1.5px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;outline:none;background:var(--bg);}
+.fb-name:focus{border-color:var(--teal);background:white;}
+.fb-submit{padding:10px 20px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.fb-status{font-size:12px;font-weight:600;margin-top:8px;padding:8px 12px;border-radius:8px;display:none;}
+.fb-ok{background:#dcfce7;color:#166534;}
+.fb-err{background:#fee2e2;color:#991b1b;}
+
+/* ── Modal overlay ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.on{display:flex;}
+.modal-box{background:white;border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+@media(min-height:700px){.modal-box{border-radius:24px;margin-bottom:20px;}}
+.modal-handle{width:40px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;}
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;}
+.form-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--slate);background:var(--bg);outline:none;transition:all 0.2s;}
+.form-input:focus{border-color:var(--teal);background:white;box-shadow:0 0 0 3px rgba(13,148,136,0.08);}
+.submit-btn{width:100%;padding:13px;border:none;border-radius:13px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-bottom:10px;}
+.sb-s{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;box-shadow:0 4px 14px rgba(13,148,136,0.3);}
+.sb-t{background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;box-shadow:0 4px 14px rgba(59,130,246,0.3);}
+.sb-a{background:linear-gradient(135deg,var(--amber),#f59e0b);color:white;box-shadow:0 4px 14px rgba(217,119,6,0.3);}
+.back-btn{width:100%;padding:11px;background:var(--bg);color:var(--slate-m);border:1.5px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+.alert{padding:10px 14px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:12px;display:none;}
 .alert.on{display:flex;align-items:center;gap:8px;}
 .alert-ok{background:#dcfce7;color:#166534;}
 .alert-err{background:#fee2e2;color:#991b1b;}
-@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 
-/* Screen transitions */
-.screen{display:none;}
-.screen.on{display:block;animation:slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);}
-@keyframes slideUp{from{opacity:0;transform:translateY(40px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* ── Tool modal content ── */
+.tool-row{display:flex;align-items:baseline;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.tool-row:last-child{border-bottom:none;}
+.tool-row .lbl{color:var(--slate-m);flex:1;}
+.tool-row .val{font-weight:700;color:var(--teal);text-align:right;}
+.calc-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:14px;margin-bottom:8px;outline:none;}
+.calc-input:focus{border-color:var(--teal);}
+.calc-result{background:var(--teal-50);border:1px solid var(--teal-l);border-radius:10px;padding:12px;font-size:13px;margin-top:8px;}
 
-/* ====== MENU ====== */
-.menu-card{
-  background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);
-  border-radius:28px;overflow:hidden;border:1px solid rgba(255,255,255,0.2);
-}
-.menu-logo-wrap{padding:36px 24px 24px;text-align:center;}
-.logo-circle{
-  width:130px;height:130px;border-radius:28px;
-  background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.3);
-  margin:0 auto 16px;display:flex;align-items:center;justify-content:center;
-  overflow:hidden;animation:logoPulse 3s ease-in-out infinite;
-}
-@keyframes logoPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.3)}50%{box-shadow:0 0 0 12px rgba(255,255,255,0)}}
-.logo-circle img{width:110px;height:110px;object-fit:contain;}
-.menu-title{font-family:'Prompt',sans-serif;font-size:28px;font-weight:800;color:white;letter-spacing:-0.5px;}
-.menu-sub{font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;line-height:1.5;}
-.menu-btns{padding:0 20px 24px;display:flex;flex-direction:column;gap:10px;}
-.role-btn{
-  display:flex;align-items:center;gap:14px;padding:16px 18px;
-  background:white;border:none;border-radius:18px;cursor:pointer;
-  transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden;
-  text-align:left;width:100%;
-}
-.role-btn::after{
-  content:'';position:absolute;inset:0;background:rgba(0,0,0,0);
-  transition:background 0.2s;
-}
-.role-btn:active{transform:scale(0.97);}
-.role-btn:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,0.15);}
-.role-icon{
-  width:48px;height:48px;border-radius:14px;
-  display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
-  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
-.role-btn:hover .role-icon{transform:scale(1.15) rotate(-5deg);}
-.ri-s{background:linear-gradient(135deg,#0d9488,#14b8a6);}
-.ri-t{background:linear-gradient(135deg,#e11d48,#f43f5e);}
-.ri-a{background:linear-gradient(135deg,#d97706,#f59e0b);}
-.role-text{flex:1;}
-.role-name{font-family:'Prompt',sans-serif;font-size:15px;font-weight:700;color:var(--slate);}
-.role-desc{font-size:12px;color:var(--slate-l);margin-top:2px;}
-.role-arrow{font-size:18px;color:var(--slate-l);transition:transform 0.2s;}
-.role-btn:hover .role-arrow{transform:translateX(4px);}
-.menu-footer{padding-bottom:20px;text-align:center;font-size:11px;color:rgba(255,255,255,0.5);}
-
-/* ====== LOGIN CARD ====== */
-.login-card{
-  background:white;border-radius:28px;padding:28px 24px;
-  box-shadow:var(--shadow);
-}
-.login-top{text-align:center;margin-bottom:24px;}
-.login-logo{
-  width:64px;height:64px;border-radius:16px;
-  margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
-  overflow:hidden;background:var(--teal-50);border:2px solid var(--teal-l);
-}
-.login-logo img{width:52px;height:52px;object-fit:contain;}
-.login-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 14px;border-radius:100px;font-size:12px;font-weight:700;margin-bottom:10px;
-}
-.lb-s{background:var(--teal-l);color:var(--teal-d);}
-.lb-t{background:var(--rose-l);color:#9f1239;}
-.lb-a{background:var(--amber-l);color:#92400e;}
-.login-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:700;color:var(--slate);}
-.login-desc{font-size:13px;color:var(--slate-l);margin-top:4px;}
-
-.fg{margin-bottom:16px;}
-.fl{display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;letter-spacing:0.3px;}
-.input-wrap{position:relative;}
-.ii{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;pointer-events:none;z-index:1;}
-.fi{
-  width:100%;padding:13px 14px 13px 44px;
-  border:2px solid var(--border);border-radius:14px;
-  font-size:15px;font-family:'Sarabun',sans-serif;color:var(--slate);
-  background:#f8fafc;transition:all 0.2s;outline:none;
-  -webkit-appearance:none;
-}
-.fi:focus{border-color:var(--teal);background:white;box-shadow:0 0 0 4px rgba(13,148,136,0.1);}
-.fi-t:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(225,29,72,0.1);}
-.fi-a:focus{border-color:var(--amber);box-shadow:0 0 0 4px rgba(217,119,6,0.1);}
-input[type="password"].fi{letter-spacing:4px;font-size:20px;}
-input[type="password"].fi::placeholder{letter-spacing:0;font-size:15px;}
-
-.submit-btn{
-  width:100%;padding:15px;border:none;border-radius:14px;
-  font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;
-  color:white;cursor:pointer;transition:all 0.2s;margin-bottom:12px;
-  position:relative;overflow:hidden;
-}
-.submit-btn::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(rgba(255,255,255,0.15),rgba(255,255,255,0));
-  opacity:0;transition:opacity 0.2s;
-}
-.submit-btn:hover::after{opacity:1;}
-.submit-btn:active{transform:scale(0.98);}
-.submit-btn:disabled{opacity:0.55;cursor:not-allowed;transform:none;}
-.sb-s{background:linear-gradient(135deg,var(--teal),var(--teal-d));box-shadow:0 6px 20px rgba(13,148,136,0.35);}
-.sb-t{background:linear-gradient(135deg,#f43f5e,#e11d48);box-shadow:0 6px 20px rgba(225,29,72,0.3);}
-.sb-a{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 6px 20px rgba(217,119,6,0.3);}
-.back-btn{
-  width:100%;padding:13px;background:transparent;
-  border:2px solid var(--border);border-radius:14px;
-  font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;
-  color:var(--slate-m);cursor:pointer;transition:all 0.2s;
-}
-.back-btn:hover{background:var(--bg);border-color:var(--slate-l);}
-.back-btn:active{transform:scale(0.98);}
-
-/* Ripple */
-.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.4);transform:scale(0);animation:ripple 0.6s linear;pointer-events:none;}
-@keyframes ripple{to{transform:scale(4);opacity:0;}}
+/* ── Footer ── */
+.app-footer{text-align:center;font-size:11px;color:var(--slate-l);padding:8px 16px 4px;margin-top:4px;}
 </style>
 </head>
 <body>
-<div class="container">
-  <!-- MENU -->
-  <div id="menuScreen" class="screen on">
-    <div class="menu-card">
-      <div class="menu-logo-wrap">
-        <div class="logo-circle">
-          <img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:36px>🏥</span>'">
-        </div>
-        <h1 class="menu-title">Log Book</h1>
-        <p class="menu-sub">คณะสัตวแพทยศาสตร์<br>มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</p>
+
+<!-- ── HEADER ── -->
+<div class="app-header">
+  <div id="sessionBar" style="display:none;">
+    <button class="header-session" onclick="clearSession()">🚪 ออกจากระบบ</button>
+  </div>
+  <div class="header-logo">
+    <img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:32px>🐾</span>'">
+  </div>
+  <div class="header-title">Log Book</div>
+  <div class="header-sub">คณะสัตวแพทยศาสตร์ มทร.ตะวันออก</div>
+</div>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+
+  <!-- LOGIN CARDS -->
+  <div class="section" style="margin-top:16px;">
+    <div class="section-title">🔐 เข้าสู่ระบบ</div>
+    <div class="login-grid">
+      <div class="login-card lc-student" onclick="openLogin('student')">
+        <div class="lc-icon">🎓</div>
+        <div class="lc-title">นักศึกษา</div>
+        <div class="lc-sub">Log Book</div>
       </div>
-      <div class="menu-btns">
-        <button class="role-btn" onclick="showLogin('student',this)" style="animation:slideUp 0.4s 0.05s both;">
-          <div class="role-icon ri-s">🎓</div>
-          <div class="role-text">
-            <div class="role-name">นักศึกษา</div>
-            <div class="role-desc">ดูทักษะและรายงาน</div>
-          </div>
-          <span class="role-arrow">›</span>
-        </button>
-        <button class="role-btn" onclick="showLogin('teacher',this)" style="animation:slideUp 0.4s 0.1s both;">
-          <div class="role-icon ri-t">👩‍🏫</div>
-          <div class="role-text">
-            <div class="role-name">อาจารย์</div>
-            <div class="role-desc">ประเมินทักษะนักศึกษา</div>
-          </div>
-          <span class="role-arrow">›</span>
-        </button>
-        <button class="role-btn" onclick="showLogin('admin',this)" style="animation:slideUp 0.4s 0.15s both;">
-          <div class="role-icon ri-a">⚙️</div>
-          <div class="role-text">
-            <div class="role-name">ผู้ดูแลระบบ</div>
-            <div class="role-desc">จัดการผู้ใช้และทักษะ</div>
-          </div>
-          <span class="role-arrow">›</span>
-        </button>
+      <div class="login-card lc-teacher" onclick="openLogin('teacher')">
+        <div class="lc-icon">👩‍⚕️</div>
+        <div class="lc-title">อาจารย์</div>
+        <div class="lc-sub">ประเมินทักษะ</div>
       </div>
-    </div>
-    <p class="menu-footer" style="margin-top:14px;">Log Book System v2.0</p>
-    <div id="sessionBar" style="display:none;margin-top:8px;text-align:center;">
-      <span style="font-size:12px;color:rgba(255,255,255,0.6);">มี session เก่าอยู่ — </span>
-      <button onclick="clearSession()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:7px;padding:3px 12px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">🚪 ออกจากระบบ</button>
+      <div class="login-card lc-admin" onclick="openLogin('admin')">
+        <div class="lc-icon">⚙️</div>
+        <div class="lc-title">ผู้ดูแลระบบ</div>
+        <div class="lc-sub">Admin</div>
+      </div>
     </div>
   </div>
 
-  <!-- STUDENT LOGIN -->
-  <div id="studentLogin" class="screen">
-    <div id="studentAlert" class="alert"></div>
-    <div class="login-card">
-      <div class="login-top">
-        <div class="login-logo"><img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:28px>🏥</span>'"></div>
-        <div class="login-badge lb-s">🎓 นักศึกษา</div>
-        <h2 class="login-title">เข้าสู่ระบบ</h2>
-        <p class="login-desc">รหัสนักศึกษา และรหัสผ่าน 6 หลัก</p>
+  <!-- GAMES -->
+  <div class="section">
+    <div class="section-title">🎮 เกม & สาระความรู้</div>
+    <div class="game-grid">
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game.html'">
+        <div class="gc-icon">🐾</div>
+        <div class="gc-title">VetQuiz</div>
+        <div class="gc-sub">ทายคำถามสัตวแพทย์ 461 ข้อ</div>
+        <span class="gc-badge gc-live">▶ เล่นได้เลย</span>
       </div>
-      <div class="fg">
-        <label class="fl">รหัสนักศึกษา</label>
-        <div class="input-wrap"><span class="ii">🎓</span>
-          <input class="fi" type="text" id="studentUsername" placeholder="เช่น 64010001" inputmode="text" autocomplete="username">
-        </div>
+      <div class="game-card gc-coming" onclick="showSoon('Drug Dose Calculator','เกมทายขนาดยาและการคำนวณ dose สำหรับสัตว์แต่ละชนิด')">
+        <div class="gc-icon">💊</div>
+        <div class="gc-title">Drug Dose Quiz</div>
+        <div class="gc-sub">ทายขนาดยาและ dose</div>
+        <span class="gc-badge gc-soon">เร็วๆ นี้</span>
       </div>
-      <div class="fg">
-        <label class="fl">รหัสผ่าน</label>
-        <div class="input-wrap"><span class="ii">🔒</span>
-          <input class="fi" type="password" id="studentPassword" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password">
-        </div>
+      <div class="game-card gc-coming" onclick="showSoon('Anatomy Flash Card','เกมจำกายวิภาคด้วย Flash Card ภาพอวัยวะสัตว์')">
+        <div class="gc-icon">🦴</div>
+        <div class="gc-title">Anatomy Cards</div>
+        <div class="gc-sub">Flash card กายวิภาค</div>
+        <span class="gc-badge gc-soon">เร็วๆ นี้</span>
       </div>
-      <button class="submit-btn sb-s" id="studentBtn" onclick="handleLogin('student',this)">เข้าสู่ระบบ</button>
-      <button class="back-btn" onclick="showMenu()">← กลับหน้าหลัก</button>
+      <div class="game-card gc-coming" onclick="showSoon('Clinical Case Scenario','กรณีศึกษาทางคลินิก เลือก diagnosis ที่ถูกต้อง')">
+        <div class="gc-icon">🩺</div>
+        <div class="gc-title">Clinical Cases</div>
+        <div class="gc-sub">กรณีศึกษาทางคลินิก</div>
+        <span class="gc-badge gc-soon">เร็วๆ นี้</span>
+      </div>
     </div>
   </div>
 
-  <!-- TEACHER LOGIN -->
-  <div id="teacherLogin" class="screen">
-    <div id="teacherAlert" class="alert"></div>
-    <div class="login-card">
-      <div class="login-top">
-        <div class="login-logo"><img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:28px>🏥</span>'"></div>
-        <div class="login-badge lb-t">👩‍🏫 อาจารย์</div>
-        <h2 class="login-title">เข้าสู่ระบบ</h2>
-        <p class="login-desc">เลขตำแหน่งอาจารย์ และรหัสผ่าน 6 หลัก</p>
+  <!-- TOOLS -->
+  <div class="section">
+    <div class="section-title">🛠️ เครื่องมือสัตวแพทย์</div>
+    <div class="tool-grid">
+      <div class="tool-card" onclick="openTool('drugs')">
+        <div class="tc-icon">💊</div>
+        <div class="tc-title">Common Drugs</div>
       </div>
-      <div class="fg">
-        <label class="fl">เลขตำแหน่งอาจารย์</label>
-        <div class="input-wrap"><span class="ii">🏫</span>
-          <input class="fi fi-t" type="text" id="teacherUsername" placeholder="เช่น T001" autocomplete="username">
-        </div>
+      <div class="tool-card" onclick="openTool('emergency')">
+        <div class="tc-icon">🚨</div>
+        <div class="tc-title">Emergency Drugs</div>
       </div>
-      <div class="fg">
-        <label class="fl">รหัสผ่าน</label>
-        <div class="input-wrap"><span class="ii">🔒</span>
-          <input class="fi fi-t" type="password" id="teacherPassword" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password">
-        </div>
+      <div class="tool-card" onclick="openTool('anesthesia')">
+        <div class="tc-icon">💉</div>
+        <div class="tc-title">Anesthetics</div>
       </div>
-      <button class="submit-btn sb-t" id="teacherBtn" onclick="handleLogin('teacher',this)">เข้าสู่ระบบ</button>
-      <button class="back-btn" onclick="showMenu()">← กลับหน้าหลัก</button>
+      <div class="tool-card" onclick="openTool('fluid')">
+        <div class="tc-icon">💧</div>
+        <div class="tc-title">Fluid Therapy</div>
+      </div>
+      <div class="tool-card" onclick="openTool('cri')">
+        <div class="tc-icon">⏱️</div>
+        <div class="tc-title">CRI Calculator</div>
+      </div>
+      <div class="tool-card" onclick="openTool('transfusion')">
+        <div class="tc-icon">🩸</div>
+        <div class="tc-title">Transfusion</div>
+      </div>
+      <div class="tool-card" onclick="openTool('unit')">
+        <div class="tc-icon">📐</div>
+        <div class="tc-title">Unit Conversion</div>
+      </div>
+      <div class="tool-card" onclick="openTool('glucose')">
+        <div class="tc-icon">📈</div>
+        <div class="tc-title">Glucose Curve</div>
+      </div>
+      <div class="tool-card" onclick="openTool('petage')">
+        <div class="tc-icon">🎂</div>
+        <div class="tc-title">Pet Age</div>
+      </div>
+      <div class="tool-card" onclick="openTool('pain')">
+        <div class="tc-icon">😣</div>
+        <div class="tc-title">Pain Scale</div>
+      </div>
+      <div class="tool-card" onclick="openTool('iris')">
+        <div class="tc-icon">🫘</div>
+        <div class="tc-title">IRIS Staging</div>
+      </div>
+      <div class="tool-card" onclick="openTool('bsa')">
+        <div class="tc-icon">🐕</div>
+        <div class="tc-title">BSA / m²</div>
+      </div>
     </div>
   </div>
 
-  <!-- ADMIN LOGIN -->
-  <div id="adminLogin" class="screen">
-    <div id="adminAlert" class="alert"></div>
-    <div class="login-card">
-      <div class="login-top">
-        <div class="login-logo"><img src="fac.png" alt="Logo" onerror="this.outerHTML='<span style=font-size:28px>🏥</span>'"></div>
-        <div class="login-badge lb-a">⚙️ ผู้ดูแลระบบ</div>
-        <h2 class="login-title">เข้าสู่ระบบ</h2>
-        <p class="login-desc">สำหรับผู้ดูแลระบบเท่านั้น</p>
+  <!-- FEEDBACK -->
+  <div class="section">
+    <div class="section-title">💬 แนะนำ / ร้องเรียน</div>
+    <div class="feedback-card">
+      <div class="fb-type-row">
+        <button class="fb-type-btn sel" id="fb-type-sug" onclick="setFbType('suggest')">💡 แนะนำ</button>
+        <button class="fb-type-btn" id="fb-type-com" onclick="setFbType('complain')">📢 ร้องเรียน</button>
+        <button class="fb-type-btn" id="fb-type-oth" onclick="setFbType('other')">💬 อื่นๆ</button>
       </div>
-      <div class="fg">
-        <label class="fl">ชื่อผู้ใช้</label>
-        <div class="input-wrap"><span class="ii">⚙️</span>
-          <input class="fi fi-a" type="text" id="adminUsername" placeholder="ชื่อผู้ใช้" autocomplete="username">
-        </div>
+      <textarea class="fb-textarea" id="fbText" rows="3" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
+      <div class="fb-row">
+        <input class="fb-name" id="fbName" placeholder="ชื่อ (ไม่บังคับ)" maxlength="50">
+        <button class="fb-submit" onclick="submitFeedback()">ส่ง →</button>
       </div>
-      <div class="fg">
-        <label class="fl">รหัสผ่าน</label>
-        <div class="input-wrap"><span class="ii">🔒</span>
-          <input class="fi fi-a" type="password" id="adminPassword" placeholder="••••••" autocomplete="current-password">
-        </div>
-      </div>
-      <button class="submit-btn sb-a" id="adminBtn" onclick="handleLogin('admin',this)">เข้าสู่ระบบ</button>
-      <button class="back-btn" onclick="showMenu()">← กลับหน้าหลัก</button>
+      <div class="fb-status" id="fbStatus"></div>
     </div>
+  </div>
+
+</div>
+
+<div class="app-footer">Log Book System v2.0 — คณะสัตวแพทยศาสตร์ มทร.ตะวันออก</div>
+
+<!-- ── LOGIN MODALS ── -->
+<div class="modal-overlay" id="loginModal" onclick="closeModalOut(event)">
+  <div class="modal-box" id="loginBox">
+    <div class="modal-handle"></div>
+
+    <!-- Student Login -->
+    <div id="studentLogin" style="display:none;">
+      <div class="modal-title">🎓 เข้าสู่ระบบนักศึกษา</div>
+      <div class="alert" id="studentAlert"></div>
+      <div class="form-group">
+        <label class="form-label">รหัสนักศึกษา</label>
+        <input class="form-input" id="studentUsername" type="text" placeholder="กรอกรหัสนักศึกษา" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน</label>
+        <input class="form-input" id="studentPassword" type="password" placeholder="••••••" autocomplete="current-password">
+      </div>
+      <button class="submit-btn sb-s" id="studentBtn" onclick="handleLogin('student',this)">🎓 เข้าสู่ระบบ</button>
+      <button class="back-btn" onclick="closeLogin()">← กลับ</button>
+    </div>
+
+    <!-- Teacher Login -->
+    <div id="teacherLogin" style="display:none;">
+      <div class="modal-title">👩‍⚕️ เข้าสู่ระบบอาจารย์</div>
+      <div class="alert" id="teacherAlert"></div>
+      <div class="form-group">
+        <label class="form-label">เลขตำแหน่งอาจารย์</label>
+        <input class="form-input" id="teacherUsername" type="text" placeholder="กรอกเลขตำแหน่ง" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน</label>
+        <input class="form-input" id="teacherPassword" type="password" placeholder="••••••" autocomplete="current-password">
+      </div>
+      <button class="submit-btn sb-t" id="teacherBtn" onclick="handleLogin('teacher',this)">👩‍⚕️ เข้าสู่ระบบ</button>
+      <button class="back-btn" onclick="closeLogin()">← กลับ</button>
+    </div>
+
+    <!-- Admin Login -->
+    <div id="adminLogin" style="display:none;">
+      <div class="modal-title">⚙️ เข้าสู่ระบบ Admin</div>
+      <div class="alert" id="adminAlert"></div>
+      <div class="form-group">
+        <label class="form-label">ชื่อผู้ใช้</label>
+        <input class="form-input" id="adminUsername" type="text" placeholder="ชื่อผู้ใช้" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน</label>
+        <input class="form-input" id="adminPassword" type="password" placeholder="••••••" autocomplete="current-password">
+      </div>
+      <button class="submit-btn sb-a" id="adminBtn" onclick="handleLogin('admin',this)">⚙️ เข้าสู่ระบบ</button>
+      <button class="back-btn" onclick="closeLogin()">← กลับ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOOL MODAL ── -->
+<div class="modal-overlay" id="toolModal" onclick="closeModalOut(event)">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div id="toolContent"></div>
+    <button class="back-btn" style="margin-top:12px;" onclick="closeTool()">← ปิด</button>
+  </div>
+</div>
+
+<!-- ── COMING SOON MODAL ── -->
+<div class="modal-overlay" id="soonModal" onclick="closeSoonModal()">
+  <div class="modal-box" style="max-width:360px;text-align:center;padding:28px;">
+    <div style="font-size:52px;margin-bottom:12px;">🚧</div>
+    <div style="font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;margin-bottom:8px;" id="soonTitle"></div>
+    <div style="font-size:13px;color:var(--slate-m);margin-bottom:20px;line-height:1.6;" id="soonDesc"></div>
+    <button class="back-btn" onclick="closeSoonModal()">ปิด</button>
   </div>
 </div>
 
@@ -298,43 +350,32 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const{createClient}=window.supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
-function showMenu(){
-  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('on');});
-  const m=document.getElementById('menuScreen');m.classList.add('on');
+// ── Login ──
+function openLogin(role){
+  ['studentLogin','teacherLogin','adminLogin'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById(role+'Login').style.display='block';
+  document.getElementById('loginModal').classList.add('on');
+  setTimeout(()=>document.getElementById(role+'Username')?.focus(),350);
 }
-function showLogin(role,btn){
-  if(btn){rippleEffect(btn,event);}
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
-  document.getElementById(role+'Login').classList.add('on');
-  setTimeout(()=>document.getElementById(role+'Username')?.focus(),300);
+function closeLogin(){
+  document.getElementById('loginModal').classList.remove('on');
+}
+function closeModalOut(e){
+  if(e.target===e.currentTarget)e.currentTarget.classList.remove('on');
 }
 function showAlert(id,msg,type){
   const el=document.getElementById(id);
-  el.innerHTML=(type==='ok'?'✅ ':'❌ ')+msg;
+  el.textContent=(type==='ok'?'✅ ':'❌ ')+msg;
   el.className='alert on alert-'+(type==='ok'?'ok':'err');
   setTimeout(()=>el.classList.remove('on'),5000);
 }
-function rippleEffect(el,e){
-  const r=document.createElement('span');r.className='ripple';
-  const rect=el.getBoundingClientRect();
-  const size=Math.max(rect.width,rect.height);
-  r.style.cssText=`width:${size}px;height:${size}px;left:${(e?.clientX??rect.left+rect.width/2)-rect.left-size/2}px;top:${(e?.clientY??rect.top+rect.height/2)-rect.top-size/2}px`;
-  el.appendChild(r);setTimeout(()=>r.remove(),600);
-}
-
-function clearSession(){localStorage.removeItem('lb_user');sb.auth.signOut();document.getElementById('sessionBar').style.display='none';showMenu();}
-async function logLogin(role,name,code){
-  const roleLabel={student:'นักศึกษา',teacher:'อาจารย์',admin:'Admin'};
-  sb.from('activity_logs').insert({user_role:role,user_name:name,user_code:code,action:'เข้าสู่ระบบ',details:`${roleLabel[role]} login สำเร็จ`}).then(()=>{});
-}
-
 async function handleLogin(role,btn){
   const username=document.getElementById(role+'Username').value.trim();
   const password=document.getElementById(role+'Password').value;
   const alertId=role+'Alert';
   const labels={student:'รหัสนักศึกษา',teacher:'เลขตำแหน่งอาจารย์',admin:'ชื่อผู้ใช้'};
   if(!username){showAlert(alertId,'กรุณากรอก'+labels[role],'err');return;}
-  if(!password||password.length<6){showAlert(alertId,'รหัสผ่านต้องมีอย่างน้อย 6 ตัว','err');return;}
+  if(!password||password.length<4){showAlert(alertId,'รหัสผ่านไม่ถูกต้อง','err');return;}
   btn.disabled=true;btn.textContent='กำลังเข้าสู่ระบบ...';
   try{
     if(role==='admin'){
@@ -348,7 +389,6 @@ async function handleLogin(role,btn){
       setTimeout(()=>{window.location.href='admin-dashboard.html';},800);
     }else if(role==='student'){
       let{data,error}=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).single();
-      // Fallback: if FK not set up, try without join
       if(error&&(error.message?.includes('relationship')||error.message?.includes('department'))){
         const res=await sb.from('students').select('*').eq('student_code',username).eq('password',password).single();
         data=res.data;error=res.error;
@@ -368,88 +408,227 @@ async function handleLogin(role,btn){
       const isTA=data.is_admin===true;
       localStorage.setItem('lb_user',JSON.stringify({role:'teacher',fullName:data.full_name,profileId:data.id,teacherCode:data.teacher_code,username,isAdmin:isTA,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
       logLogin('teacher',data.full_name,data.teacher_code||username);
-      showAlert(alertId,'ยินดีต้อนรับ '+data.full_name,(isTA?' (Teacher Admin)':''),'ok');
+      showAlert(alertId,'ยินดีต้อนรับ '+data.full_name+(isTA?' (Teacher Admin)':''),'ok');
       setTimeout(()=>{window.location.href='teacher-dashboard.html';},800);
     }
   }catch(e){showAlert(alertId,'เกิดข้อผิดพลาด: '+e.message,'err');}
   finally{btn.disabled=false;btn.textContent='เข้าสู่ระบบ';}
 }
 document.addEventListener('keydown',e=>{
-  if(e.key!=='Enter')return;
-  const a=document.querySelector('.screen.on');
-  if(a&&a.id!=='menuScreen'){
-    const role=a.id.replace('Login','');
-    handleLogin(role,document.getElementById(role+'Btn'));
-  }
+  if(e.key!=='Enter'&&!document.getElementById('loginModal').classList.contains('on'))return;
+  const active=['student','teacher','admin'].find(r=>document.getElementById(r+'Login').style.display!=='none');
+  if(active)handleLogin(active,document.getElementById(active+'Btn'));
 });
+
+// ── Session ──
+function clearSession(){localStorage.removeItem('lb_user');sb.auth.signOut();document.getElementById('sessionBar').style.display='none';}
+async function logLogin(role,name,code){
+  sb.from('activity_logs').insert({user_role:role,user_name:name,user_code:code,action:'เข้าสู่ระบบ',details:role+' login สำเร็จ'}).then(()=>{});
+}
 window.addEventListener('load',async()=>{
   const s=localStorage.getItem('lb_user');if(!s)return;
   const i=JSON.parse(s);
   const map={student:'student-dashboard.html',teacher:'teacher-dashboard.html',admin:'admin-dashboard.html'};
   if(!map[i.role]){localStorage.removeItem('lb_user');return;}
-  // Quick verify: check if user still exists in DB
+  document.getElementById('sessionBar').style.display='block';
   try{
-    if(i.role==='student'){
-      const{data}=await sb.from('students').select('id').eq('id',i.profileId).single();
-      if(!data){localStorage.removeItem('lb_user');return;}
-    } else if(i.role==='teacher'){
-      const{data}=await sb.from('teachers').select('id').eq('id',i.profileId).single();
-      if(!data){localStorage.removeItem('lb_user');return;}
-    } else if(i.role==='admin'){
-      const{data:{session}}=await sb.auth.getSession();
-      if(!session){localStorage.removeItem('lb_user');return;}
-    }
+    if(i.role==='student'){const{data}=await sb.from('students').select('id').eq('id',i.profileId).single();if(!data){localStorage.removeItem('lb_user');document.getElementById('sessionBar').style.display='none';return;}}
+    else if(i.role==='teacher'){const{data}=await sb.from('teachers').select('id').eq('id',i.profileId).single();if(!data){localStorage.removeItem('lb_user');document.getElementById('sessionBar').style.display='none';return;}}
+    else if(i.role==='admin'){const{data:{session}}=await sb.auth.getSession();if(!session){localStorage.removeItem('lb_user');document.getElementById('sessionBar').style.display='none';return;}}
     window.location.href=map[i.role];
-  }catch(e){
-    localStorage.removeItem('lb_user');
-  }
+  }catch(e){localStorage.removeItem('lb_user');document.getElementById('sessionBar').style.display='none';}
 });
-</script><!-- ===== DEBUG BAR ===== -->
-<style>
-#_dbgBar{position:fixed;bottom:80px;left:8px;right:8px;z-index:9999;background:rgba(15,23,42,0.95);color:#4ade80;padding:8px 12px;border-radius:12px;font-family:monospace;font-size:11px;max-height:200px;overflow-y:auto;transition:all 0.3s;backdrop-filter:blur(8px);border:1px solid rgba(74,222,128,0.2);display:none;}
-#_dbgToggle{position:fixed;bottom:calc(var(--nav-h,64px) + env(safe-area-inset-bottom,0px) + 8px);right:8px;z-index:10000;width:32px;height:32px;border-radius:50%;background:rgba(15,23,42,0.8);border:1px solid rgba(74,222,128,0.4);color:#4ade80;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all 0.2s;}
-#_dbgToggle:hover{background:rgba(15,23,42,0.95);border-color:#4ade80;}
-#_dbgToggle.active{background:#166534;border-color:#4ade80;}
-</style>
-<div id="_dbgBar"></div>
-<button id="_dbgToggle" onclick="toggleDbg()" title="Debug Log" style="display:none;">🐛</button>
-<script>
-function dbg(msg,color){
-  const bar=document.getElementById('_dbgBar');if(!bar)return;
-  const line=document.createElement('div');
-  line.style.color=color||'#4ade80';
-  line.textContent='['+new Date().toLocaleTimeString('th-TH')+'] '+msg;
-  bar.appendChild(line);
-  if(bar.style.display!=='none')bar.scrollTop=bar.scrollHeight;
-  console.log('[DBG]',msg);
+
+// ── Feedback ──
+let fbType='suggest';
+function setFbType(t){
+  fbType=t;
+  ['suggest','complain','other'].forEach(x=>{
+    document.getElementById('fb-type-'+{'suggest':'sug','complain':'com','other':'oth'}[x])?.classList.toggle('sel',x===t);
+  });
 }
-function toggleDbg(){
-  const bar=document.getElementById('_dbgBar'),btn=document.getElementById('_dbgToggle');
-  const isOn=bar.style.display!=='none';
-  bar.style.display=isOn?'none':'block';
-  btn.classList.toggle('active',!isOn);
-  if(!isOn)bar.scrollTop=bar.scrollHeight;
-  localStorage.setItem('_dbgOpen',!isOn?'1':'');
+async function submitFeedback(){
+  const text=document.getElementById('fbText').value.trim();
+  const name=document.getElementById('fbName').value.trim()||'ไม่ระบุชื่อ';
+  const st=document.getElementById('fbStatus');
+  if(!text){st.textContent='⚠️ กรุณาพิมพ์ข้อความก่อนส่ง';st.className='fb-status fb-err';st.style.display='block';return;}
+  const typeLabel={suggest:'💡 แนะนำ',complain:'📢 ร้องเรียน',other:'💬 อื่นๆ'};
+  const{error}=await sb.from('activity_logs').insert({
+    user_role:'feedback',user_name:name,user_code:fbType,
+    action:typeLabel[fbType],details:text
+  });
+  if(error){st.textContent='❌ ส่งไม่สำเร็จ: '+error.message;st.className='fb-status fb-err';}
+  else{st.textContent='✅ ขอบคุณสำหรับข้อเสนอแนะ! ส่งสำเร็จแล้ว';st.className='fb-status fb-ok';document.getElementById('fbText').value='';document.getElementById('fbName').value='';}
+  st.style.display='block';
+  setTimeout(()=>st.style.display='none',4000);
 }
-(function(){
-  // Only show debug button if admin has enabled it
-  if(localStorage.getItem('_dbgEnabled')==='1'){
-    const btn=document.getElementById('_dbgToggle');
-    if(btn)btn.style.display='flex';
-    if(localStorage.getItem('_dbgOpen')==='1'){
-      const bar=document.getElementById('_dbgBar');
-      if(bar)bar.style.display='block';
-      if(btn)btn.classList.add('active');
-    }
-  }
-})();
-window.onerror=function(msg,src,line){
-  if(localStorage.getItem('_dbgEnabled')==='1')dbg('⚠️ '+msg+' (line '+line+')','#f87171');
-};
-window.addEventListener('unhandledrejection',function(e){
-  if(localStorage.getItem('_dbgEnabled')==='1')dbg('⚠️ '+(e.reason?.message||e.reason),'#f87171');
-});
+
+// ── Coming soon ──
+function showSoon(title,desc){
+  document.getElementById('soonTitle').textContent=title;
+  document.getElementById('soonDesc').textContent=desc;
+  document.getElementById('soonModal').classList.add('on');
+}
+function closeSoonModal(){document.getElementById('soonModal').classList.remove('on');}
+
+// ── Tools ──
+function openTool(id){
+  const content=document.getElementById('toolContent');
+  content.innerHTML=toolHTML(id);
+  document.getElementById('toolModal').classList.add('on');
+}
+function closeTool(){document.getElementById('toolModal').classList.remove('on');}
+
+function toolHTML(id){
+  const tools={
+    drugs:`<div class="modal-title">💊 Common Drugs</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">ขนาดยาใช้บ่อยในสัตว์เลี้ยง (สุนัข/แมว)</div>
+${[['Amoxicillin','10-20 mg/kg PO q8-12h'],['Metronidazole','10-15 mg/kg PO/IV q12h'],['Enrofloxacin','5-10 mg/kg PO/SC q24h (สุนัข)'],['Meloxicam','0.1 mg/kg SC/PO q24h (แมว 0.05)'],['Dexamethasone','0.1-0.5 mg/kg IV/IM'],['Furosemide','1-4 mg/kg IV/IM/PO q8-12h'],['Phenobarbital','2-5 mg/kg PO q12h'],['Metoclopramide','0.2-0.5 mg/kg IM/SC q6-8h'],['Omeprazole','0.5-1 mg/kg PO q24h'],['Tramadol','2-5 mg/kg PO q8-12h (สุนัข)']].map(([d,r])=>`<div class="tool-row"><span class="lbl">${d}</span><span class="val" style="font-size:11px;max-width:55%">${r}</span></div>`).join('')}`,
+
+    emergency:`<div class="modal-title">🚨 Emergency Drugs</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">ยาฉุกเฉิน — ปรึกษาสัตวแพทย์เสมอก่อนใช้</div>
+${[['Epinephrine (CPR)','0.01 mg/kg IV/IT q3-5min'],['Atropine (Bradycardia)','0.02-0.04 mg/kg IV/IM'],['Lidocaine (VT)','2 mg/kg IV slow bolus'],['Diazepam (Seizure)','0.5 mg/kg IV slow'],['Naloxone (Opioid OD)','0.01-0.04 mg/kg IV/IM'],['Flumazenil (Benzo OD)','0.01 mg/kg IV slow'],['Dextrose 50%','0.5-1 mL/kg IV diluted (Hypoglycemia)'],['NaHCO3','1 mEq/kg IV slow (Acidosis)'],['Calcium gluconate','50-150 mg/kg slow IV (Hypocalcemia)'],['Mannitol (ICP)','0.5-1 g/kg IV over 20min']].map(([d,r])=>`<div class="tool-row"><span class="lbl">${d}</span><span class="val" style="font-size:11px;max-width:55%">${r}</span></div>`).join('')}`,
+
+    anesthesia:`<div class="modal-title">💉 Anesthetics</div>
+${[['Propofol (induction)','4-6 mg/kg IV slow'],['Ketamine+Diazepam','5-10 + 0.25-0.5 mg/kg IM'],['Xylazine','0.5-1 mg/kg IM/SC (สุนัข)'],['Medetomidine','10-40 mcg/kg IM'],['Acepromazine (preM)','0.02-0.05 mg/kg IM/SC'],['Butorphanol','0.2-0.4 mg/kg IV/IM'],['Isoflurane (maint.)','1.5-2.5% inhalation'],['Alfaxalone','2-3 mg/kg IV (แมว)'],['Atipamezole (rev)','5× Medetomidine dose IM'],['Naloxone (opioid rev)','0.01-0.04 mg/kg IV/IM']].map(([d,r])=>`<div class="tool-row"><span class="lbl">${d}</span><span class="val" style="font-size:11px;max-width:55%">${r}</span></div>`).join('')}`,
+
+    fluid:`<div class="modal-title">💧 Fluid Therapy</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:10px;">คำนวณ Fluid Rate</div>
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">น้ำหนักสัตว์ (kg)</label>
+<input class="calc-input" id="ft-bw" type="number" placeholder="เช่น 10" oninput="calcFluid()">
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">%Dehydration</label>
+<input class="calc-input" id="ft-deh" type="number" placeholder="เช่น 5" oninput="calcFluid()">
+<div class="calc-result" id="ft-result" style="display:none;"></div>
+<div style="margin-top:14px;">${[['LRS (Lactated Ringer\'s)','Isotonic — ใช้บ่อยที่สุด'],['0.9% NaCl (NSS)','Isotonic — ระวัง Hyperchloremia'],['D5W','Hypotonic หลัง mix — พลังงาน'],['Plasma-Lyte','Balanced — ใกล้เคียงพลาสมา'],['Colloid (Hetastarch)','0.5-20 mL/kg — Shock']].map(([d,r])=>`<div class="tool-row"><span class="lbl">${d}</span><span class="val" style="font-size:11px">${r}</span></div>`).join('')}</div>`,
+
+    cri:`<div class="modal-title">⏱️ CRI Calculator</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:10px;">Constant Rate Infusion</div>
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">น้ำหนักสัตว์ (kg)</label>
+<input class="calc-input" id="cri-bw" type="number" placeholder="เช่น 10" oninput="calcCRI()">
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">ยา</label>
+<select class="calc-input" id="cri-drug" onchange="calcCRI()">
+  <option value="">-- เลือกยา --</option>
+  <option value="0.005,0.02">Fentanyl 0.005–0.02 mcg/kg/min</option>
+  <option value="5,20">Lidocaine 5–20 mcg/kg/min</option>
+  <option value="0.1,0.5">Morphine 0.1–0.5 mcg/kg/min</option>
+  <option value="1,5">Ketamine 1–5 mcg/kg/min</option>
+  <option value="1,5">Dopamine 1–5 mcg/kg/min</option>
+  <option value="5,10">Dobutamine 5–10 mcg/kg/min</option>
+</select>
+<div class="calc-result" id="cri-result" style="display:none;"></div>`,
+
+    transfusion:`<div class="modal-title">🩸 Transfusion</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:10px;">คำนวณปริมาณเลือดที่ต้องให้</div>
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">น้ำหนักสัตว์ (kg)</label>
+<input class="calc-input" id="tr-bw" type="number" placeholder="เช่น 10" oninput="calcTransfusion()">
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">PCV ปัจจุบัน (%)</label>
+<input class="calc-input" id="tr-cur" type="number" placeholder="เช่น 18" oninput="calcTransfusion()">
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">PCV เป้าหมาย (%) เช่น 30</label>
+<input class="calc-input" id="tr-target" type="number" placeholder="30" oninput="calcTransfusion()">
+<div class="calc-result" id="tr-result" style="display:none;"></div>
+<div style="margin-top:10px;font-size:11px;color:var(--slate-m);">สูตร: BV×(PCVต้องการ-PCVปัจจุบัน)/PCVผู้ให้<br>BV สุนัข=90 mL/kg, แมว=70 mL/kg | Rate: 2-4 mL/kg/hr</div>`,
+
+    unit:`<div class="modal-title">📐 Unit Conversion</div>
+${[['kg → lb','× 2.205'],['lb → kg','÷ 2.205'],['mg/kg → mcg/kg','× 1000'],['°C → °F','× 9/5 + 32'],['mmHg → kPa','× 0.133'],['mEq/L → mmol/L','= mEq/L (monovalent)'],['IU/L → U/L','เท่ากัน'],['g/dL → g/L','× 10'],['mg/dL → mmol/L (glucose)','÷ 18'],['mg/dL → μmol/L (Cr)','× 88.4']].map(([d,r])=>`<div class="tool-row"><span class="lbl">${d}</span><span class="val">${r}</span></div>`).join('')}`,
+
+    glucose:`<div class="modal-title">📈 Glucose Curve</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">แนวทางแปลผล Glucose Curve ใน Diabetic pet</div>
+${[['< 80 mg/dL','⚠️ Hypoglycemia — ลด Insulin'],['80–150 mg/dL','✅ ควบคุมดี (แมว)'],['80–180 mg/dL','✅ ควบคุมดี (สุนัข)'],['180–250 mg/dL','⬆️ เพิ่ม Insulin เล็กน้อย'],['> 250 mg/dL','⬆️ ควบคุมไม่ดี — ปรับ Insulin'],['Nadir < 80 mg/dL','⚠️ Somogyi effect — ลด Insulin'],['Glucose > 400','🚨 ตรวจหา DKA']].map(([d,r])=>`<div class="tool-row"><span class="lbl">${d}</span><span class="val" style="font-size:11px;max-width:50%">${r}</span></div>`).join('')}`,
+
+    petage:`<div class="modal-title">🎂 Pet Age Calculator</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:10px;">เปรียบเทียบอายุสัตว์กับมนุษย์</div>
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">อายุสัตว์ (ปี)</label>
+<input class="calc-input" id="pa-age" type="number" placeholder="เช่น 5" oninput="calcPetAge()">
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">ชนิดสัตว์</label>
+<select class="calc-input" id="pa-type" onchange="calcPetAge()">
+  <option value="dog-small">สุนัขขนาดเล็ก (<10kg)</option>
+  <option value="dog-large">สุนัขขนาดใหญ่ (>25kg)</option>
+  <option value="cat">แมว</option>
+</select>
+<div class="calc-result" id="pa-result" style="display:none;"></div>`,
+
+    pain:`<div class="modal-title">😣 Pain Scale</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">Colorado State University (CSU) Pain Scale</div>
+${[['0','ไม่มีความเจ็บปวด — ปกติ','#dcfce7','#166534'],['1–2','เจ็บปวดเล็กน้อย — กระวนกระวายบ้าง','#fef9c3','#92400e'],['3–4','เจ็บปวดปานกลาง — ส่งเสียง ต้านการตรวจ','#fef3c7','#d97706'],['5–6','เจ็บปวดรุนแรง — ไม่สนใจสิ่งแวดล้อม','#fee2e2','#dc2626'],['7–10','เจ็บปวดรุนแรงมาก — ต้องการยาแก้ปวดทันที','#fee2e2','#991b1b']].map(([s,d,bg,c])=>`<div style="padding:10px 12px;border-radius:10px;background:${bg};margin-bottom:6px;"><div style="font-weight:700;color:${c};">ระดับ ${s}</div><div style="font-size:12px;color:${c};margin-top:2px;">${d}</div></div>`).join('')}`,
+
+    iris:`<div class="modal-title">🫘 IRIS Staging — CKD</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">International Renal Interest Society</div>
+${[['Stage 1','< 1.4 (สุนัข) / < 1.6 (แมว)','Non-azotemic CKD'],['Stage 2','1.4–2.8 / 1.6–2.8','Mild azotemia'],['Stage 3','2.9–5.0 / 2.9–5.0','Moderate azotemia'],['Stage 4','> 5.0 / > 5.0','Severe azotemia']].map(([st,cr,desc])=>`<div class="tool-row"><div><div style="font-weight:700">${st}</div><div style="font-size:10px;color:var(--slate-l)">${desc}</div></div><span class="val" style="font-size:11px">Cr ${cr}<br>mg/dL</span></div>`).join('')}
+<div style="margin-top:10px;font-size:11px;color:var(--slate-m);padding:10px;background:var(--teal-50);border-radius:8px;">Sub-staging: Blood pressure (BP1–4) + Proteinuria (UP/UC < 0.2 / 0.2–0.5 / > 0.5)</div>`,
+
+    bsa:`<div class="modal-title">🐕 BSA / m² Calculator</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:10px;">Body Surface Area สำหรับคำนวณ Chemotherapy dose</div>
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">น้ำหนัก (kg)</label>
+<input class="calc-input" id="bsa-bw" type="number" placeholder="เช่น 10" oninput="calcBSA()">
+<label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">ชนิดสัตว์</label>
+<select class="calc-input" id="bsa-type" onchange="calcBSA()">
+  <option value="dog">สุนัข</option>
+  <option value="cat">แมว</option>
+</select>
+<div class="calc-result" id="bsa-result" style="display:none;"></div>
+<div style="margin-top:8px;font-size:11px;color:var(--slate-m);">สูตร: สุนัข = 0.101 × W²/³ | แมว = 0.1 × W²/³ (W = น้ำหนัก kg)</div>`,
+  };
+  return tools[id]||'<div>Coming soon</div>';
+}
+
+// ── Calculators ──
+function calcFluid(){
+  const bw=parseFloat(document.getElementById('ft-bw')?.value)||0;
+  const deh=parseFloat(document.getElementById('ft-deh')?.value)||0;
+  const r=document.getElementById('ft-result');if(!r)return;
+  if(!bw||!deh){r.style.display='none';return;}
+  const deficit=bw*deh*10;
+  const maint=bw*50;
+  const total=deficit+maint;
+  r.innerHTML=`<b>Deficit:</b> ${deficit.toFixed(0)} mL<br><b>Maintenance (24h):</b> ${maint.toFixed(0)} mL<br><b>รวม 24h:</b> ${total.toFixed(0)} mL<br><b>Rate (mL/hr):</b> ${(total/24).toFixed(1)} mL/hr`;
+  r.style.display='block';
+}
+function calcCRI(){
+  const bw=parseFloat(document.getElementById('cri-bw')?.value)||0;
+  const drug=document.getElementById('cri-drug')?.value||'';
+  const r=document.getElementById('cri-result');if(!r)return;
+  if(!bw||!drug){r.style.display='none';return;}
+  const [low,high]=drug.split(',').map(Number);
+  r.innerHTML=`<b>Rate ต่ำ:</b> ${(low*bw*60/1000).toFixed(2)} mL/hr (${low} mcg/kg/min)<br><b>Rate สูง:</b> ${(high*bw*60/1000).toFixed(2)} mL/hr (${high} mcg/kg/min)<br><span style="font-size:11px;color:var(--slate-m)">*คำนวณจาก stock 1 mg/mL ใน 1 mL/hr</span>`;
+  r.style.display='block';
+}
+function calcTransfusion(){
+  const bw=parseFloat(document.getElementById('tr-bw')?.value)||0;
+  const cur=parseFloat(document.getElementById('tr-cur')?.value)||0;
+  const target=parseFloat(document.getElementById('tr-target')?.value)||30;
+  const r=document.getElementById('tr-result');if(!r)return;
+  if(!bw||!cur){r.style.display='none';return;}
+  const bvDog=bw*90,bvCat=bw*70;
+  const volDog=bvDog*(target-cur)/40;
+  const volCat=bvCat*(target-cur)/40;
+  r.innerHTML=`<b>สุนัข:</b> ${Math.max(0,volDog).toFixed(0)} mL (ผู้ให้ PCV ~40%)<br><b>แมว:</b> ${Math.max(0,volCat).toFixed(0)} mL<br><b>Max rate:</b> ${(bw*4).toFixed(0)} mL/hr`;
+  r.style.display='block';
+}
+function calcPetAge(){
+  const age=parseFloat(document.getElementById('pa-age')?.value)||0;
+  const type=document.getElementById('pa-type')?.value||'dog-small';
+  const r=document.getElementById('pa-result');if(!r||!age)return;
+  let human=0;
+  const tables={
+    'dog-small':[15,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80],
+    'dog-large':[15,24,28,32,36,45,50,55,61,66,72,77,82,88,93,99],
+    'cat':[15,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80]
+  };
+  const t=tables[type]||tables['dog-small'];
+  const idx=Math.min(Math.floor(age)-1,t.length-1);
+  human=idx>=0?t[idx]+(age%1)*(idx<t.length-1?t[Math.min(idx+1,t.length-1)]-t[idx]:4):0;
+  r.innerHTML=`<b>อายุ ${age} ปี</b> ≈ <b style="color:var(--teal);font-size:18px">${Math.round(human)}</b> ปี (มนุษย์)`;
+  r.style.display='block';
+}
+function calcBSA(){
+  const bw=parseFloat(document.getElementById('bsa-bw')?.value)||0;
+  const type=document.getElementById('bsa-type')?.value||'dog';
+  const r=document.getElementById('bsa-result');if(!r||!bw){if(r)r.style.display='none';return;}
+  const k=type==='dog'?0.101:0.1;
+  const bsa=k*Math.pow(bw,2/3);
+  r.innerHTML=`<b>BSA = ${bsa.toFixed(3)} m²</b><br><span style="font-size:11px;color:var(--slate-m)">น้ำหนัก ${bw} kg (${type==='dog'?'สุนัข':'แมว'})</span>`;
+  r.style.display='block';
+}
 </script>
-<!-- ===== END DEBUG BAR ===== -->
 </body>
 </html>
