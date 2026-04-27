@@ -169,7 +169,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
       <div class="game-card gc-vetquiz" onclick="window.location.href='game.html'">
         <div class="gc-icon">🐾</div>
         <div class="gc-title">VetQuiz</div>
-        <div class="gc-sub">ทายคำถามสัตวแพทย์ 461 ข้อ</div>
+        <div class="gc-sub">ทายคำถามสัตวแพทย์</div>
         <span class="gc-badge gc-live">▶ เล่นได้เลย</span>
       </div>
       <div class="game-card gc-coming" onclick="showSoon('Drug Dose Calculator','เกมทายขนาดยาและการคำนวณ dose สำหรับสัตว์แต่ละชนิด')">
@@ -257,6 +257,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
         <button class="fb-type-btn" id="fb-type-com" onclick="setFbType('complain')">📢 ร้องเรียน</button>
         <button class="fb-type-btn" id="fb-type-oth" onclick="setFbType('other')">💬 อื่นๆ</button>
       </div>
+      <select id="fbDept" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate);background:var(--bg);margin-bottom:10px;outline:none;">
+        <option value="สำนักงานคณบดี">🏛️ สำนักงานคณบดี</option>
+        <option value="งานบริหารและแผน">📊 งานบริหารและแผน</option>
+        <option value="งานวิชาการ">📚 งานวิชาการ</option>
+        <option value="งานกิจการนักศึกษา">🎓 งานกิจการนักศึกษา</option>
+        <option value="งานอาคารสถานที่">🏗️ งานอาคารสถานที่</option>
+        <option value="งานโรงพยาบาลสัตว์">🏥 งานโรงพยาบาลสัตว์</option>
+        <option value="งานอื่นๆ และทั่วไป">💬 งานอื่นๆ และทั่วไป</option>
+      </select>
       <textarea class="fb-textarea" id="fbText" rows="3" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
       <div class="fb-row">
         <input class="fb-name" id="fbName" placeholder="ชื่อ (ไม่บังคับ)" maxlength="50">
@@ -453,9 +462,10 @@ async function submitFeedback(){
   const st=document.getElementById('fbStatus');
   if(!text){st.textContent='⚠️ กรุณาพิมพ์ข้อความก่อนส่ง';st.className='fb-status fb-err';st.style.display='block';return;}
   const typeLabel={suggest:'💡 แนะนำ',complain:'📢 ร้องเรียน',other:'💬 อื่นๆ'};
+  const dept=document.getElementById('fbDept')?.value||'ทั่วไป';
   const{error}=await sb.from('activity_logs').insert({
     user_role:'feedback',user_name:name,user_code:fbType,
-    action:typeLabel[fbType],details:text
+    action:typeLabel[fbType],details:'[ถึง: '+dept+'] '+text
   });
   if(error){st.textContent='❌ ส่งไม่สำเร็จ: '+error.message;st.className='fb-status fb-err';}
   else{st.textContent='✅ ขอบคุณสำหรับข้อเสนอแนะ! ส่งสำเร็จแล้ว';st.className='fb-status fb-ok';document.getElementById('fbText').value='';document.getElementById('fbName').value='';}

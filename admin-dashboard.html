@@ -526,12 +526,23 @@ tr:hover td{background:var(--amber-50);}
       <button onclick="loadFeedback()" style="padding:9px 14px;background:var(--teal-l);color:var(--teal);border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🔄 โหลดใหม่</button>
     </div>
     <!-- Filter -->
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="filter-btn active" onclick="filterFeedback('all',this)">ทั้งหมด</button>
-      <button class="filter-btn" onclick="filterFeedback('💡 แนะนำ',this)">💡 แนะนำ</button>
-      <button class="filter-btn" onclick="filterFeedback('📢 ร้องเรียน',this)">📢 ร้องเรียน</button>
-      <button class="filter-btn" onclick="filterFeedback('💬 อื่นๆ',this)">💬 อื่นๆ</button>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <button class="filter-btn active" onclick="filterFeedback('all','all',this)">ทั้งหมด</button>
+      <button class="filter-btn" onclick="filterFeedback('type','💡 แนะนำ',this)">💡 แนะนำ</button>
+      <button class="filter-btn" onclick="filterFeedback('type','📢 ร้องเรียน',this)">📢 ร้องเรียน</button>
+      <button class="filter-btn" onclick="filterFeedback('type','💬 อื่นๆ',this)">💬 อื่นๆ</button>
     </div>
+    <select id="fbDeptFilter" onchange="filterFeedback('dept',this.value,null)"
+      style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;margin-bottom:12px;background:white;outline:none;">
+      <option value="all">📌 ทุกหน่วยงาน</option>
+      <option value="สำนักงานคณบดี">🏛️ สำนักงานคณบดี</option>
+      <option value="งานบริหารและแผน">📊 งานบริหารและแผน</option>
+      <option value="งานวิชาการ">📚 งานวิชาการ</option>
+      <option value="งานกิจการนักศึกษา">🎓 งานกิจการนักศึกษา</option>
+      <option value="งานอาคารสถานที่">🏗️ งานอาคารสถานที่</option>
+      <option value="งานโรงพยาบาลสัตว์">🏥 งานโรงพยาบาลสัตว์</option>
+      <option value="งานอื่นๆ และทั่วไป">💬 งานอื่นๆ และทั่วไป</option>
+    </select>
     <div id="feedbackList"><div class="spinner-wrap"><div class="spinner"></div></div></div>
   </div>
   <div id="tab-settings" class="tab-view">
@@ -952,10 +963,15 @@ async function loadFeedback(){
   allFeedback=data||[];
   renderFeedback(allFeedback);
 }
-function filterFeedback(type,btn){
-  document.querySelectorAll('#tab-feedback .filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const list=type==='all'?allFeedback:allFeedback.filter(f=>f.action===type);
+let fbFilterType='all', fbFilterDept='all';
+function filterFeedback(by,val,btn){
+  if(btn){document.querySelectorAll('#tab-feedback .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  if(by==='all'){fbFilterType='all';fbFilterDept='all';const sel=document.getElementById('fbDeptFilter');if(sel)sel.value='all';}
+  else if(by==='type')fbFilterType=val;
+  else if(by==='dept')fbFilterDept=val;
+  let list=allFeedback;
+  if(fbFilterType!=='all')list=list.filter(f=>f.action===fbFilterType);
+  if(fbFilterDept!=='all')list=list.filter(f=>(f.details||'').includes('[ถึง: '+fbFilterDept+']'));
   renderFeedback(list);
 }
 function renderFeedback(list){
@@ -970,7 +986,15 @@ function renderFeedback(list){
         <span style="font-size:12px;font-weight:600;color:var(--slate-m);">👤 ${f.user_name||'ไม่ระบุ'}</span>
         <span style="font-size:11px;color:var(--slate-l);margin-left:auto;">${f.created_at?new Date(f.created_at).toLocaleString('th-TH',{year:'2-digit',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</span>
       </div>
-      <div style="font-size:14px;color:var(--slate);line-height:1.6;">${f.details||''}</div>
+      ${(()=>{
+        const details=f.details||'';
+        const deptMatch=details.match(/^\[ถึง: ([^\]]+)\] (.*)/s);
+        if(deptMatch){
+          return '<div style="display:inline-block;background:#dbeafe;color:#1d4ed8;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:700;margin-bottom:6px;">📌 '+deptMatch[1]+'</div>'
+            +'<div style="font-size:14px;color:var(--slate);line-height:1.6;">'+deptMatch[2]+'</div>';
+        }
+        return '<div style="font-size:14px;color:var(--slate);line-height:1.6;">'+details+'</div>';
+      })()}
     </div>`).join('');
 }
 
