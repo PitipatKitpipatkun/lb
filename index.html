@@ -85,6 +85,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .fb-name{flex:1;padding:10px 13px;border:1.5px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;outline:none;background:var(--bg);}
 .fb-name:focus{border-color:var(--teal);background:white;}
 .fb-submit{padding:10px 20px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.dfbtn{padding:3px 10px;border-radius:100px;border:1.5px solid var(--border);background:white;color:var(--slate-m);font-family:'Sarabun',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.dfbtn.dfactive{background:var(--teal);color:white;border-color:var(--teal);}
 .fb-status{font-size:12px;font-weight:600;margin-top:8px;padding:8px 12px;border-radius:8px;display:none;}
 .fb-ok{background:#dcfce7;color:#166534;}
 .fb-err{background:#fee2e2;color:#991b1b;}
@@ -205,7 +207,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div class="tool-grid">
       <div class="tool-card" onclick="openTool('drugs')">
         <div class="tc-icon">💊</div>
-        <div class="tc-title">Common Drugs</div>
+        <div class="tc-title">Common 100 Drugs</div>
       </div>
       <div class="tool-card" onclick="openTool('emergency')">
         <div class="tc-icon">🚨</div>
@@ -492,14 +494,33 @@ function openTool(id){
   const content=document.getElementById('toolContent');
   content.innerHTML=toolHTML(id);
   document.getElementById('toolModal').classList.add('on');
+  if(id==='drugs'){
+    setTimeout(()=>{
+      const dl=document.getElementById('drugList');
+      if(dl)dl.innerHTML=renderDrugRows(ALL_DRUGS);
+    },20);
+  }
 }
 function closeTool(){document.getElementById('toolModal').classList.remove('on');}
 
 function toolHTML(id){
   const tools={
-    drugs:`<div class="modal-title">💊 Common Drugs</div>
-<div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">ขนาดยาใช้บ่อยในสัตว์เลี้ยง (สุนัข/แมว)</div>
-${[['Amoxicillin','10-20 mg/kg PO q8-12h'],['Metronidazole','10-15 mg/kg PO/IV q12h'],['Enrofloxacin','5-10 mg/kg PO/SC q24h (สุนัข)'],['Meloxicam','0.1 mg/kg SC/PO q24h (แมว 0.05)'],['Dexamethasone','0.1-0.5 mg/kg IV/IM'],['Furosemide','1-4 mg/kg IV/IM/PO q8-12h'],['Phenobarbital','2-5 mg/kg PO q12h'],['Metoclopramide','0.2-0.5 mg/kg IM/SC q6-8h'],['Omeprazole','0.5-1 mg/kg PO q24h'],['Tramadol','2-5 mg/kg PO q8-12h (สุนัข)']].map(([d,r])=>`<div class="tool-row"><span class="lbl">${d}</span><span class="val" style="font-size:11px;max-width:55%">${r}</span></div>`).join('')}`,
+    drugs:`<div class="modal-title">💊 Common 100 Drugs</div>
+<div style="font-size:12px;color:var(--slate-l);margin-bottom:6px;">ยาใช้บ่อยในสัตว์เลี้ยง 100 รายการ — กดกรองหรือค้นหา</div>
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;" id="drugFilterWrap">
+  <button onclick="filterDrugs('all',this)" class="dfbtn dfactive">ทั้งหมด</button>
+  <button onclick="filterDrugs('ยาปฏิชีวนะ',this)" class="dfbtn">ยาปฏิชีวนะ</button>
+  <button onclick="filterDrugs('NSAID',this)" class="dfbtn">NSAID</button>
+  <button onclick="filterDrugs('Corticosteroid',this)" class="dfbtn">Steroid</button>
+  <button onclick="filterDrugs('Opioid',this)" class="dfbtn">Opioid</button>
+  <button onclick="filterDrugs('Cardiac',this)" class="dfbtn">หัวใจ</button>
+  <button onclick="filterDrugs('Anticonvulsant',this)" class="dfbtn">ชัก</button>
+  <button onclick="filterDrugs('Anthelmintic',this)" class="dfbtn">พยาธิ</button>
+  <button onclick="filterDrugs('Emergency',this)" class="dfbtn">ฉุกเฉิน</button>
+</div>
+<input id="drugSearch" oninput="searchDrugs(this.value)" placeholder="🔍 ค้นหาชื่อยา..." style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:Sarabun,sans-serif;font-size:13px;margin-bottom:8px;outline:none;">
+<div id="drugList" style="max-height:55vh;overflow-y:auto;"></div>
+`,
 
     emergency:`<div class="modal-title">🚨 Emergency Drugs</div>
 <div style="font-size:12px;color:var(--slate-l);margin-bottom:12px;">ยาฉุกเฉิน — ปรึกษาสัตวแพทย์เสมอก่อนใช้</div>
@@ -645,6 +666,140 @@ function calcBSA(){
   r.innerHTML=`<b>BSA = ${bsa.toFixed(3)} m²</b><br><span style="font-size:11px;color:var(--slate-m)">น้ำหนัก ${bw} kg (${type==='dog'?'สุนัข':'แมว'})</span>`;
   r.style.display='block';
 }
+const ALL_DRUGS=[
+  ['Amoxicillin','สุนัข/แมว: 10–20 mg/kg PO q8–12h','ยาปฏิชีวนะ'],
+  ['Amoxicillin-Clavulanate','12.5–25 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Ampicillin','22 mg/kg IV/IM q6–8h','ยาปฏิชีวนะ'],
+  ['Enrofloxacin','สุนัข: 5–20 mg/kg PO/SC q24h | แมว: 5 mg/kg q24h','ยาปฏิชีวนะ'],
+  ['Marbofloxacin','สุนัข: 2–5.5 mg/kg PO q24h | แมว: 2 mg/kg q24h','ยาปฏิชีวนะ'],
+  ['Doxycycline','5–10 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Metronidazole','10–15 mg/kg PO/IV q12h','ยาปฏิชีวนะ'],
+  ['Trimethoprim-Sulfonamide','15–30 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Cephalexin','22–30 mg/kg PO q8–12h','ยาปฏิชีวนะ'],
+  ['Cefazolin','22 mg/kg IV/IM q8h','ยาปฏิชีวนะ'],
+  ['Cefovecin (Convenia)','8 mg/kg SC ครั้งเดียว (14 วัน)','ยาปฏิชีวนะ'],
+  ['Gentamicin','6–9 mg/kg IV/SC q24h ระวังไต','ยาปฏิชีวนะ'],
+  ['Clindamycin','11–22 mg/kg PO q12h','ยาปฏิชีวนะ'],
+  ['Azithromycin','5–10 mg/kg PO q24h 3–5 วัน','ยาปฏิชีวนะ'],
+  ['Chloramphenicol','สุนัข: 50 mg/kg PO q8h (ห้ามในอาหาร)','ยาปฏิชีวนะ'],
+  ['Meloxicam','สุนัข: 0.1 mg/kg PO/SC q24h | แมว: 0.05 mg/kg q24h','NSAID'],
+  ['Carprofen','สุนัข: 4.4 mg/kg PO q24h หรือ 2.2 q12h','NSAID'],
+  ['Robenacoxib (Onsior)','สุนัข: 1–2 mg/kg PO q24h | แมว: 1 mg/kg q24h ≤6 วัน','NSAID'],
+  ['Grapiprant (Galliprant)','สุนัข: 2 mg/kg PO q24h','NSAID'],
+  ['Ketoprofen','1–2 mg/kg PO/SC q24h ≤5 วัน','NSAID'],
+  ['Dexamethasone','0.1–0.5 mg/kg IV/IM/PO q12–24h','Corticosteroid'],
+  ['Prednisolone','สุนัข: 1–2 mg/kg PO q24h | แมว: 1–4 mg/kg q24h','Corticosteroid'],
+  ['Methylprednisolone sodium succinate','Shock: 30 mg/kg IV slow','Corticosteroid'],
+  ['Tramadol','สุนัข: 2–5 mg/kg PO q8–12h | แมว: 1–2 mg/kg q12h','Opioid-like'],
+  ['Buprenorphine','0.01–0.02 mg/kg IV/IM/Buccal q6–12h','Opioid'],
+  ['Methadone','0.1–0.3 mg/kg IV/IM q4–8h','Opioid'],
+  ['Fentanyl CRI','Induction: 2–5 mcg/kg IV | CRI: 0.005–0.04 mcg/kg/min','Opioid'],
+  ['Gabapentin','สุนัข: 5–10 mg/kg PO q8–12h | แมว: 5–10 mg/kg q12h','Analgesic'],
+  ['Maropitant (Cerenia)','สุนัข/แมว: 1 mg/kg SC q24h หรือ 2 mg/kg PO','Antiemetic'],
+  ['Omeprazole','0.5–1 mg/kg PO q24h','PPI'],
+  ['Famotidine','0.5–1 mg/kg PO/IV q12–24h','H2-blocker'],
+  ['Sucralfate','สุนัข: 0.5–1 g PO q8h | แมว: 0.25 g q8h','Gastroprotectant'],
+  ['Ondansetron','0.1–0.3 mg/kg IV/PO q12h','Antiemetic'],
+  ['Metoclopramide','0.2–0.5 mg/kg PO/IM/SC q8h','Prokinetic'],
+  ['Cisapride','0.5 mg/kg PO q8–12h','Prokinetic'],
+  ['Lactulose','สุนัข: 1–5 mL/5 kg PO q8h | แมว: 1–3 mL q8h','Laxative'],
+  ['Loperamide','สุนัข: 0.1 mg/kg PO q8h (ห้ามใน Collie)','Antidiarrheal'],
+  ['Kaolin-Pectin','1–2 mL/kg PO q4–6h','Antidiarrheal'],
+  ['Ursodiol (UDCA)','10–15 mg/kg PO q24h','Hepatoprotective'],
+  ['SAMe','สุนัข: 20 mg/kg PO q24h | แมว: 90–200 mg/cat q24h','Hepatoprotective'],
+  ['Furosemide','1–4 mg/kg IV/IM/PO q8–12h','Diuretic'],
+  ['Spironolactone','1–2 mg/kg PO q12h','Diuretic'],
+  ['Pimobendan','0.25–0.3 mg/kg PO q12h ก่อนอาหาร','Cardiac'],
+  ['Enalapril','0.5 mg/kg PO q12–24h','ACE inhibitor'],
+  ['Benazepril','0.25–0.5 mg/kg PO q24h','ACE inhibitor'],
+  ['Amlodipine','สุนัข: 0.1–0.25 mg/kg PO q24h | แมว: 0.625 mg/cat q24h','CCB'],
+  ['Diltiazem','สุนัข: 0.5–2 mg/kg PO q8h | แมว: 7.5 mg/cat q8h','CCB'],
+  ['Digoxin','สุนัข: 0.005–0.01 mg/kg PO q12h ติดตามระดับยา','Cardiac glycoside'],
+  ['Atenolol','สุนัข: 0.25–1 mg/kg PO q12h | แมว: 6.25–12.5 mg/cat q12h','Beta-blocker'],
+  ['Lidocaine IV','2 mg/kg IV bolus slow | CRI: 40–80 mcg/kg/min','Antiarrhythmic'],
+  ['Aminophylline','10 mg/kg PO/IV q8h สุนัข | 5 mg/kg q12h แมว','Bronchodilator'],
+  ['Terbutaline','0.01 mg/kg SC q4h','Bronchodilator'],
+  ['Dextromethorphan','1–2 mg/kg PO q8h สุนัข (ยาแก้ไอ)','Antitussive'],
+  ['N-Acetylcysteine','70 mg/kg IV q6h (antidote) หรือ nebulize','Mucolytic/Antidote'],
+  ['Phenobarbital','สุนัข: 2–5 mg/kg PO q12h | แมว: 1.5–2.5 mg/kg q12h','Anticonvulsant'],
+  ['Potassium Bromide','สุนัข: 30–40 mg/kg PO q24h (add-on)','Anticonvulsant'],
+  ['Levetiracetam','20 mg/kg PO/IV q8h','Anticonvulsant'],
+  ['Zonisamide','สุนัข: 3–7 mg/kg PO q12h | แมว: 5–10 mg/kg q24h','Anticonvulsant'],
+  ['Diazepam IV','0.5 mg/kg IV slow (seizure ฉุกเฉิน)','Benzodiazepine'],
+  ['Midazolam','0.2–0.4 mg/kg IM/IN (sedation/seizure)','Benzodiazepine'],
+  ['Acepromazine','0.01–0.05 mg/kg IM/SC (pre-med)','Phenothiazine'],
+  ['Trazodone','สุนัข: 3–7 mg/kg PO q12h (anxiety)','Anxiolytic'],
+  ['Ketamine','IM: 5–10 mg/kg | IV induction: 5 mg/kg','Dissociative'],
+  ['Propofol','Induction: 4–6 mg/kg IV slow','TIVA'],
+  ['Alfaxalone','สุนัข: 2 mg/kg IV | แมว: 2–3 mg/kg IV','TIVA'],
+  ['Xylazine','สุนัข: 0.5–1 mg/kg IM | วัว: 0.05–0.1 mg/kg IM','Alpha-2 agonist'],
+  ['Medetomidine','สุนัข: 10–40 mcg/kg IM | แมว: 50–80 mcg/kg IM','Alpha-2 agonist'],
+  ['Atipamezole','5× medetomidine dose IM (reversal)','Alpha-2 antagonist'],
+  ['Butorphanol','0.2–0.4 mg/kg IV/IM q4–6h','Opioid partial agonist'],
+  ['Naloxone','0.01–0.04 mg/kg IV/IM (opioid reversal)','Opioid antagonist'],
+  ['Atropine','0.02–0.04 mg/kg IV/IM (pre-med/bradycardia)','Anticholinergic'],
+  ['Methimazole','แมว: 1.25–2.5 mg/cat PO q12h','Antithyroid'],
+  ['Levothyroxine','สุนัข: 0.02 mg/kg PO q12h','Thyroid hormone'],
+  ['Trilostane','สุนัข: 2–10 mg/kg PO q24h','Adrenal blocker'],
+  ['Fludrocortisone',"สุนัข: 0.01–0.02 mg/kg PO q24h (Addison's)",'Mineralocorticoid'],
+  ['Fenbendazole','50 mg/kg PO q24h × 3–5 วัน','Anthelmintic'],
+  ['Praziquantel','5 mg/kg PO ครั้งเดียว','Anthelmintic'],
+  ['Pyrantel pamoate','5–10 mg/kg PO ครั้งเดียว','Anthelmintic'],
+  ['Ivermectin','สุนัข: 0.006 mg/kg PO (HWx) ห้ามใน MDR1','Antiparasitic'],
+  ['Selamectin','Revolution: 6–12 mg/kg Topical q30 วัน','Antiparasitic'],
+  ['Milbemycin oxime','0.5–1 mg/kg PO q30 วัน','Antiparasitic'],
+  ['Itraconazole','สุนัข: 5 mg/kg PO q24h | แมว: 5–10 mg/kg q24h','Antifungal'],
+  ['Fluconazole','สุนัข/แมว: 2.5–5 mg/kg PO q12h','Antifungal'],
+  ['Terbinafine','สุนัข: 5–10 mg/kg PO q24h','Antifungal'],
+  ['Cyclosporine (Atopica)','สุนัข: 5 mg/kg PO q24h | แมว: 7 mg/kg q24h','Immunosuppressive'],
+  ['Azathioprine','สุนัข: 2 mg/kg PO q24h → q48h (ห้ามในแมว)','Immunosuppressive'],
+  ['Oclacitinib (Apoquel)','สุนัข: 0.4–0.6 mg/kg PO q12h × 14 วัน → q24h','JAK inhibitor'],
+  ["Lactated Ringer's (LRS)",'สุนัข/แมว: Shock 90/60 mL/kg IV | Maint 40–60 mL/kg/day','Crystalloid'],
+  ['0.9% NaCl (NSS)','Shock 90/60 mL/kg IV | ระวัง Hyperchloremia','Crystalloid'],
+  ['Potassium Chloride (KCl)','เสริม K+ ใน Fluids ≤0.5 mEq/kg/hr IV','Electrolyte'],
+  ['Calcium gluconate 10%','สุนัข/แมว: 0.5–1.5 mL/kg IV slow (Hypocalcemia)','Electrolyte'],
+  ['Dextrose 50%','1 mL/kg diluted IV (Hypoglycemia)','Glucose'],
+  ['Mannitol 20%','0.5–1 g/kg IV over 20 min (ICP)','Osmotic diuretic'],
+  ['Vitamin K1','2.5–5 mg/kg PO/SC q12h (anticoagulant antidote)','Vitamin'],
+  ['Diphenhydramine','1–2 mg/kg IM/IV q8h (allergy)','Antihistamine'],
+  ['Epinephrine 1:1000','0.01 mg/kg IV/IM (anaphylaxis/CPR)','Emergency'],
+  ['Dopamine','5–10 mcg/kg/min CRI (shock)','Vasopressor'],
+  ['Dobutamine','2–10 mcg/kg/min CRI (heart failure)','Inotrope'],
+  ['Vasopressin','0.4–4 mU/kg/min CRI (vasodilatory shock)','Vasopressor'],
+  ['Heparin sodium','100–200 IU/kg SC q8h','Anticoagulant'],
+  ['Clopidogrel (Plavix)','แมว: 18.75 mg/cat PO q24h','Antiplatelet'],
+];
+
+function renderDrugRows(list){
+  if(!list.length) return '<div style="padding:20px;text-align:center;color:var(--slate-l);font-size:13px;">ไม่พบยา</div>';
+  const groups={};
+  list.forEach(d=>{if(!groups[d[2]])groups[d[2]]=[];groups[d[2]].push(d);});
+  return Object.entries(groups).map(([g,drugs])=>
+    `<div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;border-top:1px solid var(--border);margin-top:4px;">${g}</div>`+
+    drugs.map(d=>`<div style="padding:7px 0;border-bottom:1px solid var(--bg);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+        <span style="font-weight:700;font-size:13px;color:var(--slate);">${d[0]}</span>
+      </div>
+      <div style="font-size:11px;color:var(--slate-m);margin-top:2px;">${d[1]}</div>
+    </div>`).join('')
+  ).join('');
+}
+function filterDrugs(cat,btn){
+  document.querySelectorAll('#drugFilterWrap button').forEach(b=>{b.style.background='white';b.style.color='var(--slate)';b.style.borderColor='var(--border)';});
+  btn.style.background='var(--teal)';btn.style.color='white';btn.style.borderColor='var(--teal)';
+  const q=document.querySelector('#drugList').parentElement.querySelector('input').value||'';
+  let list=cat==='ทั้งหมด'?ALL_DRUGS:ALL_DRUGS.filter(d=>d[2]===cat||d[2].includes(cat));
+  if(q)list=list.filter(d=>d[0].toLowerCase().includes(q.toLowerCase())||d[1].toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('drugList').innerHTML=renderDrugRows(list);
+}
+function searchDrugs(q){
+  const activeBtn=Array.from(document.querySelectorAll('#drugFilterWrap button')).find(b=>b.style.background.includes('rgb(13'));
+  const cat=activeBtn?activeBtn.textContent:'ทั้งหมด';
+  let list=cat==='ทั้งหมด'?ALL_DRUGS:ALL_DRUGS.filter(d=>d[2]===cat||d[2].includes(cat));
+  if(q)list=list.filter(d=>d[0].toLowerCase().includes(q.toLowerCase())||d[1].toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('drugList').innerHTML=renderDrugRows(list);
+}
+
 </script>
 </body>
 </html>
