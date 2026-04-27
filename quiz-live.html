@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🏆 VetQuiz Live — แข่งแบบ Real-time</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0d9488;--teal-d:#0f766e;--teal-l:#ccfbf1;--teal-50:#f0fdfa;
+  --rose:#e11d48;--rose-l:#ffe4e6;
+  --amber:#d97706;--amber-l:#fef3c7;
+  --violet:#7c3aed;--violet-l:#ede9fe;
+  --slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;
+  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh;overflow-x:hidden;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;}
+.screen.on{display:flex;flex-direction:column;}
+
+/* ── HOME ── */
+#s-home{background:linear-gradient(160deg,#0d9488 0%,#0f766e 50%,#134e4a 100%);align-items:center;justify-content:center;padding:24px;}
+.home-card{background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);border-radius:28px;padding:32px 24px;width:100%;max-width:400px;text-align:center;}
+.home-logo{font-size:64px;margin-bottom:8px;}
+.home-title{font-family:'Prompt',sans-serif;font-size:26px;font-weight:800;color:white;margin-bottom:4px;}
+.home-sub{font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:28px;}
+.big-btn{width:100%;padding:15px;border:none;border-radius:16px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.18s;margin-bottom:10px;}
+.big-btn:active{transform:scale(0.97);}
+.btn-host{background:white;color:var(--teal-d);}
+.btn-join{background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.4);color:white;}
+.home-divider{color:rgba(255,255,255,0.4);font-size:12px;margin:4px 0 14px;}
+.text-input{width:100%;padding:13px 16px;border:2px solid rgba(255,255,255,0.3);border-radius:14px;background:rgba(255,255,255,0.12);color:white;font-family:'Sarabun',sans-serif;font-size:16px;text-align:center;letter-spacing:6px;font-weight:700;outline:none;margin-bottom:10px;}
+.text-input::placeholder{color:rgba(255,255,255,0.4);letter-spacing:2px;}
+.text-input:focus{border-color:rgba(255,255,255,0.7);}
+.name-input{letter-spacing:0;text-align:left;}
+.home-err{font-size:12px;color:#fca5a5;min-height:20px;margin-bottom:4px;}
+
+/* ── LOBBY ── */
+#s-lobby{background:linear-gradient(160deg,#0d9488,#134e4a);}
+.lobby-header{padding:20px 20px 0;display:flex;align-items:center;gap:12px;}
+.lb-back{background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;}
+.lb-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;color:white;}
+.lobby-body{flex:1;padding:20px;overflow-y:auto;}
+.room-code-box{background:rgba(255,255,255,0.15);border-radius:20px;padding:20px;text-align:center;margin-bottom:20px;}
+.rcode-label{font-size:12px;color:rgba(255,255,255,0.65);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.rcode-val{font-family:'Prompt',sans-serif;font-size:44px;font-weight:800;color:white;letter-spacing:12px;}
+.rcode-hint{font-size:12px;color:rgba(255,255,255,0.5);margin-top:6px;}
+.players-box{background:rgba(255,255,255,0.1);border-radius:16px;padding:16px;margin-bottom:20px;}
+.players-label{font-size:12px;color:rgba(255,255,255,0.6);font-weight:700;text-transform:uppercase;margin-bottom:12px;}
+.player-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.08);border-radius:10px;margin-bottom:6px;}
+.player-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;}
+.player-name{font-size:13px;font-weight:600;color:white;}
+.player-host-badge{font-size:10px;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);padding:2px 7px;border-radius:100px;margin-left:auto;}
+.settings-box{background:rgba(255,255,255,0.1);border-radius:16px;padding:16px;margin-bottom:20px;}
+.settings-label{font-size:12px;color:rgba(255,255,255,0.6);font-weight:700;text-transform:uppercase;margin-bottom:12px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.setting-name{font-size:13px;color:white;}
+.setting-select{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:white;padding:6px 10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;outline:none;}
+.start-btn{width:100%;padding:16px;background:white;color:var(--teal-d);border:none;border-radius:16px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all 0.2s;}
+.start-btn:disabled{opacity:0.4;cursor:default;}
+.waiting-text{text-align:center;font-size:13px;color:rgba(255,255,255,0.6);padding:12px;}
+
+/* ── COUNTDOWN ── */
+#s-countdown{background:linear-gradient(160deg,#0d9488,#134e4a);align-items:center;justify-content:center;}
+.countdown-num{font-family:'Prompt',sans-serif;font-size:120px;font-weight:800;color:white;animation:pop 0.5s ease;}
+@keyframes pop{from{transform:scale(1.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ── QUESTION ── */
+#s-question{background:var(--bg);}
+.q-header{background:linear-gradient(135deg,var(--teal),var(--teal-d));padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.q-progress{font-size:12px;color:rgba(255,255,255,0.8);}
+.q-timer-wrap{display:flex;align-items:center;gap:8px;}
+.q-timer{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:white;min-width:28px;text-align:center;}
+.timer-ring{width:40px;height:40px;position:relative;}
+.timer-svg{transform:rotate(-90deg);}
+.timer-circle{stroke:rgba(255,255,255,0.3);fill:none;stroke-width:4;}
+.timer-arc{stroke:white;fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear;}
+.q-score-pill{font-size:12px;background:rgba(255,255,255,0.2);color:white;padding:4px 12px;border-radius:100px;font-weight:700;}
+.q-timer-bar{height:5px;background:rgba(255,255,255,0.2);}
+.q-timer-fill{height:5px;background:white;transition:width 1s linear;transform-origin:left;}
+.q-body{padding:16px;flex:1;}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.q-cat{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;background:#f0fdfa;color:var(--teal-d);}
+.q-lv{padding:3px 8px;border-radius:100px;font-size:10px;font-weight:700;}
+.lv-easy{background:#dcfce7;color:#166534;}
+.lv-medium{background:#fef9c3;color:#92400e;}
+.lv-hard{background:#fee2e2;color:#991b1b;}
+.q-text{font-size:16px;font-weight:600;line-height:1.65;margin-bottom:18px;color:var(--slate);}
+.q-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.choice{padding:13px 12px;border:2px solid var(--border);border-radius:14px;background:white;font-family:'Sarabun',sans-serif;font-size:13px;text-align:center;cursor:pointer;line-height:1.4;transition:all 0.15s;font-weight:600;}
+.choice:active{transform:scale(0.96);}
+.choice.selected{border-color:var(--teal);background:var(--teal-50);}
+.choice.correct{background:#dcfce7;border-color:#16a34a;color:#166534;}
+.choice.wrong{background:#fee2e2;border-color:#dc2626;color:#991b1b;}
+.choice.reveal-correct{background:#dcfce7;border-color:#16a34a;color:#166534;}
+.choice:disabled,.choice[disabled]{cursor:default;}
+.q-answered-msg{text-align:center;margin-top:14px;font-size:13px;font-weight:700;padding:10px;border-radius:10px;}
+.ans-ok{background:#dcfce7;color:#166534;}
+.ans-ng{background:#fee2e2;color:#991b1b;}
+
+/* ── LEADERBOARD (mid-game) ── */
+#s-leaderboard{background:var(--bg);}
+.lb-q-header{background:linear-gradient(135deg,var(--teal),var(--teal-d));padding:16px;text-align:center;}
+.lb-q-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:white;}
+.lb-q-sub{font-size:12px;color:rgba(255,255,255,0.75);}
+.lb-list{padding:16px;}
+.lb-row{display:flex;align-items:center;gap:12px;background:white;border-radius:14px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);}
+.lb-rank{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;min-width:28px;text-align:center;}
+.lb-rank.r1{color:#f59e0b;}
+.lb-rank.r2{color:#94a3b8;}
+.lb-rank.r3{color:#cd7f32;}
+.lb-info{flex:1;}
+.lb-name{font-size:14px;font-weight:700;}
+.lb-pts{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:var(--teal);}
+.lb-change{font-size:11px;font-weight:700;color:#16a34a;}
+.lb-next-btn{margin:0 16px 16px;width:calc(100%-32px);padding:14px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:14px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+
+/* ── FINAL ── */
+#s-final{background:linear-gradient(160deg,#0d9488,#134e4a);}
+.final-header{padding:24px 20px 16px;text-align:center;}
+.final-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:white;margin-bottom:4px;}
+.final-sub{font-size:13px;color:rgba(255,255,255,0.7);}
+.podium-wrap{padding:0 16px 20px;display:flex;align-items:flex-end;justify-content:center;gap:10px;min-height:140px;}
+.pod-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}
+.pod-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;margin-bottom:6px;border:3px solid rgba(255,255,255,0.4);}
+.pod-name{font-size:11px;color:rgba(255,255,255,0.8);font-weight:700;margin-bottom:4px;text-align:center;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pod-pts{font-family:'Prompt',sans-serif;font-size:14px;font-weight:800;color:white;margin-bottom:4px;}
+.pod-base{border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:rgba(255,255,255,0.8);width:72px;}
+.pod-1{background:linear-gradient(135deg,#f59e0b,#d97706);height:90px;}
+.pod-2{background:linear-gradient(135deg,#94a3b8,#64748b);height:70px;}
+.pod-3{background:linear-gradient(135deg,#cd7f32,#a16207);height:55px;}
+.final-list{background:rgba(255,255,255,0.1);margin:0 16px;border-radius:16px;overflow:hidden;}
+.final-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.final-row:last-child{border-bottom:none;}
+.final-rank{font-family:'Prompt',sans-serif;font-size:14px;font-weight:800;color:rgba(255,255,255,0.5);min-width:20px;}
+.final-name{flex:1;font-size:13px;font-weight:600;color:white;}
+.final-pts{font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:white;}
+.final-correct{font-size:11px;color:rgba(255,255,255,0.55);}
+.final-btns{padding:20px 16px;}
+.final-btn{width:100%;padding:14px;border:none;border-radius:14px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.fb-again{background:white;color:var(--teal-d);}
+.fb-home{background:rgba(255,255,255,0.15);color:white;border:2px solid rgba(255,255,255,0.3);}
+
+/* ── WAITING OVERLAY ── */
+.wait-overlay{position:fixed;inset:0;background:rgba(13,148,136,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;display:none;}
+.wait-overlay.on{display:flex;}
+.wait-spin{width:48px;height:48px;border:4px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wait-text{font-size:14px;color:white;font-weight:600;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.on{opacity:1;}
+
+/* ── ANSWER WAIT (player waiting for reveal) ── */
+.answer-wait-bar{background:rgba(255,255,255,0.05);border-radius:12px;padding:12px;margin-top:12px;text-align:center;}
+.aw-label{font-size:11px;color:var(--slate-l);font-weight:700;text-transform:uppercase;margin-bottom:8px;}
+.aw-players{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.aw-dot{width:10px;height:10px;border-radius:50%;background:var(--border);}
+.aw-dot.done{background:#16a34a;}
+</style>
+</head>
+<body>
+
+<!-- ══ HOME ══ -->
+<div id="s-home" class="screen on">
+  <div class="home-card">
+    <div class="home-logo">🐾</div>
+    <div class="home-title">VetQuiz Live</div>
+    <div class="home-sub">แข่งแบบ Real-time หลายคนพร้อมกัน</div>
+    <input class="text-input name-input" id="homeNameInput" placeholder="ชื่อผู้เล่นของคุณ" maxlength="20">
+    <div class="home-err" id="homeErr"></div>
+    <button class="big-btn btn-host" onclick="goHost()">🎮 สร้างห้อง (Host)</button>
+    <div class="home-divider">— หรือ —</div>
+    <input class="text-input" id="homeCodeInput" placeholder="รหัสห้อง" maxlength="4" oninput="this.value=this.value.toUpperCase()">
+    <button class="big-btn btn-join" onclick="goJoin()">🚀 เข้าร่วมห้อง</button>
+  </div>
+</div>
+
+<!-- ══ LOBBY ══ -->
+<div id="s-lobby" class="screen">
+  <div class="lobby-header">
+    <button class="lb-back" onclick="leaveLobby()">←</button>
+    <div class="lb-title" id="lobbyTitle">ห้อง</div>
+  </div>
+  <div class="lobby-body">
+    <div class="room-code-box" id="roomCodeBox" style="display:none;">
+      <div class="rcode-label">รหัสห้อง — แชร์ให้เพื่อน</div>
+      <div class="rcode-val" id="rcodeVal"></div>
+      <div class="rcode-hint">ผู้เล่นกรอกรหัสนี้เพื่อเข้าร่วม</div>
+    </div>
+    <div class="players-box">
+      <div class="players-label">ผู้เล่น <span id="playerCount">0</span> คน</div>
+      <div id="playerList"></div>
+    </div>
+    <div class="settings-box" id="settingsBox" style="display:none;">
+      <div class="settings-label">⚙️ ตั้งค่าเกม</div>
+      <div class="setting-row">
+        <span class="setting-name">จำนวนคำถาม</span>
+        <select class="setting-select" id="settingQ">
+          <option value="5">5 ข้อ</option>
+          <option value="10" selected>10 ข้อ</option>
+          <option value="15">15 ข้อ</option>
+          <option value="20">20 ข้อ</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-name">เวลาต่อข้อ</span>
+        <select class="setting-select" id="settingT">
+          <option value="10">10 วินาที</option>
+          <option value="15" selected>15 วินาที</option>
+          <option value="20">20 วินาที</option>
+          <option value="30">30 วินาที</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-name">หมวดหมู่</span>
+        <select class="setting-select" id="settingCat">
+          <option value="all">ทุกหมวด</option>
+          <option value="กายวิภาค">กายวิภาค</option>
+          <option value="สรีรวิทยา">สรีรวิทยา</option>
+          <option value="เภสัชวิทยา">เภสัชวิทยา</option>
+          <option value="จุลชีววิทยา">จุลชีววิทยา</option>
+          <option value="ปรสิตวิทยา">ปรสิตวิทยา</option>
+          <option value="พยาธิวิทยา">พยาธิวิทยา</option>
+          <option value="อายุรกรรม">อายุรกรรม</option>
+          <option value="ศัลยกรรม">ศัลยกรรม</option>
+          <option value="สัตว์ใหญ่">สัตว์ใหญ่</option>
+          <option value="Exotic">Exotic</option>
+          <option value="คลินิกรวม">คลินิกรวม</option>
+        </select>
+      </div>
+    </div>
+    <button class="start-btn" id="startBtn" onclick="startGame()" style="display:none;" disabled>
+      🚀 เริ่มเกม
+    </button>
+    <div class="waiting-text" id="waitingText" style="display:none;">⏳ รอ Host เริ่มเกม...</div>
+  </div>
+</div>
+
+<!-- ══ COUNTDOWN ══ -->
+<div id="s-countdown" class="screen">
+  <div class="countdown-num" id="cdNum">3</div>
+</div>
+
+<!-- ══ QUESTION ══ -->
+<div id="s-question" class="screen">
+  <div class="q-header">
+    <div>
+      <div class="q-progress" id="qProgress">ข้อ 1 / 10</div>
+      <div class="q-score-pill" id="myScore">0 คะแนน</div>
+    </div>
+    <div class="q-timer-wrap">
+      <svg class="timer-ring" viewBox="0 0 40 40">
+        <circle class="timer-circle" cx="20" cy="20" r="16"/>
+        <circle class="timer-arc" id="timerArc" cx="20" cy="20" r="16" stroke-dasharray="100" stroke-dashoffset="0"/>
+      </svg>
+      <div class="q-timer" id="qTimerNum">15</div>
+    </div>
+  </div>
+  <div class="q-timer-bar"><div id="qTimerFill" style="height:5px;background:var(--teal);width:100%;transition:width 1s linear;"></div></div>
+  <div class="q-body" style="overflow-y:auto;">
+    <div class="q-meta">
+      <span class="q-cat" id="qCat"></span>
+      <span class="q-lv" id="qLv"></span>
+    </div>
+    <div class="q-text" id="qText"></div>
+    <div class="q-choices" id="qChoices"></div>
+    <div class="q-answered-msg" id="qAnsMsg" style="display:none;"></div>
+    <div class="answer-wait-bar" id="answerWaitBar" style="display:none;">
+      <div class="aw-label">รอผู้เล่นคนอื่น...</div>
+      <div class="aw-players" id="awPlayers"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEADERBOARD (mid) ══ -->
+<div id="s-leaderboard" class="screen">
+  <div class="lb-q-header">
+    <div class="lb-q-title" id="lbQTitle">สรุปคะแนน</div>
+    <div class="lb-q-sub" id="lbQSub"></div>
+  </div>
+  <div class="lb-list" id="lbList"></div>
+  <button class="lb-next-btn" id="lbNextBtn" onclick="hostNextQuestion()" style="display:none;">ถัดไป →</button>
+  <div class="waiting-text" id="lbWaitText">⏳ รอ Host...</div>
+</div>
+
+<!-- ══ FINAL ══ -->
+<div id="s-final" class="screen">
+  <div class="final-header">
+    <div class="final-title">🏆 ผลการแข่งขัน</div>
+    <div class="final-sub" id="finalSub"></div>
+  </div>
+  <div class="podium-wrap" id="podiumWrap"></div>
+  <div class="final-list" id="finalList"></div>
+  <div class="final-btns">
+    <button class="final-btn fb-again" onclick="playAgain()">🔄 เล่นอีกรอบ</button>
+    <button class="final-btn fb-home" onclick="goHome()">🏠 กลับหน้าหลัก</button>
+  </div>
+</div>
+
+<!-- ══ WAIT OVERLAY ══ -->
+<div class="wait-overlay" id="waitOverlay">
+  <div class="wait-spin"></div>
+  <div class="wait-text" id="waitText">กำลังเชื่อมต่อ...</div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SUPABASE ──
+const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const{createClient}=window.supabase;
+const sb=createClient(SB_URL,SB_KEY);
+
+// ── QUESTIONS (subset 200 for faster load) ──
+const RAW_Q=[
+{"q":"กระดูก Cervical ของสุนัขมีกี่ชิ้น?","a":"7","w":["5","9","12"],"animal":"🦴","lv":"easy","cat":"กายวิภาค"},
+{"q":"หัวใจห้องใดมีผนังหนาที่สุด?","a":"Left ventricle","w":["Right ventricle","Left atrium","Right atrium"],"animal":"❤️","lv":"easy","cat":"กายวิภาค"},
+{"q":"Rumen คือส่วนใดของกระเพาะวัว?","a":"กระเพาะส่วนแรก ผ้าขี้ริ้ว","w":["ส่วนสอง","ส่วนสาม","ส่วนสี่"],"animal":"🐄","lv":"easy","cat":"กายวิภาค"},
+{"q":"กระเพาะวัวมีกี่ห้อง?","a":"4","w":["2","3","5"],"animal":"🐄","lv":"easy","cat":"กายวิภาค"},
+{"q":"Alveoli คืออะไร?","a":"ถุงลมขนาดเล็กในปอดสำหรับแลกเปลี่ยนก๊าซ","w":["หลอดลมใหญ่","หลอดลมเล็ก","เยื่อหุ้มปอด"],"animal":"🫁","lv":"easy","cat":"กายวิภาค"},
+{"q":"Femur คือกระดูกส่วนใด?","a":"กระดูกต้นขา","w":["กระดูกแข้ง","กระดูกสะโพก","กระดูกน่อง"],"animal":"🦵","lv":"easy","cat":"กายวิภาค"},
+{"q":"Patella คือกระดูกอะไร?","a":"ลูกสะบ้าเข่า","w":["ข้อมือ","ข้อศอก","ข้อเท้า"],"animal":"🦵","lv":"easy","cat":"กายวิภาค"},
+{"q":"Sclera คือส่วนใดของตา?","a":"ส่วนขาวของลูกตา","w":["ส่วนดำ","เลนส์","เรตินา"],"animal":"👁️","lv":"easy","cat":"กายวิภาค"},
+{"q":"Spleen ทำหน้าที่อะไร?","a":"กรองเลือด กำจัด RBC เก่า","w":["สร้างน้ำดี","ย่อยโปรตีน","ผลิตปัสสาวะ"],"animal":"🫘","lv":"medium","cat":"กายวิภาค"},
+{"q":"Adrenal gland อยู่ติดกับอวัยวะใด?","a":"ไต","w":["ตับ","ม้าม","ปอด"],"animal":"🧬","lv":"easy","cat":"กายวิภาค"},
+{"q":"อุณหภูมิร่างกายปกติของสุนัข?","a":"38.0–39.2 °C","w":["36.0–37.0 °C","40.0–41.5 °C","35.0–36.5 °C"],"animal":"🌡️","lv":"easy","cat":"สรีรวิทยา"},
+{"q":"อุณหภูมิร่างกายปกติของแมว?","a":"38.0–39.2 °C","w":["36.5–37.5 °C","40.5–42.0 °C","34.0–35.5 °C"],"animal":"🌡️","lv":"easy","cat":"สรีรวิทยา"},
+{"q":"อุณหภูมิปกติของวัว?","a":"38.5–39.5 °C","w":["37.0–37.5 °C","41.0–42.0 °C","36.0–37.0 °C"],"animal":"🌡️","lv":"easy","cat":"สรีรวิทยา"},
+{"q":"PCV ปกติของสุนัข?","a":"37–55%","w":["10–15%","70–85%","20–25%"],"animal":"🩸","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"เม็ดเลือดขาวชนิดใดมากที่สุดในสุนัขปกติ?","a":"Neutrophil","w":["Lymphocyte","Eosinophil","Basophil"],"animal":"🩸","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"ฮอร์โมนใดกระตุ้นให้ไตดูดน้ำกลับ?","a":"ADH (Vasopressin)","w":["Insulin","Glucagon","Cortisol"],"animal":"🧬","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"Erythropoietin สร้างจาก?","a":"ไต","w":["ตับ","ไขกระดูก","ม้าม"],"animal":"🫘","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"Sympathetic NS กระตุ้น?","a":"Fight or flight","w":["Rest and digest","การนอนหลับ","การย่อยอาหาร"],"animal":"🧠","lv":"easy","cat":"สรีรวิทยา"},
+{"q":"Beta-1 receptor อยู่ที่ไหนเป็นหลัก?","a":"หัวใจ","w":["ปอด","หลอดเลือด","กระเพาะ"],"animal":"❤️","lv":"hard","cat":"สรีรวิทยา"},
+{"q":"Insulin สร้างจาก cell ชนิดใด?","a":"Beta cells ของ Pancreatic islets","w":["Alpha cells","Delta cells","Acinar cells"],"animal":"💉","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"Amoxicillin จัดในกลุ่มยาใด?","a":"Beta-lactam antibiotic","w":["Aminoglycoside","Fluoroquinolone","Macrolide"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"Metronidazole ใช้รักษาการติดเชื้อชนิดใด?","a":"Anaerobic bacteria และ Protozoa","w":["Gram-positive bacteria","Virus","Fungus"],"animal":"💊","lv":"medium","cat":"เภสัชวิทยา"},
+{"q":"ยาใดห้ามใช้ในแมวเพราะพิษสูงมาก?","a":"Acetaminophen (Paracetamol)","w":["Amoxicillin","Metronidazole","Fenbendazole"],"animal":"🐈","lv":"hard","cat":"เภสัชวิทยา"},
+{"q":"Furosemide ออกฤทธิ์อย่างไร?","a":"ขับปัสสาวะ (Diuretic)","w":["ลดความดัน","ฆ่าแบคทีเรีย","กดภูมิ"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"Praziquantel ใช้รักษาพยาธิชนิดใด?","a":"Tapeworm พยาธิตัวแบน","w":["Roundworm","Hookworm","Heartworm"],"animal":"🐛","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"Antidote ของ Opioid overdose คือ?","a":"Naloxone","w":["Atropine","Flumazenil","Vitamin K"],"animal":"💊","lv":"hard","cat":"เภสัชวิทยา"},
+{"q":"Meloxicam จัดในกลุ่มใด?","a":"NSAID","w":["Opioid","Corticosteroid","Antibiotic"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"Ivermectin ห้ามใช้ในสุนัขสายพันธุ์ใด?","a":"Collie และสายพันธุ์ที่มี MDR1 mutation","w":["German Shepherd","Labrador","Poodle"],"animal":"🐕","lv":"hard","cat":"เภสัชวิทยา"},
+{"q":"Phenobarbital ใช้รักษาอาการใด?","a":"ชัก (Seizure)","w":["ติดเชื้อ","ปวด","อักเสบ"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"Half-life ของยาหมายถึง?","a":"เวลาที่ความเข้มข้นยาลดลงครึ่งหนึ่ง","w":["ขนาดยารักษา","ช่วงเวลาให้ยา","ความแรงยา"],"animal":"⏱️","lv":"medium","cat":"เภสัชวิทยา"},
+{"q":"Rabies virus จัดใน Family ใด?","a":"Rhabdoviridae","w":["Parvoviridae","Herpesviridae","Adenoviridae"],"animal":"🦠","lv":"medium","cat":"จุลชีววิทยา"},
+{"q":"Canine Parvovirus มีลักษณะอย่างไร?","a":"DNA virus ทนทาน ไม่มี Envelope","w":["RNA virus","มี Envelope","ทนความร้อนไม่ได้"],"animal":"🐕","lv":"hard","cat":"จุลชีววิทยา"},
+{"q":"Dermatophyte ทำให้เกิดโรคอะไร?","a":"Ringworm (กลาก)","w":["Mange","Pyoderma","Otitis"],"animal":"🍄","lv":"easy","cat":"จุลชีววิทยา"},
+{"q":"Leptospirosis เกิดจากเชื้ออะไร?","a":"Leptospira spp. (Spirochete)","w":["Brucella","Salmonella","E.coli"],"animal":"🦠","lv":"medium","cat":"จุลชีววิทยา"},
+{"q":"Toxoplasma gondii ใช้สัตว์ใดเป็น Definitive host?","a":"แมว","w":["สุนัข","วัว","หนู"],"animal":"🐈","lv":"hard","cat":"จุลชีววิทยา"},
+{"q":"Gram staining แบ่งแบคทีเรียออกเป็นกี่กลุ่ม?","a":"2 กลุ่ม (Gram+ และ Gram-)","w":["3","4","ไม่สามารถแบ่ง"],"animal":"🔬","lv":"easy","cat":"จุลชีววิทยา"},
+{"q":"FIV คล้ายกับไวรัสใดในคน?","a":"HIV","w":["Hepatitis B","Rabies","Influenza"],"animal":"🐈","lv":"medium","cat":"จุลชีววิทยา"},
+{"q":"FIP เกิดจากอะไร?","a":"Feline Coronavirus mutation","w":["Parvovirus","Herpesvirus","Calicivirus"],"animal":"🐈","lv":"hard","cat":"จุลชีววิทยา"},
+{"q":"Newcastle Disease เกิดจากอะไร?","a":"Paramyxovirus","w":["Orthomyxovirus","Retrovirus","Reovirus"],"animal":"🐔","lv":"medium","cat":"จุลชีววิทยา"},
+{"q":"BSE เกิดจากอะไร?","a":"Prion protein","w":["Virus","Bacteria","Fungus"],"animal":"🐄","lv":"hard","cat":"จุลชีววิทยา"},
+{"q":"Toxocara canis เป็นพยาธิชนิดใด?","a":"Roundworm พยาธิตัวกลม","w":["Tapeworm","Hookworm","Whipworm"],"animal":"🐛","lv":"easy","cat":"ปรสิตวิทยา"},
+{"q":"Dirofilaria immitis ทำให้เกิดโรคใดในสุนัข?","a":"Heartworm disease","w":["Hookworm","Ringworm","Tapeworm"],"animal":"❤️","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Sarcoptes scabiei ทำให้เกิดอาการใด?","a":"คันรุนแรง Sarcoptic mange","w":["ผมร่วง","ผิวหนังหนา","ตัวเหลือง"],"animal":"🐕","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Dipylidium caninum แพร่ผ่านพาหะใด?","a":"หมัด (Flea)","w":["ยุง","เห็บ","แมลงวัน"],"animal":"🐛","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Giardia lamblia ติดต่อทาง?","a":"Fecal-oral route","w":["สัมผัสโดยตรง","แมลงกัด","ทางอากาศ"],"animal":"🦠","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Float test ใช้ตรวจอะไร?","a":"ไข่พยาธิในอุจจาระ","w":["แบคทีเรีย","ไวรัส","เลือดในปัสสาวะ"],"animal":"🔬","lv":"easy","cat":"ปรสิตวิทยา"},
+{"q":"Otodectes cynotis ทำให้เกิดปัญหาที่?","a":"ช่องหู","w":["ผิวหนัง","ขน","ตา"],"animal":"🐕","lv":"easy","cat":"ปรสิตวิทยา"},
+{"q":"Dirofilaria ติดต่อโดยพาหะใด?","a":"ยุง Culex spp.","w":["หมัด","เห็บ","แมลงวัน"],"animal":"🦟","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Babesia canis ติดต่อโดยพาหะใด?","a":"เห็บ Rhipicephalus sanguineus","w":["ยุง","หมัด","แมลงวัน"],"animal":"🪲","lv":"hard","cat":"ปรสิตวิทยา"},
+{"q":"Hookworm larvae ติดต่อสู่คนทาง?","a":"Cutaneous larva migrans ผิวหนัง","w":["กินอาหาร","ทางอากาศ","แมลงกัด"],"animal":"🦠","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Necrosis แตกต่างจาก Apoptosis?","a":"Necrosis ทำให้เกิดการอักเสบ Apoptosis ไม่ทำ","w":["เหมือนกัน","Apoptosis เกิดจากบาดเจ็บ","Necrosis ไม่ทำให้ตาย"],"animal":"🔬","lv":"hard","cat":"พยาธิวิทยา"},
+{"q":"Edema คือการสะสมของ?","a":"น้ำในเนื้อเยื่อ","w":["ไขมัน","แคลเซียม","เหล็ก"],"animal":"💧","lv":"easy","cat":"พยาธิวิทยา"},
+{"q":"Jaundice เกิดจากสิ่งใดสะสม?","a":"Bilirubin","w":["Glucose","Creatinine","Albumin"],"animal":"🟡","lv":"easy","cat":"พยาธิวิทยา"},
+{"q":"Metastasis หมายถึง?","a":"เนื้องอกร้ายแพร่กระจายไปยังอวัยวะอื่น","w":["เนื้องอกโต","เนื้องอกหาย","การอักเสบ"],"animal":"🔬","lv":"medium","cat":"พยาธิวิทยา"},
+{"q":"Granuloma เกิดจากอะไร?","a":"การอักเสบเรื้อรัง Macrophage รวมตัว","w":["ติดเชื้อเฉียบพลัน","เนื้องอก","เลือดออก"],"animal":"🔬","lv":"hard","cat":"พยาธิวิทยา"},
+{"q":"Mast cell tumor พบมากในสุนัขสายพันธุ์ใด?","a":"Boxer","w":["Poodle","Shih Tzu","Chihuahua"],"animal":"🐕","lv":"hard","cat":"พยาธิวิทยา"},
+{"q":"Ascites คือ?","a":"น้ำสะสมในช่องท้อง","w":["น้ำในปอด","น้ำในหัวใจ","น้ำในสมอง"],"animal":"💧","lv":"easy","cat":"พยาธิวิทยา"},
+{"q":"Type I hypersensitivity เกิดจาก?","a":"IgE-mediated (Anaphylaxis, Atopy)","w":["IgG-mediated","T-cell-mediated","Complement"],"animal":"🔬","lv":"hard","cat":"พยาธิวิทยา"},
+{"q":"Parvovirus ในสุนัขทำให้เกิดอาการหลักอะไร?","a":"ท้องเสียรุนแรงมีเลือดและ Leukopenia","w":["ไอ น้ำมูก","ชัก","ผิวหนังอักเสบ"],"animal":"🐕","lv":"easy","cat":"อายุรกรรม"},
+{"q":"Cushing's disease เกิดจากอะไร?","a":"Cortisol สูงเกิน Hyperadrenocorticism","w":["Cortisol ต่ำ","Insulin ต่ำ","Thyroid สูง"],"animal":"🐕","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Hyperthyroidism พบบ่อยในสัตว์ชนิดใด?","a":"แมวสูงอายุ","w":["สุนัขอายุน้อย","วัว","หมู"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Heartworm disease วินิจฉัยด้วยวิธีใด?","a":"Antigen test","w":["CBC","Urinalysis","Fecal float"],"animal":"❤️","lv":"medium","cat":"อายุรกรรม"},
+{"q":"FLUTD พบในแมวเพศใดบ่อยกว่า?","a":"แมวเพศผู้","w":["แมวเพศเมีย","เท่ากัน","ไม่เกี่ยวกับเพศ"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Pancreatitis วินิจฉัยโดยดูค่าเอนไซม์ใด?","a":"Lipase และ Amylase","w":["ALT และ AST","BUN และ Creatinine","Glucose"],"animal":"🧪","lv":"medium","cat":"อายุรกรรม"},
+{"q":"GDV พบบ่อยในสุนัขสายพันธุ์ใด?","a":"สายพันธุ์ใหญ่ Deep chest เช่น German Shepherd","w":["Chihuahua","Poodle","Shih Tzu"],"animal":"🐕","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Feline Asthma มักพบอาการอะไร?","a":"ไอ หายใจลำบาก ใช้ท้องช่วยหายใจ","w":["ท้องเสีย","ชัก","ตัวเหลือง"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Anemia สังเกตจากอาการใด?","a":"เยื่อเมือก Mucous membrane ซีด","w":["ตัวเหลือง","ท้องบวม","ขนร่วง"],"animal":"🩸","lv":"easy","cat":"อายุรกรรม"},
+{"q":"PU/PD + Polyphagia + Pot-belly บ่งชี้โรคใด?","a":"Hyperadrenocorticism (Cushing's)","w":["Hypothyroid","Diabetes","Addison's"],"animal":"🐕","lv":"easy","cat":"อายุรกรรม"},
+{"q":"Pyometra คือ?","a":"หนองสะสมในมดลูก","w":["รังไข่อักเสบ","มดลูกอักเสบเฉียบพลัน","เนื้องอก"],"animal":"🏥","lv":"medium","cat":"ศัลยกรรม"},
+{"q":"Cruciate ligament อยู่บริเวณใด?","a":"ข้อเข่า","w":["ข้อสะโพก","ข้อมือ","ข้อเท้า"],"animal":"🦵","lv":"easy","cat":"ศัลยกรรม"},
+{"q":"Hip dysplasia พบบ่อยในสุนัขสายพันธุ์ใด?","a":"German Shepherd, Labrador","w":["Chihuahua","Poodle","Dachshund"],"animal":"🐕","lv":"easy","cat":"ศัลยกรรม"},
+{"q":"Isoflurane ให้ทาง?","a":"สูดดม Inhalation","w":["ฉีดเข้าเส้นเลือด","ทางปาก","ฉีดกล้ามเนื้อ"],"animal":"💨","lv":"easy","cat":"ศัลยกรรม"},
+{"q":"GDV ย่อมาจาก?","a":"Gastric Dilatation Volvulus","w":["Gallbladder Dilation Virus","General Digestive Void","Gut Dilation Volvulus"],"animal":"🐕","lv":"medium","cat":"ศัลยกรรม"},
+{"q":"Gastropexy ทำเพื่อ?","a":"ป้องกัน GDV ใน High-risk breeds","w":["รักษา Pyometra","รักษาตับ","รักษาไต"],"animal":"🐕","lv":"medium","cat":"ศัลยกรรม"},
+{"q":"Shock ชนิด Hypovolemic เกิดจาก?","a":"เสียเลือดหรือน้ำมาก","w":["หัวใจล้มเหลว","ติดเชื้อในเลือด","แพ้ยา"],"animal":"🩸","lv":"medium","cat":"ศัลยกรรม"},
+{"q":"Fracture แบบ Comminuted คือ?","a":"กระดูกแตกเป็นชิ้นเล็กหลายชิ้น","w":["หักไม่สมบูรณ์","หักตามยาว","หักเฉียง"],"animal":"🦴","lv":"medium","cat":"ศัลยกรรม"},
+{"q":"Triage หมายถึง?","a":"คัดแยกผู้ป่วยตามความเร่งด่วน","w":["การผ่าตัด","การให้น้ำเกลือ","การตรวจเลือด"],"animal":"🏥","lv":"easy","cat":"ศัลยกรรม"},
+{"q":"FMD เกิดจาก?","a":"Picornavirus","w":["Paramyxovirus","Herpesvirus","Rhabdovirus"],"animal":"🐄","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"ระยะตั้งท้องของวัว?","a":"ประมาณ 280 วัน","w":["63 วัน","114 วัน","365 วัน"],"animal":"🐄","lv":"easy","cat":"สัตว์ใหญ่"},
+{"q":"ระยะตั้งท้องของหมู?","a":"ประมาณ 114 วัน","w":["63 วัน","280 วัน","340 วัน"],"animal":"🐷","lv":"easy","cat":"สัตว์ใหญ่"},
+{"q":"Milk fever เกิดจาก?","a":"Hypocalcemia หลังคลอด","w":["Hypomagnesemia","Hyperkalemia","Hypoglycemia"],"animal":"🐄","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"Bloat ในวัวเกิดจาก?","a":"แก๊สสะสมใน Rumen","w":["อาหารอุดตัน","ติดเชื้อ","เลือดออก"],"animal":"🐄","lv":"easy","cat":"สัตว์ใหญ่"},
+{"q":"ASF เกิดจาก?","a":"Asfivirus (DNA virus)","w":["Paramyxovirus","Parvovirus","Reovirus"],"animal":"🐷","lv":"hard","cat":"สัตว์ใหญ่"},
+{"q":"PRRS เกิดจาก?","a":"Arterivirus","w":["Herpesvirus","Adenovirus","Parvovirus"],"animal":"🐷","lv":"hard","cat":"สัตว์ใหญ่"},
+{"q":"HPAI ที่ระบาดในนกคือ Subtype ใด?","a":"H5N1","w":["H1N1","H3N2","H7N2"],"animal":"🐔","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"Colic ในม้าหมายถึง?","a":"อาการปวดท้อง","w":["ขาหัก","ติดเชื้อ","ท้องผูก"],"animal":"🐴","lv":"easy","cat":"สัตว์ใหญ่"},
+{"q":"Laminitis ในม้าเกิดที่?","a":"กีบ (Hoof)","w":["ข้อเข่า","ข้อสะโพก","คอ"],"animal":"🐴","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"Psittacosis เกิดจาก?","a":"Chlamydophila psittaci","w":["Salmonella","E. coli","Pasteurella"],"animal":"🦜","lv":"hard","cat":"Exotic"},
+{"q":"กระต่ายควรกินหญ้าชนิดใดเป็นหลัก?","a":"Timothy hay","w":["Alfalfa hay","Orchardgrass","Ryegrass"],"animal":"🐰","lv":"easy","cat":"Exotic"},
+{"q":"Rabbit GI Stasis คืออะไร?","a":"การหยุดทำงานของระบบย่อยอาหาร","w":["ติดเชื้อลำไส้","พยาธิ","ตับอักเสบ"],"animal":"🐰","lv":"medium","cat":"Exotic"},
+{"q":"Ferret มักเป็นโรคใดเมื่ออายุมาก?","a":"Adrenal disease","w":["Parvo","Distemper","Rabies"],"animal":"🦦","lv":"hard","cat":"Exotic"},
+{"q":"Metabolic bone disease ในเต่าเกิดจาก?","a":"ขาด UVB + Calcium","w":["ติดเชื้อ","ปรสิต","ขาดน้ำ"],"animal":"🐢","lv":"medium","cat":"Exotic"},
+{"q":"Shell rot เกิดจาก?","a":"แบคทีเรีย/เชื้อราบนกระดอง","w":["ปรสิต","ไวรัส","สารพิษ"],"animal":"🐢","lv":"medium","cat":"Exotic"},
+{"q":"Guinea pig ต้องการวิตามินใด?","a":"Vitamin C","w":["Vitamin A","Vitamin B12","Vitamin D"],"animal":"🐾","lv":"easy","cat":"Exotic"},
+{"q":"Snuffles ในกระต่ายเกิดจาก?","a":"Pasteurella multocida","w":["Herpesvirus","E. coli","Staphylococcus"],"animal":"🐰","lv":"medium","cat":"Exotic"},
+{"q":"PBFD เกิดจาก?","a":"Circovirus","w":["Bornavirus","Herpesvirus","Poxvirus"],"animal":"🦜","lv":"hard","cat":"Exotic"},
+{"q":"CBC ย่อมาจาก?","a":"Complete Blood Count","w":["Canine Blood Check","Clinical Blood Chemistry","Comprehensive Body Check"],"animal":"🩸","lv":"easy","cat":"คลินิกรวม"},
+{"q":"ALT บ่งบอกการทำงานของอวัยวะใด?","a":"ตับ","w":["ไต","หัวใจ","ปอด"],"animal":"🧪","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Creatinine บ่งบอกการทำงานของอวัยวะใด?","a":"ไต","w":["ตับ","หัวใจ","ม้าม"],"animal":"🧪","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Zoonosis คือ?","a":"โรคที่ติดต่อระหว่างสัตว์และคน","w":["โรคเฉพาะสัตว์","โรคจากพันธุกรรม","โรคจากสิ่งแวดล้อม"],"animal":"🦠","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Hypoglycemia ในสุนัขมีอาการอะไร?","a":"ชัก สับสน อ่อนแรง","w":["ท้องเสีย","ไอ","ตัวเหลือง"],"animal":"🧪","lv":"medium","cat":"คลินิกรวม"},
+{"q":"Dyspnea หมายถึง?","a":"หายใจลำบาก","w":["หายใจเร็ว","หายใจช้า","ไอ"],"animal":"🫁","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Tachycardia หมายถึง?","a":"หัวใจเต้นเร็วผิดปกติ","w":["เต้นช้า","เต้นไม่สม่ำเสมอ","หัวใจหยุด"],"animal":"❤️","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Emesis หมายถึง?","a":"อาเจียน","w":["ท้องเสีย","ท้องผูก","ปวดท้อง"],"animal":"🤢","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Anaphylaxis รักษาด้วย?","a":"Epinephrine + IV fluids + Steroid","w":["Antihistamine เท่านั้น","Antibiotic","Antifungal"],"animal":"🚨","lv":"hard","cat":"คลินิกรวม"},
+{"q":"SpO2 ปกติควรสูงกว่า?","a":"95%","w":["80%","70%","60%"],"animal":"🫁","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Capillary refill time ปกติไม่เกิน?","a":"2 วินาที","w":["10 วินาที","30 วินาที","5 นาที"],"animal":"💊","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Icterus สังเกตได้จาก?","a":"เยื่อเมือก ผิวหนัง ตาขาว สีเหลือง","w":["ขนร่วง","ผิวแดง","บวมน้ำ"],"animal":"🟡","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Mammary tumor ในสุนัขที่ไม่ Spay มีโอกาสมะเร็ง?","a":"ประมาณ 50%","w":["5%","20%","90%"],"animal":"🐕","lv":"hard","cat":"คลินิกรวม"},
+{"q":"Struvite urolithiasis พบมากในเพศใด?","a":"เพศเมีย","w":["เพศผู้","ทั้งสองเท่ากัน","ลูกสุนัข"],"animal":"🐕","lv":"medium","cat":"คลินิกรวม"},
+];
+
+// ── COLORS FOR AVATARS ──
+const COLORS=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea','#0891b2','#65a30d'];
+
+// ── STATE ──
+let myName='', myId='', roomCode='', isHost=false;
+let channel=null, players={}, gameQ=[], settings={};
+let curQIdx=0, myScore=0, myCorrect=0, hasAnswered=false, answerTimes={};
+let timerInterval=null, timeLeft=0;
+let prevScores={};
+
+// ── UTILS ──
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function genCode(){ return Math.random().toString(36).toUpperCase().slice(2,6).replace(/[^A-Z]/g,'X').padEnd(4,'A'); }
+function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+function showWait(txt){ document.getElementById('waitOverlay').classList.add('on'); document.getElementById('waitText').textContent=txt||'กำลังโหลด...'; }
+function hideWait(){ document.getElementById('waitOverlay').classList.remove('on'); }
+let toastTimer;
+function toast(msg,ms=2500){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('on'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('on'),ms); }
+function avatarColor(name){ let h=0;for(let c of name)h=(h+c.charCodeAt(0))%COLORS.length;return COLORS[h]; }
+function avatarLetter(name){ return name.trim().charAt(0).toUpperCase()||'?'; }
+
+// ── ROOM ──
+function goHome(){ leaveLobby(true); showScreen('s-home'); }
+function goHost(){
+  myName=document.getElementById('homeNameInput').value.trim();
+  if(!myName){document.getElementById('homeErr').textContent='กรุณากรอกชื่อก่อน';return;}
+  document.getElementById('homeErr').textContent='';
+  myId=uid(); roomCode=genCode(); isHost=true;
+  joinChannel(true);
+}
+function goJoin(){
+  myName=document.getElementById('homeNameInput').value.trim();
+  const code=document.getElementById('homeCodeInput').value.trim().toUpperCase();
+  if(!myName){document.getElementById('homeErr').textContent='กรุณากรอกชื่อก่อน';return;}
+  if(code.length!==4){document.getElementById('homeErr').textContent='รหัสห้องต้องเป็น 4 ตัวอักษร';return;}
+  document.getElementById('homeErr').textContent='';
+  myId=uid(); roomCode=code; isHost=false;
+  joinChannel(false);
+}
+
+// ── SUPABASE REALTIME ──
+async function joinChannel(asHost){
+  showWait('กำลังเชื่อมต่อ...');
+  if(channel) await sb.removeChannel(channel);
+
+  channel = sb.channel('vetquiz:'+roomCode, {
+    config:{ presence:{ key:myId }, broadcast:{ self:true } }
+  });
+
+  channel
+    .on('presence','sync',()=>{ syncPlayers(); })
+    .on('presence','join',({key,newPresences})=>{ syncPlayers(); })
+    .on('presence','leave',({key,leftPresences})=>{ syncPlayers(); toast('👋 '+((leftPresences[0]||{}).name||'?')+' ออกจากห้อง'); })
+    .on('broadcast',{event:'game_event'},(payload)=>{ handleEvent(payload.payload); })
+    .subscribe(async(status)=>{
+      if(status==='SUBSCRIBED'){
+        await channel.track({ id:myId, name:myName, isHost:asHost, score:0, correct:0 });
+        showLobby(asHost);
+        hideWait();
+      } else if(status==='CHANNEL_ERROR'){
+        hideWait();
+        document.getElementById('homeErr').textContent='เชื่อมต่อไม่ได้ ลองใหม่';
+      }
+    });
+}
+
+function syncPlayers(){
+  const state=channel.presenceState();
+  players={};
+  for(const key in state){
+    const p=state[key][0];
+    if(p) players[p.id]={...p};
+  }
+  renderPlayerList();
+  updateStartBtn();
+}
+
+function renderPlayerList(){
+  const list=document.getElementById('playerList');
+  document.getElementById('playerCount').textContent=Object.keys(players).length;
+  list.innerHTML=Object.values(players).sort((a,b)=>a.isHost?-1:1).map(p=>`
+    <div class="player-row">
+      <div class="player-avatar" style="background:${avatarColor(p.name)}">${avatarLetter(p.name)}</div>
+      <div class="player-name">${p.name}</div>
+      ${p.isHost?'<span class="player-host-badge">Host 👑</span>':''}
+    </div>`).join('');
+}
+
+function updateStartBtn(){
+  const n=Object.keys(players).length;
+  const btn=document.getElementById('startBtn');
+  if(btn) btn.disabled=(n<2);
+}
+
+function showLobby(asHost){
+  showScreen('s-lobby');
+  document.getElementById('lobbyTitle').textContent='ห้อง '+roomCode;
+  document.getElementById('roomCodeBox').style.display=asHost?'block':'none';
+  document.getElementById('rcodeVal').textContent=roomCode;
+  document.getElementById('settingsBox').style.display=asHost?'block':'none';
+  document.getElementById('startBtn').style.display=asHost?'block':'none';
+  document.getElementById('waitingText').style.display=asHost?'none':'block';
+}
+
+async function leaveLobby(full=false){
+  clearInterval(timerInterval);
+  if(channel){ await channel.untrack(); await sb.removeChannel(channel); channel=null; }
+  players={}; gameQ=[]; curQIdx=0; myScore=0; myCorrect=0;
+  if(full) showScreen('s-home');
+}
+
+// ── START GAME ──
+function startGame(){
+  const totalQ=parseInt(document.getElementById('settingQ').value)||10;
+  const timePerQ=parseInt(document.getElementById('settingT').value)||15;
+  const cat=document.getElementById('settingCat').value||'all';
+  settings={totalQ,timePerQ,cat};
+  let pool=cat==='all'?RAW_Q:RAW_Q.filter(q=>q.cat===cat);
+  if(pool.length<totalQ) pool=[...pool,...RAW_Q].slice(0,totalQ*3);
+  gameQ=shuffle(pool).slice(0,totalQ);
+  broadcast({type:'game_start',gameQ,settings});
+}
+
+// ── BROADCAST ──
+function broadcast(data){
+  channel.send({type:'broadcast',event:'game_event',payload:data});
+}
+
+// ── HANDLE EVENTS ──
+function handleEvent(data){
+  switch(data.type){
+    case 'game_start': onGameStart(data); break;
+    case 'countdown': onCountdown(data); break;
+    case 'question': onQuestion(data); break;
+    case 'player_answer': onPlayerAnswer(data); break;
+    case 'reveal': onReveal(data); break;
+    case 'next_question': onNextQuestion(data); break;
+    case 'final': onFinal(data); break;
+  }
+}
+
+function onGameStart(data){
+  gameQ=data.gameQ; settings=data.settings;
+  curQIdx=0; myScore=0; myCorrect=0; prevScores={}; answerTimes={};
+  Object.keys(players).forEach(id=>prevScores[id]=0);
+  showScreen('s-countdown');
+  if(isHost) runCountdown(3);
+}
+
+function runCountdown(n){
+  document.getElementById('cdNum').textContent=n;
+  if(n<=0){ sendQuestion(0); return; }
+  setTimeout(()=>runCountdown(n-1),1000);
+}
+
+function sendQuestion(idx){
+  if(!isHost) return;
+  const q=gameQ[idx];
+  const opts=shuffle([q.a,...q.w]);
+  broadcast({type:'question',idx,q,opts,timePerQ:settings.timePerQ});
+}
+
+function onQuestion(data){
+  const{idx,q,opts,timePerQ}=data;
+  curQIdx=idx; hasAnswered=false; answerTimes={};
+  showScreen('s-question');
+  document.getElementById('qProgress').textContent=`ข้อ ${idx+1} / ${gameQ.length}`;
+  document.getElementById('myScore').textContent=myScore+' คะแนน';
+  document.getElementById('qCat').textContent=(window.CAT_EMOJI||{})[q.cat]||'📚'+' '+q.cat;
+  const lvTxt={easy:'ง่าย',medium:'กลาง',hard:'ยาก'};
+  const lvCls={easy:'lv-easy',medium:'lv-medium',hard:'lv-hard'};
+  const lvBadge=document.getElementById('qLv');
+  lvBadge.textContent=lvTxt[q.lv]||q.lv;
+  lvBadge.className='q-lv '+(lvCls[q.lv]||'lv-easy');
+  document.getElementById('qText').textContent=q.q;
+  document.getElementById('qAnsMsg').style.display='none';
+  document.getElementById('answerWaitBar').style.display='none';
+  document.getElementById('qChoices').innerHTML=opts.map((o,i)=>`
+    <button class="choice" id="ch${i}" onclick="pickAnswer(${i},'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('');
+  startTimer(timePerQ,idx);
+}
+
+function pickAnswer(idx,chosen){
+  if(hasAnswered) return;
+  hasAnswered=true;
+  const q=gameQ[curQIdx];
+  const correct=chosen===q.a;
+  const elapsed=settings.timePerQ-timeLeft;
+  // Calc points: base + speed bonus
+  const pts=q.lv==='hard'?3:q.lv==='medium'?2:1;
+  const bonus=Math.max(0,Math.round((timeLeft/settings.timePerQ)*pts));
+  const earned=correct?pts+bonus:0;
+  if(correct){ myScore+=earned; myCorrect++; }
+  // Highlight choice
+  document.querySelectorAll('.choice').forEach(b=>b.disabled=true);
+  const btn=document.getElementById('ch'+idx);
+  btn.classList.add(correct?'correct':'wrong');
+  if(!correct){ document.querySelectorAll('.choice').forEach(b=>{ if(b.textContent===q.a) b.classList.add('reveal-correct'); }); }
+  // Show message
+  const msg=document.getElementById('qAnsMsg');
+  msg.textContent=correct?`✅ ถูก! +${earned} คะแนน`:`❌ ผิด — คำตอบที่ถูกคือ: ${q.a}`;
+  msg.className='q-answered-msg '+(correct?'ans-ok':'ans-ng');
+  msg.style.display='block';
+  // Update presence score
+  channel.track({id:myId,name:myName,isHost,score:myScore,correct:myCorrect});
+  // Broadcast answer
+  broadcast({type:'player_answer',playerId:myId,playerName:myName,correct,elapsed});
+  // Show wait bar
+  document.getElementById('answerWaitBar').style.display='block';
+  renderAnswerDots();
+}
+
+function onPlayerAnswer(data){
+  answerTimes[data.playerId]={...data};
+  renderAnswerDots();
+  // Host: if all answered, reveal early
+  if(isHost){
+    const total=Object.keys(players).length;
+    const done=Object.keys(answerTimes).length;
+    if(done>=total) clearTimerAndReveal();
+  }
+}
+
+function renderAnswerDots(){
+  const wrap=document.getElementById('awPlayers');
+  if(!wrap) return;
+  wrap.innerHTML=Object.values(players).map(p=>`
+    <div class="aw-dot ${answerTimes[p.id]?'done':''}" title="${p.name}"></div>`).join('');
+}
+
+let timerExpired=false;
+function startTimer(seconds,qIdx){
+  clearInterval(timerInterval);
+  timeLeft=seconds; timerExpired=false;
+  const arc=document.getElementById('timerArc');
+  const circ=2*Math.PI*16; // r=16
+  arc.style.strokeDasharray=circ;
+  updateTimerArc(seconds,seconds,circ);
+  document.getElementById('qTimerNum').textContent=seconds;
+  document.getElementById('qTimerFill').style.width='100%';
+  document.getElementById('qTimerFill').style.transition='width '+seconds+'s linear';
+  setTimeout(()=>{ document.getElementById('qTimerFill').style.width='0%'; },50);
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('qTimerNum').textContent=timeLeft;
+    updateTimerArc(timeLeft,seconds,circ);
+    if(timeLeft<=3) document.getElementById('qTimerNum').style.color='#fca5a5';
+    else document.getElementById('qTimerNum').style.color='white';
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      if(!hasAnswered){ hasAnswered=true; broadcast({type:'player_answer',playerId:myId,playerName:myName,correct:false,elapsed:seconds}); }
+      if(isHost) setTimeout(()=>clearTimerAndReveal(),500);
+    }
+  },1000);
+}
+
+function updateTimerArc(left,total,circ){
+  const arc=document.getElementById('timerArc');
+  if(!arc) return;
+  const pct=left/total;
+  arc.style.strokeDashoffset=circ*(1-pct);
+  arc.style.stroke=left<=5?'#fca5a5':'white';
+}
+
+function clearTimerAndReveal(){
+  clearInterval(timerInterval);
+  if(!isHost) return;
+  const state=channel.presenceState();
+  const scores=[];
+  for(const key in state){
+    const p=state[key][0];
+    if(p) scores.push({id:p.id,name:p.name,score:p.score||0,correct:p.correct||0});
+  }
+  scores.sort((a,b)=>b.score-a.score);
+  broadcast({type:'reveal',scores,qIdx:curQIdx,correctAnswer:gameQ[curQIdx].a});
+}
+
+function onReveal(data){
+  clearInterval(timerInterval);
+  // Reveal correct answer in choices
+  document.querySelectorAll('.choice').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===data.correctAnswer) b.classList.add('reveal-correct');
+  });
+  document.getElementById('answerWaitBar').style.display='none';
+  // Show leaderboard
+  setTimeout(()=>showLeaderboard(data),600);
+}
+
+function showLeaderboard(data){
+  const{scores,qIdx}=data;
+  showScreen('s-leaderboard');
+  document.getElementById('lbQTitle').textContent=`คะแนน — ข้อ ${qIdx+1} / ${gameQ.length}`;
+  document.getElementById('lbQSub').textContent='ผลการตอบคำถามนี้';
+  const medal=['🥇','🥈','🥉'];
+  const list=document.getElementById('lbList');
+  list.innerHTML=scores.map((p,i)=>{
+    const gain=(p.score||0)-(prevScores[p.id]||0);
+    const rankCls=i<3?`r${i+1}`:'';
+    return `<div class="lb-row">
+      <div class="lb-rank ${rankCls}">${medal[i]||i+1}</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:${avatarColor(p.name)};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;flex-shrink:0;">${avatarLetter(p.name)}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.name}${p.id===myId?' (คุณ)':''}</div>
+        ${gain>0?`<div class="lb-change">+${gain}</div>`:''}
+      </div>
+      <div class="lb-pts">${p.score||0}</div>
+    </div>`;
+  }).join('');
+  // Update prevScores
+  scores.forEach(p=>prevScores[p.id]=p.score||0);
+  // Host controls
+  const isLastQ=(qIdx+1)>=gameQ.length;
+  document.getElementById('lbNextBtn').style.display=isHost?'block':'none';
+  document.getElementById('lbNextBtn').textContent=isLastQ?'🏆 ดูผลสุดท้าย':'ข้อต่อไป →';
+  document.getElementById('lbWaitText').style.display=isHost?'none':'block';
+}
+
+function hostNextQuestion(){
+  if(!isHost) return;
+  const isLastQ=(curQIdx+1)>=gameQ.length;
+  if(isLastQ){
+    broadcastFinal();
+  } else {
+    broadcast({type:'next_question',idx:curQIdx+1});
+  }
+}
+
+function onNextQuestion(data){
+  curQIdx=data.idx;
+  answerTimes={};
+  sendQuestion(curQIdx);
+}
+
+function broadcastFinal(){
+  const state=channel.presenceState();
+  const scores=[];
+  for(const key in state){
+    const p=state[key][0];
+    if(p) scores.push({id:p.id,name:p.name,score:p.score||0,correct:p.correct||0});
+  }
+  scores.sort((a,b)=>b.score-a.score);
+  broadcast({type:'final',scores,totalQ:gameQ.length});
+}
+
+function onFinal(data){
+  clearInterval(timerInterval);
+  showScreen('s-final');
+  const{scores,totalQ}=data;
+  document.getElementById('finalSub').textContent=`จาก ${totalQ} คำถาม | ${Object.keys(players).length} ผู้เล่น`;
+  // Podium
+  const podWrap=document.getElementById('podiumWrap');
+  const order=[1,0,2]; // 2nd, 1st, 3rd
+  const heights=['pod-2','pod-1','pod-3'];
+  const labels=['🥈','🥇','🥉'];
+  podWrap.innerHTML=order.map((rank,col)=>{
+    const p=scores[rank];
+    if(!p) return '';
+    return `<div class="pod-col">
+      <div class="pod-avatar" style="background:${avatarColor(p.name)}">${avatarLetter(p.name)}</div>
+      <div class="pod-name">${p.name}</div>
+      <div class="pod-pts">${p.score} คะแนน</div>
+      <div class="pod-base ${heights[col]}">${labels[col]}</div>
+    </div>`;
+  }).join('');
+  // Full list
+  document.getElementById('finalList').innerHTML=scores.map((p,i)=>`
+    <div class="final-row">
+      <div class="final-rank">${i+1}</div>
+      <div style="width:28px;height:28px;border-radius:50%;background:${avatarColor(p.name)};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;">${avatarLetter(p.name)}</div>
+      <div class="final-name">${p.name}${p.id===myId?' ★':''}</div>
+      <div>
+        <div class="final-pts">${p.score}</div>
+        <div class="final-correct">${p.correct||0}/${totalQ} ถูก</div>
+      </div>
+    </div>`).join('');
+}
+
+function playAgain(){
+  if(isHost){
+    showLobby(true);
+    curQIdx=0; myScore=0; myCorrect=0; prevScores={};
+    channel.track({id:myId,name:myName,isHost:true,score:0,correct:0});
+  } else {
+    showLobby(false);
+    myScore=0; myCorrect=0;
+    channel.track({id:myId,name:myName,isHost:false,score:0,correct:0});
+  }
+}
+
+// ── INIT ──
+window.CAT_EMOJI={'กายวิภาค':'🦴','สรีรวิทยา':'💓','เภสัชวิทยา':'💊','จุลชีววิทยา':'🦠','ปรสิตวิทยา':'🐛','พยาธิวิทยา':'🔬','อายุรกรรม':'🩺','ศัลยกรรม':'✂️','สัตว์ใหญ่':'🐄','Exotic':'🦜','คลินิกรวม':'🏥'};
+</script>
+</body>
+</html>
