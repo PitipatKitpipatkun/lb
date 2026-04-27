@@ -215,9 +215,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 
   <!-- FEEDBACK -->
   <div class="section">
-    <div class="section-title" id="fbToggleBtn" onclick="toggleFeedback()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;">
-      <span>💬 แนะนำ / ร้องเรียน</span>
-      <span id="fbChevron" style="font-size:11px;color:var(--slate-l);transition:transform 0.3s;display:inline-block;margin-left:auto;">▼</span>
+    <div class="section-title" id="fbToggleBtn" onclick="toggleFeedback()" style="cursor:pointer;user-select:none;">
+      💬 แนะนำ / ร้องเรียน
+      <span id="fbChevron" style="font-size:11px;color:var(--slate-l);transition:transform 0.3s;display:inline-block;float:right;">▼</span>
     </div>
     <div id="fbCollapse" style="display:none;">
       <div class="feedback-card">
@@ -803,13 +803,11 @@ function searchDrugs(q){
 </html>
 // ── Feedback Collapse ──
 function toggleFeedback(){
-  const el=document.getElementById('fbCollapse');
-  const ch=document.getElementById('fbChevron');
-  const btn=document.getElementById('fbToggleBtn');
-  if(!el)return;
-  const open=el.style.display==='none'||el.style.display==='';
-  el.style.display=open?'block':'none';
-  if(ch) ch.style.transform=open?'rotate(180deg)':'rotate(0deg)';
-  if(btn) btn.style.color=open?'var(--teal)':'';
+  var el = document.getElementById('fbCollapse');
+  var ch = document.getElementById('fbChevron');
+  if(!el) return;
+  var isHidden = (el.style.display === 'none' || el.style.display === '');
+  el.style.display = isHidden ? 'block' : 'none';
+  if(ch) ch.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 
