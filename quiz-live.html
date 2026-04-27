@@ -4,652 +4,372 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>⚡ VetQuiz Live</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0">
-// ── CONFETTI ──
-function launchConfetti(){
-  const wrap=document.getElementById('confettiWrap');
-  if(!wrap)return;
-  wrap.innerHTML='';
-  const colors=['#f59e0b','#0d9488','#e11d48','#7c3aed','#0284c7','#16a34a','#f97316','#ec4899'];
-  const shapes=['■','●','▲','★','◆'];
-  for(let i=0;i<80;i++){
-    const el=document.createElement('div');
-    el.className='confetti-piece';
-    el.textContent=shapes[i%shapes.length];
-    el.style.cssText=`
-      left:${Math.random()*100}%;
-      bottom:-20px;
-      color:${colors[i%colors.length]};
-      font-size:${10+Math.random()*14}px;
-      animation-duration:${1.5+Math.random()*2.5}s;
-      animation-delay:${Math.random()*1.5}s;
-    `;
-    wrap.appendChild(el);
-  }
-  setTimeout(()=>wrap.innerHTML='',5000);
-}
-
-
-// ── SAVE MEMORY (Canvas screenshot) ──
-let _finalScores=[], _finalTotalQ=0;
-
-async function saveMemory(){
-  const btn=document.getElementById('saveMemBtn');
-  btn.textContent='⏳ กำลังสร้างภาพ...'; btn.disabled=true;
-  try{
-    const W=420;
-    const listRows=Math.max(1,_finalScores.length);
-    const H=300+listRows*46;
-    const dpr=Math.min(window.devicePixelRatio||1,2);
-    const cv=document.createElement('canvas');
-    cv.width=W*dpr; cv.height=H*dpr;
-    const ctx=cv.getContext('2d');
-    ctx.scale(dpr,dpr);
-
-    // Polyfill roundRect
-    function rr(x,y,w,h,r){
-      r=Math.min(r,w/2,h/2);
-      ctx.beginPath();
-      ctx.moveTo(x+r,y);
-      ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
-      ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
-      ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
-      ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
-      ctx.closePath();
-    }
-
-    // ── Background ──
-    const bg=ctx.createLinearGradient(0,0,0,H);
-    bg.addColorStop(0,'#0d9488'); bg.addColorStop(1,'#134e4a');
-    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-
-    ctx.fillStyle='rgba(255,255,255,0.06)';
-    ctx.beginPath(); ctx.arc(380,40,120,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(30,H-30,80,0,Math.PI*2); ctx.fill();
-
-    // ── Header text ──
-    ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='12px sans-serif';
-    ctx.fillText('VetQuiz Live — Vet RMUTTO Log Book', W/2, 22);
-    ctx.fillStyle='white'; ctx.font='bold 22px sans-serif';
-    ctx.fillText('🏆 ผลการแข่งขัน', W/2, 50);
-    ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.font='12px sans-serif';
-    ctx.fillText(_finalTotalQ+' คำถาม  •  '+_finalScores.length+' ผู้เล่น  •  '+new Date().toLocaleDateString('th-TH'), W/2, 70);
-
-    ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(20,82); ctx.lineTo(W-20,82); ctx.stroke();
-
-    // ── Podium top 3 ──
-    const podC=['#f59e0b','#94a3b8','#cd7f32'];
-    const podH=[80,62,50]; const podX=[W/2,W/2-78,W/2+78];
-    const podBase=230;
-    [1,0,2].forEach((rank,col)=>{
-      const p=_finalScores[rank]; if(!p)return;
-      const x=podX[rank], ph=podH[rank];
-      ctx.fillStyle=podC[rank];
-      rr(x-30,podBase-ph,60,ph,6); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
-      ctx.fillText(rank===0?'1st':rank===1?'2nd':'3rd', x, podBase-ph+14);
-      const ay=podBase-ph-42;
-      ctx.fillStyle=avCol(p.name); ctx.beginPath(); ctx.arc(x,ay,17,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 13px sans-serif';
-      ctx.fillText((p.name[0]||'?').toUpperCase(), x, ay+5);
-      ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font='10px sans-serif';
-      const nm=p.name.length>8?p.name.slice(0,7)+'..':p.name;
-      ctx.fillText(nm, x, ay+30);
-      ctx.fillStyle='white'; ctx.font='bold 12px sans-serif';
-      ctx.fillText(p.score+' pts', x, ay+46);
-    });
-
-    // ── Score list ──
-    const ly=246;
-    ctx.fillStyle='rgba(0,0,0,0.15)';
-    rr(12,ly,W-24,listRows*46+8,10); ctx.fill();
-    _finalScores.forEach((p,i)=>{
-      const y=ly+6+(i*46);
-      // Row bg for self
-      if(p.id===myId){ ctx.fillStyle='rgba(255,255,255,0.08)'; rr(14,y,W-28,44,8); ctx.fill(); }
-      // Rank
-      const rc=['#fbbf24','#d1d5db','#cd7f32'];
-      ctx.fillStyle=i<3?rc[i]:'rgba(255,255,255,0.35)';
-      ctx.font='bold 14px sans-serif'; ctx.textAlign='left';
-      ctx.fillText(i+1, 24, y+22);
-      // Avatar circle
-      ctx.fillStyle=avCol(p.name); ctx.beginPath(); ctx.arc(56,y+18,13,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
-      ctx.fillText((p.name[0]||'?').toUpperCase(), 56, y+22);
-      // Name
-      ctx.fillStyle='white'; ctx.font=(p.id===myId?'bold ':'')+'13px sans-serif'; ctx.textAlign='left';
-      ctx.fillText(p.name.slice(0,17)+(p.id===myId?' ★':''), 76, y+20);
-      // Correct
-      ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='11px sans-serif';
-      ctx.fillText(p.correct+'/'+_finalTotalQ+' correct', 76, y+34);
-      // Score
-      ctx.fillStyle='#6ee7b7'; ctx.font='bold 15px sans-serif'; ctx.textAlign='right';
-      ctx.fillText(p.score, W-18, y+22);
-      // Divider
-      if(i<_finalScores.length-1){
-        ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(18,y+44); ctx.lineTo(W-18,y+44); ctx.stroke();
-      }
-    });
-
-    // Footer
-    ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='10px sans-serif';
-    ctx.fillText('pitipatKitpipatkun.github.io/lb', W/2, H-8);
-
-    // ── Save ──
-    const dataURL=cv.toDataURL('image/png');
-
-    // Show in overlay (works on all devices incl iOS)
-    const img=document.getElementById('saveOverlayImg');
-    if(img){ img.src=dataURL; document.getElementById('saveOverlay').classList.add('on'); }
-
-    // Also try auto-download (works on desktop/Android)
-    try{
-      const a=document.createElement('a');
-      a.href=dataURL;
-      a.download='VetQuiz-'+Date.now()+'.png';
-      a.style.display='none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(()=>document.body.removeChild(a),1000);
-    }catch(de){ console.log('download fallback:',de); }
-
-    toast('📸 กดค้างที่รูปเพื่อบันทึก (iOS) หรือรอดาวน์โหลด');
-  }catch(e){
-    console.error('[saveMemory]',e);
-    toast('❌ Error: '+e.message);
-  }
-  btn.textContent='📸 บันทึกความทรงจำ'; btn.disabled=false;
-}
-
-
-function avCol(name){
-  const cols=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea'];
-  let h=0; for(const ch of String(name||'?'))h=(h+ch.charCodeAt(0))%cols.length; return cols[h];
-}
-
-function avColors(name){
-  const cols=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea'];
-  let h=0; for(const ch of name) h=(h+ch.charCodeAt(0))%cols.length;
-  return cols[h];
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{
-  --teal:#0d9488;--teal-d:#0f766e;--teal-l:#ccfbf1;--teal-50:#f0fdfa;
-  --rose:#e11d48;--amber:#d97706;--violet:#7c3aed;
-  --slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;
-  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
-  --safe-b:env(safe-area-inset-bottom,0px);
-}
+:root{--t:#0d9488;--td:#0f766e;--tl:#ccfbf1;--sl:#1e293b;--sm:#475569;--s2:#94a3b8;--bd:#e2e8f0;--bg:#f8fafc;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh;}
-.screen{display:none;min-height:100vh;flex-direction:column;}
-.screen.on{display:flex;}
-
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--sl);min-height:100vh;}
+.scr{display:none;min-height:100vh;flex-direction:column;}
+.scr.on{display:flex;}
 /* HOME */
-#s-home{background:linear-gradient(160deg,#0d9488,#134e4a);align-items:center;justify-content:center;padding:20px;}
-.home-card{background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);border-radius:28px;padding:28px 20px;width:100%;max-width:400px;text-align:center;}
-.home-logo{font-size:60px;margin-bottom:6px;}
-.home-title{font-family:'Prompt',sans-serif;font-size:24px;font-weight:800;color:white;margin-bottom:4px;}
-.home-sub{font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:24px;}
-.home-input{width:100%;padding:13px 16px;border:2px solid rgba(255,255,255,0.3);border-radius:14px;background:rgba(255,255,255,0.12);color:white;font-family:'Sarabun',sans-serif;font-size:15px;outline:none;margin-bottom:10px;}
-.home-input::placeholder{color:rgba(255,255,255,0.4);}
-.home-input:focus{border-color:rgba(255,255,255,0.7);}
-.code-input{text-align:center;letter-spacing:8px;font-size:22px;font-weight:800;}
-.big-btn{width:100%;padding:14px;border:none;border-radius:14px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-bottom:10px;}
-.big-btn:active{transform:scale(0.97);}
-.btn-host{background:white;color:var(--teal-d);}
-.btn-join{background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.35);color:white;}
-.home-div{color:rgba(255,255,255,0.35);font-size:12px;margin:6px 0;}
-.home-err{font-size:12px;color:#fca5a5;min-height:18px;margin-bottom:6px;}
-
+#sHome{background:linear-gradient(160deg,#0d9488,#134e4a);align-items:center;justify-content:center;padding:20px;}
+.hCard{background:rgba(255,255,255,0.13);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);border-radius:26px;padding:28px 20px;width:100%;max-width:400px;text-align:center;}
+.hLogo{font-size:58px;margin-bottom:6px;}
+.hTitle{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:white;margin-bottom:4px;}
+.hSub{font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:22px;}
+.inp{width:100%;padding:12px 16px;border:2px solid rgba(255,255,255,0.3);border-radius:13px;background:rgba(255,255,255,0.12);color:white;font-family:'Sarabun',sans-serif;font-size:15px;outline:none;margin-bottom:8px;}
+.inp::placeholder{color:rgba(255,255,255,0.4);}
+.inp:focus{border-color:rgba(255,255,255,0.7);}
+.codeInp{text-align:center;letter-spacing:8px;font-size:20px;font-weight:800;}
+.btn{width:100%;padding:13px;border:none;border-radius:13px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;transition:transform 0.1s;}
+.btn:active{transform:scale(0.97);}
+.btnHost{background:white;color:var(--td);}
+.btnJoin{background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);color:white;}
+.div{color:rgba(255,255,255,0.35);font-size:12px;margin:6px 0;}
+.err{font-size:12px;color:#fca5a5;min-height:18px;margin-bottom:6px;}
 /* LOBBY */
-#s-lobby{background:linear-gradient(160deg,#0d9488,#134e4a);}
-.top-bar{padding:16px 16px 0;display:flex;align-items:center;gap:10px;}
-.back-btn{background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:17px;cursor:pointer;}
-.top-title{font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;color:white;flex:1;}
-.status-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-.lobby-body{flex:1;padding:16px;overflow-y:auto;}
-.code-box{background:rgba(255,255,255,0.15);border-radius:18px;padding:18px;text-align:center;margin-bottom:14px;}
-.code-label{font-size:11px;color:rgba(255,255,255,0.6);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
-.code-val{font-family:'Prompt',sans-serif;font-size:48px;font-weight:800;color:white;letter-spacing:14px;}
-.code-hint{font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;}
-.players-box{background:rgba(255,255,255,0.1);border-radius:14px;padding:14px;margin-bottom:14px;}
-.players-hdr{font-size:11px;color:rgba(255,255,255,0.55);font-weight:700;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
-.player-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:10px;padding:8px 10px;margin-bottom:6px;animation:fadeIn 0.3s ease;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-.player-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;flex-shrink:0;}
-.player-nm{font-size:13px;font-weight:600;color:white;flex:1;}
-.host-badge{font-size:10px;background:rgba(255,255,255,0.18);color:rgba(255,255,255,0.8);padding:2px 7px;border-radius:100px;}
-.settings-box{background:rgba(255,255,255,0.1);border-radius:14px;padding:14px;margin-bottom:14px;}
-.set-hdr{font-size:11px;color:rgba(255,255,255,0.55);font-weight:700;text-transform:uppercase;margin-bottom:10px;}
-.set-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.set-name{font-size:13px;color:rgba(255,255,255,0.9);}
-.set-sel{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;padding:5px 8px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;outline:none;}
-.start-btn{width:100%;padding:15px;background:white;color:var(--teal-d);border:none;border-radius:14px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all 0.2s;}
-.start-btn:disabled{opacity:0.4;cursor:default;}
-.wait-txt{text-align:center;font-size:13px;color:rgba(255,255,255,0.55);padding:12px;}
-
+#sLobby{background:linear-gradient(160deg,#0d9488,#134e4a);}
+.tBar{padding:14px 16px 0;display:flex;align-items:center;gap:10px;}
+.bkBtn{background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;}
+.tTitle{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:white;flex:1;}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.lBody{flex:1;padding:14px;overflow-y:auto;}
+.codeBox{background:rgba(255,255,255,0.15);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;}
+.codeLbl{font-size:11px;color:rgba(255,255,255,0.6);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.codeVal{font-family:'Prompt',sans-serif;font-size:46px;font-weight:800;color:white;letter-spacing:12px;}
+.codeHint{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;}
+.pBox{background:rgba(255,255,255,0.1);border-radius:13px;padding:12px;margin-bottom:12px;}
+.pHdr{font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;}
+.pRow{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.08);border-radius:9px;padding:7px 9px;margin-bottom:5px;animation:fi .3s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(-4px)}to{opacity:1}}
+.pAv{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:white;flex-shrink:0;}
+.pNm{font-size:13px;font-weight:600;color:white;flex:1;}
+.hostBadge{font-size:10px;background:rgba(255,255,255,0.18);color:rgba(255,255,255,0.8);padding:2px 7px;border-radius:100px;}
+.setBox{background:rgba(255,255,255,0.1);border-radius:13px;padding:12px;margin-bottom:12px;}
+.setHdr{font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;margin-bottom:10px;}
+.setRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.setLbl{font-size:13px;color:rgba(255,255,255,0.9);}
+.setSel{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;padding:5px 8px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;outline:none;}
+.startBtn{width:100%;padding:14px;background:white;color:var(--td);border:none;border-radius:13px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+.startBtn:disabled{opacity:.4;cursor:default;}
+.waitTxt{text-align:center;font-size:13px;color:rgba(255,255,255,0.5);padding:12px;}
 /* COUNTDOWN */
-#s-countdown{background:linear-gradient(160deg,#0d9488,#134e4a);align-items:center;justify-content:center;}
-.cd-wrap{text-align:center;}
-.cd-label{font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:12px;}
-.cd-num{font-family:'Prompt',sans-serif;font-size:120px;font-weight:800;color:white;animation:pop 0.5s ease;}
+#sCd{background:linear-gradient(160deg,#0d9488,#134e4a);align-items:center;justify-content:center;}
+.cdNum{font-family:'Prompt',sans-serif;font-size:110px;font-weight:800;color:white;animation:pop .5s ease;}
 @keyframes pop{from{transform:scale(1.4);opacity:0}to{transform:scale(1);opacity:1}}
-
 /* QUESTION */
-#s-question{background:var(--bg);}
-.q-hdr{background:linear-gradient(135deg,var(--teal),var(--teal-d));padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
-.q-left{} .q-prog{font-size:11px;color:rgba(255,255,255,0.75);}
-.q-mypts{font-size:18px;font-weight:800;color:white;font-family:'Prompt',sans-serif;}
-.q-timer-wrap{display:flex;align-items:center;gap:6px;}
-.q-timer-num{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:white;min-width:26px;text-align:right;}
-.q-timer-num.warn{color:#fca5a5;}
-.q-bar-wrap{height:5px;background:rgba(255,255,255,0.2);}
-.q-bar{height:5px;background:white;transition:width 1s linear;}
-.streak-row{background:#fff7ed;padding:6px 16px;font-size:12px;font-weight:700;color:#c2410c;display:none;}
-.q-body{padding:14px 16px;flex:1;overflow-y:auto;}
-.q-meta{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
-.q-cat{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;background:#f0fdfa;color:var(--teal-d);}
-.q-lv{padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;}
-.lv-easy{background:#dcfce7;color:#166534;} .lv-medium{background:#fef9c3;color:#92400e;} .lv-hard{background:#fee2e2;color:#991b1b;}
-.q-text{font-size:15px;font-weight:600;line-height:1.65;margin-bottom:16px;}
+#sQ{background:var(--bg);}
+.qHdr{background:linear-gradient(135deg,var(--t),var(--td));padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.qPts{font-family:'Prompt',sans-serif;font-size:17px;font-weight:800;color:white;}
+.qProg{font-size:11px;color:rgba(255,255,255,0.7);}
+.timerRow{display:flex;align-items:center;gap:6px;}
+.timerN{font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:white;min-width:24px;text-align:right;}
+.timerN.warn{color:#fca5a5;}
+.timerBar{height:5px;background:rgba(255,255,255,0.2);}
+.timerFill{height:5px;background:white;transition:width 1s linear;}
+.qBody{padding:14px 16px;flex:1;overflow-y:auto;}
+.qMeta{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.qCat{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;background:#f0fdfa;color:var(--td);}
+.qLv{padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;}
+.lvE{background:#dcfce7;color:#166534;}.lvM{background:#fef9c3;color:#92400e;}.lvH{background:#fee2e2;color:#991b1b;}
+.qTxt{font-size:15px;font-weight:600;line-height:1.65;margin-bottom:14px;}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.choice{padding:12px;border:2px solid var(--border);border-radius:13px;background:white;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;text-align:center;cursor:pointer;line-height:1.4;transition:all 0.15s;}
-.choice:active{transform:scale(0.96);}
-.choice.selected{border-color:var(--teal);background:var(--teal-50);}
-.choice.correct{background:#dcfce7;border-color:#16a34a;color:#166534;}
-.choice.wrong{background:#fee2e2;border-color:#dc2626;color:#991b1b;}
-.choice.show-correct{background:#dcfce7;border-color:#16a34a;color:#166534;}
-.choice:disabled{cursor:default;}
-.ans-msg{text-align:center;margin-top:12px;font-size:13px;font-weight:700;padding:10px;border-radius:10px;}
-.ans-ok{background:#dcfce7;color:#166534;} .ans-ng{background:#fee2e2;color:#991b1b;}
-.wait-bar{background:rgba(13,148,136,0.06);border:1px solid var(--teal-l);border-radius:10px;padding:10px;margin-top:10px;text-align:center;}
-.wait-bar-label{font-size:11px;color:var(--teal-d);font-weight:700;text-transform:uppercase;margin-bottom:6px;}
-.wait-dots{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;}
-.wd{width:9px;height:9px;border-radius:50%;background:var(--border);transition:background 0.3s;}
+.ch{padding:12px;border:2px solid var(--bd);border-radius:12px;background:white;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;text-align:center;cursor:pointer;line-height:1.4;transition:all .15s;}
+.ch:active{transform:scale(.96);}
+.ch.correct{background:#dcfce7;border-color:#16a34a;color:#166534;}
+.ch.wrong{background:#fee2e2;border-color:#dc2626;color:#991b1b;}
+.ch.showC{background:#dcfce7;border-color:#16a34a;color:#166534;}
+.ansMsg{text-align:center;margin-top:12px;font-size:13px;font-weight:700;padding:10px;border-radius:10px;display:none;}
+.ansOk{background:#dcfce7;color:#166534;}.ansNg{background:#fee2e2;color:#991b1b;}
+.wBar{background:rgba(13,148,136,.06);border:1px solid var(--tl);border-radius:10px;padding:10px;margin-top:10px;text-align:center;display:none;}
+.wLbl{font-size:11px;color:var(--td);font-weight:700;text-transform:uppercase;margin-bottom:6px;}
+.wDots{display:flex;gap:5px;justify-content:center;}
+.wd{width:9px;height:9px;border-radius:50%;background:var(--bd);transition:background .3s;}
 .wd.done{background:#16a34a;}
-
 /* LEADERBOARD */
-#s-leaderboard{background:var(--bg);}
-.lb-hdr{background:linear-gradient(135deg,var(--teal),var(--teal-d));padding:16px;text-align:center;}
-.lb-hdr-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:white;}
-.lb-hdr-sub{font-size:12px;color:rgba(255,255,255,0.7);}
-.lb-list{padding:14px;}
-.lb-row{display:flex;align-items:center;gap:10px;background:white;border-radius:13px;padding:11px 13px;margin-bottom:8px;border:1px solid var(--border);animation:fadeIn 0.2s ease;}
-.lb-rank{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;min-width:26px;text-align:center;}
-.r1{color:#f59e0b;} .r2{color:#94a3b8;} .r3{color:#cd7f32;}
-.lb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;}
-.lb-info{flex:1;}
-.lb-nm{font-size:14px;font-weight:700;}
-.lb-gain{font-size:11px;font-weight:700;color:#16a34a;}
-.lb-pts{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:var(--teal);}
-.lb-next{margin:0 14px 14px;width:calc(100% - 28px);padding:13px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:13px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
-
+#sLb{background:var(--bg);}
+.lbHdr{background:linear-gradient(135deg,var(--t),var(--td));padding:14px;text-align:center;}
+.lbHT{font-family:'Prompt',sans-serif;font-size:15px;font-weight:700;color:white;}
+.lbHS{font-size:12px;color:rgba(255,255,255,.7);}
+.lbList{padding:12px;}
+.lbRow{display:flex;align-items:center;gap:10px;background:white;border-radius:12px;padding:10px 12px;margin-bottom:7px;border:1px solid var(--bd);animation:fi .2s ease;}
+.lbRk{font-family:'Prompt',sans-serif;font-size:17px;font-weight:800;min-width:24px;text-align:center;}
+.r1{color:#f59e0b;}.r2{color:#94a3b8;}.r3{color:#cd7f32;}
+.lbAv{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;}
+.lbInf{flex:1;}
+.lbNm{font-size:13px;font-weight:700;}
+.lbGn{font-size:11px;font-weight:700;color:#16a34a;}
+.lbPt{font-family:'Prompt',sans-serif;font-size:17px;font-weight:800;color:var(--t);}
+.lbNext{margin:0 14px 14px;width:calc(100% - 28px);padding:12px;background:linear-gradient(135deg,var(--t),var(--td));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 /* FINAL */
-#s-final{background:linear-gradient(160deg,#0d9488,#134e4a);}
-.final-hdr{padding:22px 16px 14px;text-align:center;}
-.final-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:white;margin-bottom:4px;}
-.final-sub{font-size:13px;color:rgba(255,255,255,0.65);}
-.podium{padding:0 16px 18px;display:flex;align-items:flex-end;justify-content:center;gap:8px;min-height:130px;}
-.pod-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}
-.pod-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;border:2px solid rgba(255,255,255,0.35);margin-bottom:4px;}
-.pod-nm{font-size:11px;color:rgba(255,255,255,0.8);font-weight:700;margin-bottom:3px;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.pod-pts{font-family:'Prompt',sans-serif;font-size:13px;font-weight:800;color:white;margin-bottom:3px;}
-.pod-base{border-radius:10px 10px 0 0;width:70px;display:flex;align-items:center;justify-content:center;font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:rgba(255,255,255,0.8);}
-.p1{background:linear-gradient(135deg,#f59e0b,#d97706);height:88px;}
-.p2{background:linear-gradient(135deg,#94a3b8,#64748b);height:68px;}
-.p3{background:linear-gradient(135deg,#cd7f32,#a16207);height:52px;}
-.final-list{background:rgba(255,255,255,0.1);margin:0 16px;border-radius:14px;overflow:hidden;}
-.final-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.08);}
-.final-row:last-child{border-bottom:none;}
-.fr-rank{font-family:'Prompt',sans-serif;font-size:13px;font-weight:800;color:rgba(255,255,255,0.4);min-width:18px;}
-.fr-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;}
-.fr-nm{flex:1;font-size:13px;color:white;font-weight:600;}
-.fr-pts{font-family:'Prompt',sans-serif;font-size:15px;font-weight:800;color:white;}
-.fr-cr{font-size:10px;color:rgba(255,255,255,0.45);}
-.final-btns{padding:18px 16px;}
-.fbtn{width:100%;padding:13px;border:none;border-radius:13px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;}
-.fbtn-main{background:white;color:var(--teal-d);}
-.fbtn-sub{background:rgba(255,255,255,0.12);color:white;border:2px solid rgba(255,255,255,0.25);}
-
-/* overlay / toast */
-.overlay{display:none;position:fixed;inset:0;background:rgba(13,148,136,0.93);z-index:200;flex-direction:column;align-items:center;justify-content:center;}
-.overlay.on{display:flex;}
-.spin{width:44px;height:44px;border:4px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
+#sFin{background:linear-gradient(160deg,#0d9488,#134e4a);}
+.finHdr{padding:20px 16px 14px;text-align:center;}
+.finT{font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:white;margin-bottom:4px;}
+.finS{font-size:13px;color:rgba(255,255,255,.65);}
+.podium{padding:0 16px 16px;display:flex;align-items:flex-end;justify-content:center;gap:8px;min-height:120px;}
+.podCol{display:flex;flex-direction:column;align-items:center;}
+.podAv{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;border:2px solid rgba(255,255,255,.3);margin-bottom:4px;}
+.podNm{font-size:11px;color:rgba(255,255,255,.8);font-weight:700;margin-bottom:3px;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.podPt{font-family:'Prompt',sans-serif;font-size:12px;font-weight:800;color:white;margin-bottom:3px;}
+.podBase{border-radius:10px 10px 0 0;width:68px;display:flex;align-items:center;justify-content:center;font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:rgba(255,255,255,.8);}
+.p1{background:linear-gradient(135deg,#f59e0b,#d97706);height:86px;}.p2{background:linear-gradient(135deg,#94a3b8,#64748b);height:66px;}.p3{background:linear-gradient(135deg,#cd7f32,#a16207);height:50px;}
+.finList{background:rgba(255,255,255,.1);margin:0 16px;border-radius:13px;overflow:hidden;}
+.finRow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.finRow:last-child{border-bottom:none;}
+.frRk{font-family:'Prompt',sans-serif;font-size:13px;font-weight:800;color:rgba(255,255,255,.4);min-width:18px;}
+.frAv{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;}
+.frNm{flex:1;font-size:13px;color:white;font-weight:600;}
+.frPt{font-family:'Prompt',sans-serif;font-size:15px;font-weight:800;color:white;}
+.frCr{font-size:10px;color:rgba(255,255,255,.45);}
+.finBtns{padding:16px;}
+.fb{width:100%;padding:12px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;}
+.fbM{background:white;color:var(--td);}.fbS{background:rgba(255,255,255,.12);color:white;border:2px solid rgba(255,255,255,.25);}
+/* OVERLAY */
+.ovl{display:none;position:fixed;inset:0;background:rgba(13,148,136,.93);z-index:200;flex-direction:column;align-items:center;justify-content:center;}
+.ovl.on{display:flex;}
+.spin{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.spin-txt{font-size:14px;color:white;font-weight:600;}
-.toast{position:fixed;bottom:max(20px,var(--safe-b));left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
+.spinTxt{font-size:14px;color:white;font-weight:600;}
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
 .toast.on{opacity:1;}
-
-/* ── SAVE OVERLAY ── */
-#saveOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
-#saveOverlay.on{display:flex;}
-#saveOverlayImg{max-width:100%;max-height:75vh;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
-#saveOverlayHint{color:rgba(255,255,255,0.8);font-size:13px;margin-top:12px;text-align:center;font-family:"Sarabun",sans-serif;}
-#saveOverlayClose{margin-top:14px;padding:10px 28px;background:white;color:#1e293b;border:none;border-radius:12px;font-family:"Sarabun",sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
-/* ── WINNER ANIMATION ── */
-@keyframes float-up{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(-100vh) rotate(720deg)}}
-@keyframes winner-pop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-@keyframes shine{0%,100%{opacity:0.6}50%{opacity:1}}
-.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
-.confetti-piece{position:absolute;width:10px;height:10px;opacity:0;animation:float-up linear forwards;}
-.winner-crown{font-size:64px;animation:winner-pop 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards;}
-.winner-name{animation:winner-pop 0.6s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;}
-.winner-score{animation:winner-pop 0.6s 0.4s cubic-bezier(0.34,1.56,0.64,1) both;}
-.podium-wrap{animation:winner-pop 0.7s 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
-/* share buttons */
-.share-row{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px 0;}
-.share-btn{flex:1;min-width:100px;padding:11px 8px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;}
-.share-btn:active{transform:scale(0.96);}
-.sbtn-fb{background:#1877f2;color:white;}
-.sbtn-copy{background:var(--bg);color:var(--slate);border:1.5px solid var(--border);}
-.sbtn-line{background:#00b900;color:white;}
-
+/* CONFETTI */
+@keyframes cfUp{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(-100vh) rotate(720deg)}}
+.cf{position:absolute;animation:cfUp linear forwards;}
+#cfWrap{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
+/* SAVE OVERLAY */
+#saveOvl{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+#saveOvl.on{display:flex;}
+#saveOvlImg{max-width:100%;max-height:72vh;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+.saveHint{color:rgba(255,255,255,.75);font-size:12px;margin:12px 0;text-align:center;line-height:1.6;}
+.saveClose{padding:9px 26px;background:white;color:#1e293b;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+/* Share row */
+.shareRow{display:none;padding:14px 16px 0;}
+.saveMem{width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 </style>
 </head>
 <body>
+<div id="cfWrap"></div>
+<div id="saveOvl">
+  <img id="saveOvlImg" alt="result">
+  <div class="saveHint">📱 iOS: กดค้างที่รูป → บันทึกรูปภาพ<br>💻 PC/Android: รูปดาวน์โหลดอัตโนมัติ</div>
+  <button class="saveClose" onclick="document.getElementById('saveOvl').classList.remove('on')">✕ ปิด</button>
+</div>
 
 <!-- HOME -->
-<div id="s-home" class="screen on">
-  <div class="home-card">
-    <div class="home-logo">🐾</div>
-    <div class="home-title">VetQuiz Live</div>
-    <div class="home-sub">แข่งแบบ Real-time หลายคนพร้อมกัน</div>
-    <input class="home-input" id="hName" placeholder="ชื่อของคุณ" maxlength="20" autocomplete="off">
-    <div class="home-err" id="hErr"></div>
-    <button class="big-btn btn-host" onclick="goHost()">🎮 สร้างห้อง (Host)</button>
-    <div class="home-div">— หรือเข้าร่วมห้องที่มีอยู่ —</div>
-    <input class="home-input code-input" id="hCode" placeholder="XXXX" maxlength="4" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
-    <button class="big-btn btn-join" onclick="goJoin()">🚀 เข้าร่วมห้อง</button>
-    <div style="margin-top:8px;"><button onclick="window.location.href='index.html'" style="background:none;border:none;color:rgba(255,255,255,0.4);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">← กลับหน้าหลัก</button></div>
+<div id="sHome" class="scr on">
+  <div class="hCard">
+    <div class="hLogo">🐾</div>
+    <div class="hTitle">VetQuiz Live</div>
+    <div class="hSub">แข่งแบบ Real-time หลายคนพร้อมกัน</div>
+    <input class="inp" id="hName" placeholder="ชื่อของคุณ" maxlength="20" autocomplete="off">
+    <div class="err" id="hErr"></div>
+    <button class="btn btnHost" onclick="goHost()">🎮 สร้างห้อง (Host)</button>
+    <div class="div">— หรือ —</div>
+    <input class="inp codeInp" id="hCode" placeholder="XXXX" maxlength="4" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
+    <button class="btn btnJoin" onclick="goJoin()">🚀 เข้าร่วมห้อง</button>
+    <button onclick="location.href='index.html'" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;margin-top:8px;font-family:'Sarabun',sans-serif;">← กลับหน้าหลัก</button>
   </div>
 </div>
 
 <!-- LOBBY -->
-<div id="s-lobby" class="screen">
-  <div class="top-bar">
-    <button class="back-btn" onclick="leave()">←</button>
-    <div class="top-title" id="lobbyTitle">ห้อง</div>
-    <div class="status-dot" id="connDot" title="เชื่อมต่อแล้ว"></div>
+<div id="sLobby" class="scr">
+  <div class="tBar">
+    <button class="bkBtn" onclick="doLeave()">←</button>
+    <div class="tTitle" id="lobTitle">ห้อง</div>
+    <div class="dot"></div>
   </div>
-  <div class="lobby-body">
-    <div class="code-box" id="codeBox" style="display:none;">
-      <div class="code-label">รหัสห้อง — แชร์ให้เพื่อน</div>
-      <div class="code-val" id="codeVal"></div>
-      <div class="code-hint">ผู้เล่นพิมพ์รหัสนี้แล้วกด "เข้าร่วม"</div>
+  <div class="lBody">
+    <div class="codeBox" id="codeBox" style="display:none;">
+      <div class="codeLbl">รหัสห้อง</div>
+      <div class="codeVal" id="codeVal"></div>
+      <div class="codeHint">ให้เพื่อนพิมพ์รหัสนี้เพื่อเข้าร่วม</div>
     </div>
-    <div class="players-box">
-      <div class="players-hdr">
-        <span>ผู้เล่น</span>
-        <span id="playerCount" style="color:rgba(255,255,255,0.8);font-size:13px;">0 คน</span>
-      </div>
-      <div id="playerList"></div>
+    <div class="pBox">
+      <div class="pHdr"><span>ผู้เล่น</span><span id="pCount">0 คน</span></div>
+      <div id="pList"></div>
     </div>
-    <div class="settings-box" id="settingsBox" style="display:none;">
-      <div class="set-hdr">⚙️ ตั้งค่าเกม</div>
-      <div class="set-row">
-        <span class="set-name">จำนวนคำถาม</span>
-        <select class="set-sel" id="setQ"><option value="5">5 ข้อ</option><option value="10" selected>10 ข้อ</option><option value="15">15 ข้อ</option><option value="20">20 ข้อ</option></select>
-      </div>
-      <div class="set-row">
-        <span class="set-name">เวลาต่อข้อ</span>
-        <select class="set-sel" id="setT"><option value="10">10 วินาที</option><option value="15" selected>15 วินาที</option><option value="20">20 วินาที</option><option value="30">30 วินาที</option></select>
-      </div>
-      <div class="set-row">
-        <span class="set-name">หมวดหมู่</span>
-        <select class="set-sel" id="setCat">
-          <option value="all">ทุกหมวด</option>
-          <option value="กายวิภาค">กายวิภาค</option>
-          <option value="สรีรวิทยา">สรีรวิทยา</option>
-          <option value="เภสัชวิทยา">เภสัชวิทยา</option>
-          <option value="จุลชีววิทยา">จุลชีววิทยา</option>
-          <option value="ปรสิตวิทยา">ปรสิตวิทยา</option>
-          <option value="พยาธิวิทยา">พยาธิวิทยา</option>
-          <option value="อายุรกรรม">อายุรกรรม</option>
-          <option value="ศัลยกรรม">ศัลยกรรม</option>
-          <option value="สัตว์ใหญ่">สัตว์ใหญ่</option>
-          <option value="Exotic">Exotic</option>
-          <option value="คลินิกรวม">คลินิกรวม</option>
-        </select>
-      </div>
+    <div class="setBox" id="setBox" style="display:none;">
+      <div class="setHdr">⚙️ ตั้งค่า</div>
+      <div class="setRow"><span class="setLbl">จำนวนคำถาม</span><select class="setSel" id="setQ"><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option></select></div>
+      <div class="setRow"><span class="setLbl">เวลา/ข้อ</span><select class="setSel" id="setT"><option value="10">10 วิ</option><option value="15" selected>15 วิ</option><option value="20">20 วิ</option><option value="30">30 วิ</option></select></div>
+      <div class="setRow"><span class="setLbl">หมวด</span><select class="setSel" id="setCat"><option value="all">ทุกหมวด</option><option value="กายวิภาค">กายวิภาค</option><option value="สรีรวิทยา">สรีรวิทยา</option><option value="เภสัชวิทยา">เภสัชวิทยา</option><option value="จุลชีววิทยา">จุลชีววิทยา</option><option value="ปรสิตวิทยา">ปรสิตวิทยา</option><option value="พยาธิวิทยา">พยาธิวิทยา</option><option value="อายุรกรรม">อายุรกรรม</option><option value="ศัลยกรรม">ศัลยกรรม</option><option value="สัตว์ใหญ่">สัตว์ใหญ่</option><option value="Exotic">Exotic</option><option value="คลินิกรวม">คลินิกรวม</option></select></div>
     </div>
-    <button class="start-btn" id="startBtn" onclick="hostStart()" style="display:none;">🚀 เริ่มเกม</button>
-    <div class="wait-txt" id="waitTxt" style="display:none;">⏳ รอ Host เริ่มเกม...</div>
+    <button class="startBtn" id="startBtn" onclick="hostStart()" style="display:none;">🚀 เริ่มเกม</button>
+    <div class="waitTxt" id="waitTxt" style="display:none;">⏳ รอ Host เริ่มเกม...</div>
   </div>
 </div>
 
 <!-- COUNTDOWN -->
-<div id="s-countdown" class="screen">
-  <div class="cd-wrap">
-    <div class="cd-label">เกมกำลังเริ่ม!</div>
-    <div class="cd-num" id="cdNum">3</div>
-  </div>
+<div id="sCd" class="scr">
+  <div class="cdNum" id="cdNum">3</div>
 </div>
 
 <!-- QUESTION -->
-<div id="s-question" class="screen">
-  <div class="q-hdr">
-    <div class="q-left">
-      <div class="q-prog" id="qProg">ข้อ 1/10</div>
-      <div class="q-mypts" id="myPts">0 คะแนน</div>
-    </div>
-    <div class="q-timer-wrap">
-      <div class="q-timer-num" id="timerNum">15</div>
-      <svg width="34" height="34" viewBox="0 0 34 34">
-        <circle cx="17" cy="17" r="14" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
-        <circle cx="17" cy="17" r="14" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"
-          id="timerRing" style="transform:rotate(-90deg);transform-origin:50% 50%;stroke-dasharray:88;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear;"/>
-      </svg>
+<div id="sQ" class="scr">
+  <div class="qHdr">
+    <div><div class="qProg" id="qProg">ข้อ 1/10</div><div class="qPts" id="myPts">0 คะแนน</div></div>
+    <div class="timerRow">
+      <div class="timerN" id="timerN">15</div>
+      <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3"/><circle cx="16" cy="16" r="13" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" id="timerArc" style="transform:rotate(-90deg);transform-origin:50% 50%;stroke-dasharray:82;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear;"/></svg>
     </div>
   </div>
-  <div class="q-bar-wrap"><div class="q-bar" id="qBar"></div></div>
-  <div class="streak-row" id="streakRow"></div>
-  <div class="q-body">
-    <div class="q-meta"><span class="q-cat" id="qCat"></span><span class="q-lv" id="qLv"></span></div>
-    <div class="q-text" id="qText"></div>
+  <div class="timerBar"><div class="timerFill" id="timerFill"></div></div>
+  <div class="qBody">
+    <div class="qMeta"><span class="qCat" id="qCat"></span><span class="qLv" id="qLv"></span></div>
+    <div class="qTxt" id="qTxt"></div>
     <div class="choices" id="choices"></div>
-    <div class="ans-msg" id="ansMsg" style="display:none;"></div>
-    <div class="wait-bar" id="waitBar" style="display:none;">
-      <div class="wait-bar-label">รอผู้เล่นอื่น…</div>
-      <div class="wait-dots" id="waitDots"></div>
-    </div>
+    <div class="ansMsg" id="ansMsg"></div>
+    <div class="wBar" id="wBar"><div class="wLbl">รอผู้เล่นอื่น…</div><div class="wDots" id="wDots"></div></div>
   </div>
 </div>
 
 <!-- LEADERBOARD -->
-<div id="s-leaderboard" class="screen">
-  <div class="lb-hdr">
-    <div class="lb-hdr-title" id="lbTitle">คะแนน</div>
-    <div class="lb-hdr-sub" id="lbSub"></div>
-  </div>
-  <div class="lb-list" id="lbList"></div>
-  <button class="lb-next" id="lbNext" onclick="hostNext()" style="display:none;">ถัดไป →</button>
-  <div class="wait-txt" id="lbWait" style="color:var(--slate-m);">⏳ รอ Host...</div>
+<div id="sLb" class="scr">
+  <div class="lbHdr"><div class="lbHT" id="lbT">คะแนน</div><div class="lbHS" id="lbS"></div></div>
+  <div class="lbList" id="lbList"></div>
+  <button class="lbNext" id="lbNext" onclick="hostNext()" style="display:none;">ถัดไป →</button>
+  <div class="waitTxt" id="lbWait" style="color:var(--sm);">⏳ รอ Host...</div>
 </div>
 
 <!-- FINAL -->
-<div id="s-final" class="screen">
-  <div class="final-hdr">
-    <div class="final-title">🏆 ผลการแข่งขัน</div>
-    <div class="final-sub" id="finalSub"></div>
-  </div>
-  <div class="podium" id="podium"></div>
-  <div class="final-list" id="finalList"></div>
-  <div class="share-row" id="shareRow" style="display:none;"><button class="share-btn" id="saveMemBtn" onclick="saveMemory()" style="flex:1;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;">📸 บันทึกความทรงจำ</button></div>
-  <div class="final-btns">
-    <button class="fbtn fbtn-main" onclick="playAgain()">🔄 เล่นอีกรอบ</button>
-    <button class="fbtn fbtn-sub" onclick="goHome()">🏠 กลับหน้าหลัก</button>
+<div id="sFin" class="scr">
+  <div class="finHdr"><div class="finT">🏆 ผลการแข่งขัน</div><div class="finS" id="finS"></div></div>
+  <div class="podium" id="pod"></div>
+  <div class="finList" id="finList"></div>
+  <div class="shareRow" id="shareRow"><button class="saveMem" onclick="saveMemory()">📸 บันทึกความทรงจำ</button></div>
+  <div class="finBtns">
+    <button class="fb fbM" onclick="playAgain()">🔄 เล่นอีกรอบ</button>
+    <button class="fb fbS" onclick="doLeave();showScr('sHome')">🏠 กลับหน้าหลัก</button>
   </div>
 </div>
 
 <!-- OVERLAY -->
-<div class="confetti-wrap" id="confettiWrap"></div>
-<div id="saveOverlay"><img id="saveOverlayImg"><div id="saveOverlayHint">📱 iOS: กดค้างที่รูป → "บันทึกรูปภาพ"<br>🤖 Android/PC: รูปถูกดาวน์โหลดอัตโนมัติ</div><button id="saveOverlayClose" onclick="document.getElementById('saveOverlay').classList.remove('on')">✕ ปิด</button></div>
-<div class="overlay" id="overlay"><div class="spin"></div><div class="spin-txt" id="overlayTxt">กำลังเชื่อมต่อ...</div></div>
+<div class="ovl" id="ovl"><div class="spin"></div><div class="spinTxt" id="ovlTxt">กำลังเชื่อมต่อ...</div></div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════
-//  CONFIG
-// ══════════════════════════════════════
+// ── CONFIG ──
 const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
-const {createClient}=window.supabase;
-const sb=createClient(SB_URL,SB_KEY);
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
-// ══════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════
-let myName='', myId='', roomCode='', isHost=false;
-let ch=null;                       // Realtime channel
-let players={};                    // { id: {id,name,isHost,score,correct} }
-let gameQ=[], settings={};
-let curIdx=0, myScore=0, myCorrect=0;
-let myStreak=0, myStreakMax=0;
-let hasAnswered=false, answerLog={};
-let timerInt=null, timeLeft=0;
-let prevScores={};
-let scoreMap={}; // Host maintains score from broadcasts
-let lastCat='all';
+// ── STATE ──
+let myId='',myName='',roomCode='',isHost=false;
+let ch=null, players={};
+let gameQ=[],settings={},curIdx=0;
+let myScore=0,myCorrect=0,myStreak=0;
+let hasAnswered=false,answerLog={},revealSent=false;
+let scoreMap={},prevScores={};
+let timerInt=null,timeLeft=0;
+let finalScores=[],finalTotalQ=0;
 
-// ══════════════════════════════════════
-//  UTILITIES
-// ══════════════════════════════════════
+// ── UTILS ──
 const uid=()=>Math.random().toString(36).slice(2,9);
-const genCode=()=>{let s='';for(let i=0;i<4;i++)s+='ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*23)];return s;}
-const shuffle=a=>[...a].sort(()=>Math.random()-0.5);
-const COLORS=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea','#0891b2','#65a30d'];
-const avColor=n=>{let h=0;for(const c of n)h=(h+c.charCodeAt(0))%COLORS.length;return COLORS[h];};
-const avLetter=n=>n.trim()[0]?.toUpperCase()||'?';
-const CAT_E={'กายวิภาค':'🦴','สรีรวิทยา':'💓','เภสัชวิทยา':'💊','จุลชีววิทยา':'🦠','ปรสิตวิทยา':'🐛','พยาธิวิทยา':'🔬','อายุรกรรม':'🩺','ศัลยกรรม':'✂️','สัตว์ใหญ่':'🐄','Exotic':'🦜','คลินิกรวม':'🏥'};
+const genCode=()=>{let s='';const a='ABCDEFGHJKLMNPQRSTUVWXYZ';for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s;};
+const shuffle=a=>[...a].sort(()=>Math.random()-.5);
+const COLS=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea'];
+const aC=n=>{let h=0;for(const c of String(n||'?'))h=(h+c.charCodeAt(0))%COLS.length;return COLS[h];};
+const aL=n=>(String(n||'?')[0]||'?').toUpperCase();
+const CE={'กายวิภาค':'🦴','สรีรวิทยา':'💓','เภสัชวิทยา':'💊','จุลชีววิทยา':'🦠','ปรสิตวิทยา':'🐛','พยาธิวิทยา':'🔬','อายุรกรรม':'🩺','ศัลยกรรม':'✂️','สัตว์ใหญ่':'🐄','Exotic':'🦜','คลินิกรวม':'🏥'};
 
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
-function showOverlay(txt){document.getElementById('overlay').classList.add('on');document.getElementById('overlayTxt').textContent=txt||'กำลังโหลด...';}
-function hideOverlay(){document.getElementById('overlay').classList.remove('on');}
-let _tt;
-function toast(msg,ms=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('on'),ms);}
+function showScr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
+function showOvl(t){document.getElementById('ovl').classList.add('on');document.getElementById('ovlTxt').textContent=t||'กำลังโหลด...';}
+function hideOvl(){document.getElementById('ovl').classList.remove('on');}
+let _tt;function toast(m,ms=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('on'),ms);}
 
-// ══════════════════════════════════════
-//  HOME
-// ══════════════════════════════════════
-function goHome(){leave();showScreen('s-home');}
-
+// ── HOME ──
 function goHost(){
-  myName=document.getElementById('hName').value.trim();
-  if(!myName){document.getElementById('hErr').textContent='กรุณากรอกชื่อก่อน';return;}
+  const n=document.getElementById('hName').value.trim();
+  if(!n){document.getElementById('hErr').textContent='กรุณากรอกชื่อ';return;}
   document.getElementById('hErr').textContent='';
-  myId=uid(); roomCode=genCode(); isHost=true;
+  myName=n;myId=uid();roomCode=genCode();isHost=true;
   connect();
 }
 function goJoin(){
-  myName=document.getElementById('hName').value.trim();
+  const n=document.getElementById('hName').value.trim();
   const code=document.getElementById('hCode').value.trim().toUpperCase();
-  if(!myName){document.getElementById('hErr').textContent='กรุณากรอกชื่อก่อน';return;}
-  if(code.length!==4){document.getElementById('hErr').textContent='รหัสห้องต้องเป็น 4 ตัวอักษร';return;}
+  if(!n){document.getElementById('hErr').textContent='กรุณากรอกชื่อ';return;}
+  if(code.length!==4){document.getElementById('hErr').textContent='รหัส 4 ตัวอักษร';return;}
   document.getElementById('hErr').textContent='';
-  myId=uid(); roomCode=code; isHost=false;
+  myName=n;myId=uid();roomCode=code;isHost=false;
   connect();
 }
 
-// ══════════════════════════════════════
-//  SUPABASE REALTIME — CONNECT
-// ══════════════════════════════════════
+// ── CONNECT ──
 async function connect(){
-  showOverlay('กำลังเชื่อมต่อ...');
+  showOvl('กำลังเชื่อมต่อ...');
   if(ch){await sb.removeChannel(ch);ch=null;}
   players={};
 
-  ch=sb.channel('vetquiz_'+roomCode,{
-    config:{
-      presence:{key:myId},
-      broadcast:{self:true}
-    }
+  ch=sb.channel('vq_'+roomCode,{
+    config:{presence:{key:myId},broadcast:{self:true}}
   });
 
-  // ─── PRESENCE: correct Supabase v2 syntax ───
+  // Presence: correct v2 syntax
   ch.on('presence',{event:'sync'},()=>{
-    const state=ch.presenceState();
+    const st=ch.presenceState();
     players={};
-    for(const key in state){
-      const arr=state[key];
-      if(arr&&arr.length>0){
-        const p=arr[0];
-        if(p&&p.id) players[p.id]=p;
-      }
-    }
-    renderPlayers();
-    updateStart();
+    for(const k in st){const arr=st[k];if(arr&&arr[0]&&arr[0].id)players[arr[0].id]=arr[0];}
+    renderPlayers();updateStart();
   });
-
-  ch.on('presence',{event:'join'},({key,newPresences})=>{
+  ch.on('presence',{event:'join'},({newPresences})=>{
     newPresences.forEach(p=>{if(p&&p.id)players[p.id]=p;});
-    renderPlayers();
-    updateStart();
+    renderPlayers();updateStart();
   });
-
-  ch.on('presence',{event:'leave'},({key,leftPresences})=>{
+  ch.on('presence',{event:'leave'},({leftPresences})=>{
     leftPresences.forEach(p=>{if(p&&p.id)delete players[p.id];});
-    renderPlayers();
-    updateStart();
-    toast('👋 '+(leftPresences[0]?.name||'?')+' ออกจากห้อง');
+    renderPlayers();updateStart();
+    if(leftPresences[0])toast('👋 '+(leftPresences[0].name||'?')+' ออกจากห้อง');
   });
 
-  // ─── BROADCAST: game events ───
+  // Broadcast
   ch.on('broadcast',{event:'game'},(msg)=>{
-    const data=msg?.payload??msg;
-    handleEvent(data);
+    const d=msg?.payload??msg;
+    if(d&&d.type)handleEvent(d);
   });
 
-  // ─── SUBSCRIBE ───
   ch.subscribe(async(status)=>{
     if(status==='SUBSCRIBED'){
-      const trackResult=await ch.track({
-        id:myId, name:myName, isHost, score:0, correct:0
-      });
-      console.log('[track]',trackResult);
+      await ch.track({id:myId,name:myName,isHost,score:0,correct:0});
       showLobby();
-      hideOverlay();
+      hideOvl();
+      setTimeout(()=>{
+        const st=ch.presenceState();
+        players={};
+        for(const k in st){const arr=st[k];if(arr&&arr[0]&&arr[0].id)players[arr[0].id]=arr[0];}
+        renderPlayers();updateStart();
+      },600);
     } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
-      hideOverlay();
-      document.getElementById('hErr').textContent='เชื่อมต่อไม่ได้ กรุณาลองใหม่';
+      hideOvl();
+      document.getElementById('hErr').textContent='เชื่อมต่อไม่ได้ ลองใหม่';
       if(ch){await sb.removeChannel(ch);ch=null;}
     }
   });
 }
 
-// ══════════════════════════════════════
-//  LOBBY
-// ══════════════════════════════════════
+// ── LOBBY ──
 function showLobby(){
-  showScreen('s-lobby');
-  document.getElementById('lobbyTitle').textContent='ห้อง '+roomCode;
+  showScr('sLobby');
+  document.getElementById('lobTitle').textContent='ห้อง '+roomCode;
   document.getElementById('codeBox').style.display=isHost?'block':'none';
   document.getElementById('codeVal').textContent=roomCode;
-  document.getElementById('settingsBox').style.display=isHost?'block':'none';
+  document.getElementById('setBox').style.display=isHost?'block':'none';
   document.getElementById('startBtn').style.display=isHost?'block':'none';
   document.getElementById('waitTxt').style.display=isHost?'none':'block';
-  updateStart();
 }
-
 function renderPlayers(){
-  const list=document.getElementById('playerList');
   const arr=Object.values(players).sort((a,b)=>a.isHost?-1:1);
-  document.getElementById('playerCount').textContent=arr.length+' คน';
-  list.innerHTML=arr.map(p=>`
-    <div class="player-row">
-      <div class="player-av" style="background:${avColor(p.name)}">${avLetter(p.name)}</div>
-      <div class="player-nm">${p.name}${p.id===myId?' (คุณ)':''}</div>
-      ${p.isHost?'<span class="host-badge">Host 👑</span>':''}
+  document.getElementById('pCount').textContent=arr.length+' คน';
+  document.getElementById('pList').innerHTML=arr.map(p=>`
+    <div class="pRow">
+      <div class="pAv" style="background:${aC(p.name)}">${aL(p.name)}</div>
+      <div class="pNm">${p.name}${p.id===myId?' (คุณ)':''}</div>
+      ${p.isHost?'<span class="hostBadge">Host 👑</span>':''}
     </div>`).join('');
 }
-
 function updateStart(){
   const btn=document.getElementById('startBtn');
   if(!btn||!isHost)return;
@@ -657,229 +377,197 @@ function updateStart(){
   btn.disabled=false;
   btn.textContent='🚀 เริ่มเกม ('+n+' คน)';
 }
-
-async function leave(){
+async function doLeave(){
   clearInterval(timerInt);
   if(ch){await ch.untrack();await sb.removeChannel(ch);ch=null;}
-  players={};gameQ=[];curIdx=0;myScore=0;myCorrect=0;
-  myStreak=0;myStreakMax=0;answerLog={};prevScores={};
+  players={};gameQ=[];
 }
 
-// ══════════════════════════════════════
-//  BROADCAST
-// ══════════════════════════════════════
+// ── BROADCAST ── (with retry)
 async function bcast(data){
-  if(!ch)return;
-  try{
-    const r=await ch.send({type:'broadcast',event:'game',payload:data});
-    if(r==='error')console.warn('[bcast] send error');
-  }catch(e){console.error('[bcast]',e);}
+  if(!ch)return false;
+  for(let i=0;i<3;i++){
+    try{
+      const r=await ch.send({type:'broadcast',event:'game',payload:data});
+      if(r!=='error')return true;
+      await new Promise(res=>setTimeout(res,300));
+    }catch(e){await new Promise(res=>setTimeout(res,300));}
+  }
+  console.warn('[bcast] failed after 3 retries',data.type);
+  return false;
 }
 
-// ══════════════════════════════════════
-//  HOST: START
-// ══════════════════════════════════════
+// ── HOST START ──
 async function hostStart(){
   const totalQ=+document.getElementById('setQ').value||10;
   const timePerQ=+document.getElementById('setT').value||15;
   const cat=document.getElementById('setCat').value||'all';
   settings={totalQ,timePerQ,cat};
-  lastCat=cat;
   let pool=cat==='all'?RAW_Q:RAW_Q.filter(q=>q.cat===cat);
   if(!pool.length)pool=RAW_Q;
   gameQ=shuffle(pool).slice(0,Math.min(totalQ,pool.length));
-  curIdx=0;myScore=0;myCorrect=0;myStreak=0;myStreakMax=0;
-  prevScores={};
-  Object.keys(players).forEach(id=>{prevScores[id]=0;scoreMap[id]={id,name:players[id]?.name||id,score:0,correct:0};});
+  curIdx=0;myScore=0;myCorrect=0;myStreak=0;
+  prevScores={};scoreMap={};
   const btn=document.getElementById('startBtn');
-  btn.disabled=true;btn.textContent='⏳ กำลังเริ่ม...';
-  await bcast({type:'start',gameQ,settings});
-  btn.disabled=false;
+  btn.disabled=true;btn.textContent='⏳...';
+  const ok=await bcast({type:'start',gameQ,settings});
+  if(!ok){toast('❌ ส่งสัญญาณไม่ได้ ลองใหม่');btn.disabled=false;btn.textContent='🚀 เริ่มเกม';}
 }
 
-// ══════════════════════════════════════
-//  HANDLE EVENTS
-// ══════════════════════════════════════
+// ── EVENT HANDLER ──
 function handleEvent(d){
-  if(!d||!d.type)return;
   switch(d.type){
-    case'start':  onStart(d);  break;
-    case'question':onQuestion(d);break;
-    case'answer': onAnswer(d); break;
-    case'reveal': onReveal(d); break;
-    case'next':   onNext(d);   break;
-    case'final':  onFinal(d);  break;
+    case 'start':   onStart(d);   break;
+    case 'question':onQuestion(d);break;
+    case 'answer':  onAnswerEvt(d);break;
+    case 'reveal':  onReveal(d);  break;
+    case 'next':    onNext(d);    break;
+    case 'final':   onFinal(d);   break;
   }
 }
 
+// ── GAME FLOW ──
 function onStart(d){
-  gameQ=d.gameQ; settings=d.settings;
-  curIdx=0;myScore=0;myCorrect=0;myStreak=0;myStreakMax=0;
-  prevScores={};answerLog={};
-  Object.keys(players).forEach(id=>{prevScores[id]=0;scoreMap[id]={id,name:players[id]?.name||id,score:0,correct:0};});
-  showScreen('s-countdown');
+  gameQ=d.gameQ;settings=d.settings;
+  curIdx=0;myScore=0;myCorrect=0;myStreak=0;
+  scoreMap={};prevScores={};answerLog={};revealSent=false;
+  // Init scoreMap from current players
+  Object.values(players).forEach(p=>{scoreMap[p.id]={id:p.id,name:p.name,score:0,correct:0};});
+  showScr('sCd');
   if(isHost){
     let n=3;
+    document.getElementById('cdNum').textContent=n;
     const iv=setInterval(()=>{
       n--;
-      document.getElementById('cdNum').textContent=n>0?n:'🐾';
-      if(n<=0){clearInterval(iv);setTimeout(()=>sendQuestion(0),600);}
+      document.getElementById('cdNum').textContent=n>0?n:'▶';
+      if(n<=0){clearInterval(iv);setTimeout(()=>doSendQuestion(0),600);}
     },1000);
   }
 }
 
-// ══════════════════════════════════════
-//  HOST: SEND QUESTION
-// ══════════════════════════════════════
-function sendQuestion(idx){
+function doSendQuestion(idx){
   if(!isHost)return;
-  const q=gameQ[idx];
+  revealSent=false;
   answerLog={};
+  const q=gameQ[idx];
   const opts=shuffle([q.a,...q.w]);
-  bcast({type:'question',idx,q,opts,timePerQ:settings.timePerQ});
+  bcast({type:'question',idx,q,opts,tpq:settings.timePerQ});
 }
 
-// ══════════════════════════════════════
-//  SHOW QUESTION
-// ══════════════════════════════════════
 function onQuestion(d){
-  curIdx=d.idx; hasAnswered=false; answerLog={};
-  const q=d.q, opts=d.opts;
-  showScreen('s-question');
-  document.getElementById('qProg').textContent='ข้อ '+(d.idx+1)+' / '+gameQ.length;
+  curIdx=d.idx;hasAnswered=false;answerLog={};revealSent=false;
+  showScr('sQ');
+  const q=d.q;
+  document.getElementById('qProg').textContent='ข้อ '+(d.idx+1)+'/'+gameQ.length;
   document.getElementById('myPts').textContent=myScore+' คะแนน';
-  document.getElementById('qCat').textContent=(CAT_E[q.cat]||'📚')+' '+q.cat;
-  const lvcls={easy:'lv-easy',medium:'lv-medium',hard:'lv-hard'};
-  const lvtxt={easy:'ง่าย',medium:'กลาง',hard:'ยาก'};
-  const lvBadge=document.getElementById('qLv');
-  lvBadge.textContent=lvtxt[q.lv]||q.lv;
-  lvBadge.className='q-lv '+(lvcls[q.lv]||'lv-easy');
-  document.getElementById('qText').textContent=q.q;
+  document.getElementById('qCat').textContent=(CE[q.cat]||'📚')+' '+q.cat;
+  const lvC={easy:'lvE',medium:'lvM',hard:'lvH'};
+  const lvT={easy:'ง่าย',medium:'กลาง',hard:'ยาก'};
+  const lb=document.getElementById('qLv');
+  lb.textContent=lvT[q.lv]||q.lv;lb.className='qLv '+(lvC[q.lv]||'lvE');
+  document.getElementById('qTxt').textContent=q.q;
   document.getElementById('ansMsg').style.display='none';
-  document.getElementById('waitBar').style.display='none';
-  const sr=document.getElementById('streakRow');
-  if(myStreak>=3){sr.textContent='🔥 Streak '+myStreak+' ต่อเนื่อง!';sr.style.display='block';}
-  else sr.style.display='none';
-  document.getElementById('choices').innerHTML=opts.map((o,i)=>
-    `<button class="choice" id="ch_${i}" onclick="pick(${i},'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('');
-  startTimer(d.timePerQ,q);
+  document.getElementById('wBar').style.display='none';
+  document.getElementById('choices').innerHTML=d.opts.map((o,i)=>
+    `<button class="ch" id="c${i}" onclick="pick(${i},'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('');
+  startTimer(d.tpq,q);
 }
 
-// ══════════════════════════════════════
-//  PICK ANSWER
-// ══════════════════════════════════════
-function pick(idx,chosen){
+function pick(ci,chosen){
   if(hasAnswered)return;
   hasAnswered=true;
   clearInterval(timerInt);
   const q=gameQ[curIdx];
-  const correct=(chosen===q.a);
+  const correct=chosen===q.a;
   const pts=q.lv==='hard'?3:q.lv==='medium'?2:1;
-  const bonus=(myStreak>=3&&correct)?1:0;
-  if(correct){myScore+=pts+bonus;myCorrect++;myStreak++;myStreakMax=Math.max(myStreakMax,myStreak);}
+  const bonus=myStreak>=3&&correct?1:0;
+  if(correct){myScore+=pts+bonus;myCorrect++;myStreak++;}
   else myStreak=0;
-  document.querySelectorAll('.choice').forEach(b=>b.disabled=true);
-  document.getElementById('ch_'+idx).classList.add(correct?'correct':'wrong');
-  if(!correct){
-    document.querySelectorAll('.choice').forEach(b=>{if(b.textContent===q.a)b.classList.add('show-correct');});
-  }
+  document.querySelectorAll('.ch').forEach(b=>b.disabled=true);
+  document.getElementById('c'+ci).classList.add(correct?'correct':'wrong');
+  if(!correct)document.querySelectorAll('.ch').forEach(b=>{if(b.textContent===q.a)b.classList.add('showC');});
   const am=document.getElementById('ansMsg');
-  am.textContent=correct?`✅ ถูก! +${pts+bonus} คะแนน${bonus?' (streak bonus)':''}`:` ❌ ผิด — ${q.a}`;
-  am.className='ans-msg '+(correct?'ans-ok':'ans-ng');
+  am.textContent=correct?`✅ ถูก! +${pts+bonus} คะแนน`:`❌ ผิด — ${q.a}`;
+  am.className='ansMsg '+(correct?'ansOk':'ansNg');
   am.style.display='block';
   document.getElementById('myPts').textContent=myScore+' คะแนน';
-  document.getElementById('waitBar').style.display='block';
-  renderWaitDots();
-  // Broadcast answer
-  bcast({type:'answer',pid:myId,pname:myName,correct,elapsed:settings.timePerQ-timeLeft,totalScore:myScore,totalCorrect:myCorrect});
+  document.getElementById('wBar').style.display='block';
+  renderWDots();
+  bcast({type:'answer',pid:myId,pname:myName,correct,ts:myScore,tc:myCorrect});
+  // Update presence
+  ch.track({id:myId,name:myName,isHost,score:myScore,correct:myCorrect}).catch(()=>{});
 }
 
-// ══════════════════════════════════════
-//  ANSWER RECEIVED
-// ══════════════════════════════════════
-function onAnswer(d){
+function onAnswerEvt(d){
   answerLog[d.pid]={...d};
-  // Host: update scoreMap from broadcast (includes totalScore from each player)
-  if(d.pid===myId){
-    // Own answer already tracked via myScore
-    scoreMap[myId]={id:myId,name:myName,score:myScore,correct:myCorrect};
-  } else if(d.totalScore!==undefined){
-    scoreMap[d.pid]={id:d.pid,name:d.pname||d.pid,score:d.totalScore,correct:d.totalCorrect||0};
+  // Update scoreMap from broadcast payload
+  if(d.ts!==undefined){
+    scoreMap[d.pid]={id:d.pid,name:d.pname||d.pid,score:d.ts||0,correct:d.tc||0};
   }
-  renderWaitDots();
+  renderWDots();
   if(isHost){
-    const total=Object.keys(players).length;
+    const total=Object.keys(players).length||1;
     const done=Object.keys(answerLog).length;
-    if(done>=total){clearInterval(timerInt);setTimeout(()=>hostReveal(),400);}
+    if(done>=total&&!revealSent){
+      clearInterval(timerInt);
+      setTimeout(doReveal,350);
+    }
   }
 }
 
-function renderWaitDots(){
-  const wd=document.getElementById('waitDots');
+function renderWDots(){
+  const wd=document.getElementById('wDots');
   if(!wd)return;
   wd.innerHTML=Object.values(players).map(p=>
     `<div class="wd ${answerLog[p.id]?'done':''}" title="${p.name}"></div>`).join('');
 }
 
-// ══════════════════════════════════════
-//  HOST: REVEAL
-// ══════════════════════════════════════
-function hostReveal(){
-  if(!isHost)return;
-  // Always use latest local score for host
+async function doReveal(){
+  if(!isHost||revealSent)return;
+  revealSent=true; // lock immediately to prevent double call
   scoreMap[myId]={id:myId,name:myName,score:myScore,correct:myCorrect};
-  // Fill in any players who didn't answer (score from last known state)
-  Object.values(players).forEach(p=>{
-    if(!scoreMap[p.id]) scoreMap[p.id]={id:p.id,name:p.name,score:0,correct:0};
-  });
+  Object.values(players).forEach(p=>{if(!scoreMap[p.id])scoreMap[p.id]={id:p.id,name:p.name,score:0,correct:0};});
   const scores=Object.values(scoreMap).sort((a,b)=>b.score-a.score);
-  const q=gameQ[curIdx];
-  bcast({type:'reveal',scores,qIdx:curIdx,correctAns:q.a});
+  const ok=await bcast({type:'reveal',scores,qi:curIdx,ca:gameQ[curIdx].a});
+  if(!ok){
+    // bcast failed - retry once more after delay
+    revealSent=false;
+    await new Promise(r=>setTimeout(r,500));
+    if(!revealSent){
+      revealSent=true;
+      await bcast({type:'reveal',scores,qi:curIdx,ca:gameQ[curIdx].a});
+    }
+  }
 }
 
 function onReveal(d){
   clearInterval(timerInt);
-  const q=gameQ[curIdx];
-  // Highlight correct answer on choices
-  document.querySelectorAll('.choice').forEach(b=>{
-    b.disabled=true;
-    if(b.textContent===d.correctAns) b.classList.add('show-correct');
-  });
-  document.getElementById('waitBar').style.display='none';
-  setTimeout(()=>showLeaderboard(d),700);
+  document.querySelectorAll('.ch').forEach(b=>{b.disabled=true;if(b.textContent===d.ca)b.classList.add('showC');});
+  document.getElementById('wBar').style.display='none';
+  setTimeout(()=>showLb(d),700);
 }
 
-// ══════════════════════════════════════
-//  LEADERBOARD
-// ══════════════════════════════════════
-function showLeaderboard(d){
-  const {scores,qIdx}=d;
-  showScreen('s-leaderboard');
-  document.getElementById('lbTitle').textContent='คะแนน ข้อ '+(qIdx+1)+'/'+gameQ.length;
-  document.getElementById('lbSub').textContent='ผลหลังตอบคำถามนี้';
-  const medal=['🥇','🥈','🥉'];
-  document.getElementById('lbList').innerHTML=scores.map((p,i)=>{
+function showLb(d){
+  showScr('sLb');
+  document.getElementById('lbT').textContent='คะแนน ข้อ '+(d.qi+1)+'/'+gameQ.length;
+  document.getElementById('lbS').textContent='ผลหลังตอบ';
+  const med=['🥇','🥈','🥉'];
+  document.getElementById('lbList').innerHTML=(d.scores||[]).map((p,i)=>{
     const gain=(p.score||0)-(prevScores[p.id]||0);
-    return `<div class="lb-row">
-      <div class="lb-rank ${i<3?'r'+(i+1):''}">${medal[i]||i+1}</div>
-      <div class="lb-av" style="background:${avColor(p.name)}">${avLetter(p.name)}</div>
-      <div class="lb-info">
-        <div class="lb-nm">${p.name}${p.id===myId?' (คุณ)':''}</div>
-        ${gain>0?`<div class="lb-gain">+${gain}</div>`:''}
-      </div>
-      <div class="lb-pts">${p.score||0}</div>
+    return `<div class="lbRow">
+      <div class="lbRk ${i<3?'r'+(i+1):''}">${med[i]||i+1}</div>
+      <div class="lbAv" style="background:${aC(p.name)}">${aL(p.name)}</div>
+      <div class="lbInf"><div class="lbNm">${p.name}${p.id===myId?' (คุณ)':''}</div>${gain>0?`<div class="lbGn">+${gain}</div>`:''}</div>
+      <div class="lbPt">${p.score||0}</div>
     </div>`;
   }).join('');
-  scores.forEach(p=>{prevScores[p.id]=p.score||0;});
-  const isLast=(qIdx+1)>=gameQ.length;
+  (d.scores||[]).forEach(p=>prevScores[p.id]=p.score||0);
+  const isLast=(d.qi+1)>=gameQ.length;
   document.getElementById('lbNext').style.display=isHost?'block':'none';
-  document.getElementById('lbNext').textContent=isLast?'🏆 ดูผลสุดท้าย':'ถัดไป →';
+  document.getElementById('lbNext').textContent=isLast?'🏆 ผลสุดท้าย':'ถัดไป →';
   document.getElementById('lbWait').style.display=isHost?'none':'block';
 }
 
-// ══════════════════════════════════════
-//  HOST: NEXT / FINAL
-// ══════════════════════════════════════
 function hostNext(){
   if(!isHost)return;
   const isLast=(curIdx+1)>=gameQ.length;
@@ -887,246 +575,256 @@ function hostNext(){
     scoreMap[myId]={id:myId,name:myName,score:myScore,correct:myCorrect};
     Object.values(players).forEach(p=>{if(!scoreMap[p.id])scoreMap[p.id]={id:p.id,name:p.name,score:0,correct:0};});
     const scores=Object.values(scoreMap).sort((a,b)=>b.score-a.score);
-    bcast({type:'final',scores,totalQ:gameQ.length});
+    bcast({type:'final',scores,tq:gameQ.length});
   } else {
     bcast({type:'next',idx:curIdx+1});
   }
 }
 
 function onNext(d){
-  curIdx=d.idx; answerLog={};
-  // Update prevScores from scoreMap (accurate)
-  Object.values(scoreMap).forEach(p=>{ prevScores[p.id]=p.score||0; });
-  sendQuestion(curIdx);
+  curIdx=d.idx;
+  Object.values(scoreMap).forEach(p=>{prevScores[p.id]=p.score||0;});
+  doSendQuestion(d.idx);
 }
 
-// ══════════════════════════════════════
-//  FINAL
-// ══════════════════════════════════════
 function onFinal(d){
   clearInterval(timerInt);
-  const {scores,totalQ}=d;
-  showScreen('s-final');
+  finalScores=d.scores||[];finalTotalQ=d.tq||gameQ.length;
+  showScr('sFin');
   setTimeout(launchConfetti,300);
   document.getElementById('shareRow').style.display='flex';
-  _finalScores=scores; _finalTotalQ=totalQ;
-  document.getElementById('finalSub').textContent=totalQ+' คำถาม | '+scores.length+' ผู้เล่น';
-  const order=[1,0,2];
-  const ht=['p2','p1','p3'],lb=['🥈','🥇','🥉'];
-  document.getElementById('podium').innerHTML=order.map((rank,ci)=>{
-    const p=scores[rank];if(!p)return'';
-    return `<div class="pod-col">
-      <div class="pod-av" style="background:${avColor(p.name)}">${avLetter(p.name)}</div>
-      <div class="pod-nm">${p.name}</div>
-      <div class="pod-pts">${p.score}</div>
-      <div class="pod-base ${ht[ci]}">${lb[ci]}</div>
-    </div>`;}).join('');
-  document.getElementById('finalList').innerHTML=scores.map((p,i)=>`
-    <div class="final-row">
-      <div class="fr-rank">${i+1}</div>
-      <div class="fr-av" style="background:${avColor(p.name)}">${avLetter(p.name)}</div>
-      <div class="fr-nm">${p.name}${p.id===myId?' ★':''}</div>
-      <div><div class="fr-pts">${p.score}</div><div class="fr-cr">${p.correct}/${totalQ} ถูก</div></div>
+  document.getElementById('finS').textContent=finalTotalQ+' คำถาม | '+finalScores.length+' ผู้เล่น';
+  // Podium
+  const ord=[[1,'🥈','p2'],[0,'🥇','p1'],[2,'🥉','p3']];
+  document.getElementById('pod').innerHTML=ord.map(([r,m,cls])=>{
+    const p=finalScores[r];if(!p)return'';
+    return `<div class="podCol">
+      <div class="podAv" style="background:${aC(p.name)}">${aL(p.name)}</div>
+      <div class="podNm">${p.name}</div><div class="podPt">${p.score} pts</div>
+      <div class="podBase ${cls}">${m}</div></div>`;}).join('');
+  document.getElementById('finList').innerHTML=finalScores.map((p,i)=>`
+    <div class="finRow">
+      <div class="frRk">${i+1}</div>
+      <div class="frAv" style="background:${aC(p.name)}">${aL(p.name)}</div>
+      <div class="frNm">${p.name}${p.id===myId?' ★':''}</div>
+      <div><div class="frPt">${p.score}</div><div class="frCr">${p.correct||0}/${finalTotalQ} ถูก</div></div>
     </div>`).join('');
-  // Save stats
-  try{
-    const s=JSON.parse(localStorage.getItem('vetquiz_live_stats')||'{}');
-    s.games=(s.games||0)+1;s.best=Math.max(s.best||0,myScore);
-    localStorage.setItem('vetquiz_live_stats',JSON.stringify(s));
-  }catch(e){}
 }
 
 function playAgain(){
-  if(isHost){showLobby();}
-  else{showLobby();}
-  myScore=0;myCorrect=0;myStreak=0;myStreakMax=0;
-  ch.track({id:myId,name:myName,isHost,score:0,correct:0});
+  myScore=0;myCorrect=0;myStreak=0;
+  if(ch)ch.track({id:myId,name:myName,isHost,score:0,correct:0}).catch(()=>{});
+  showLobby();
 }
 
-// ══════════════════════════════════════
-//  TIMER
-// ══════════════════════════════════════
-function startTimer(seconds,q){
+// ── TIMER ──
+function startTimer(seconds){
   clearInterval(timerInt);
   timeLeft=seconds;
-  const ring=document.getElementById('timerRing');
-  const circ=88; // 2*PI*14 ≈ 88
-  ring.style.strokeDashoffset=0;
-  document.getElementById('qBar').style.width='100%';
-  document.getElementById('qBar').style.transition='width '+seconds+'s linear';
-  setTimeout(()=>document.getElementById('qBar').style.width='0%',50);
+  const arc=document.getElementById('timerArc');
+  const C=82;
+  const fill=document.getElementById('timerFill');
+  fill.style.transition='none';fill.style.width='100%';
+  setTimeout(()=>{fill.style.transition='width '+seconds+'s linear';fill.style.width='0%';},50);
   timerInt=setInterval(()=>{
     timeLeft--;
-    const el=document.getElementById('timerNum');
-    if(el) el.textContent=timeLeft;
-    if(timeLeft<=3&&el) el.classList.add('warn');
-    else if(el) el.classList.remove('warn');
-    // Arc
-    const pct=timeLeft/seconds;
-    if(ring) ring.style.strokeDashoffset=circ*(1-pct);
+    const el=document.getElementById('timerN');
+    if(el){el.textContent=timeLeft;el.className='timerN'+(timeLeft<=3?' warn':'');}
+    if(arc)arc.style.strokeDashoffset=C*(1-timeLeft/seconds);
     if(timeLeft<=0){
       clearInterval(timerInt);
       if(!hasAnswered){
         hasAnswered=true;
-        bcast({type:'answer',pid:myId,pname:myName,correct:false,elapsed:seconds,totalScore:myScore,totalCorrect:myCorrect});
+        bcast({type:'answer',pid:myId,pname:myName,correct:false,ts:myScore,tc:myCorrect});
       }
-      if(isHost) setTimeout(hostReveal,800);
+      if(isHost&&!revealSent){
+        // Watchdog: ensure reveal happens even if some answers weren't received
+        setTimeout(()=>{ if(!revealSent) doReveal(); },800);
+      }
     }
   },1000);
 }
 
-// ══════════════════════════════════════
-//  UPDATE PRESENCE SCORE after answer
-// ══════════════════════════════════════
-function updatePresenceScore(){
-  if(ch) ch.track({id:myId,name:myName,isHost,score:myScore,correct:myCorrect}).catch(()=>{});
+// ── CONFETTI ──
+function launchConfetti(){
+  const w=document.getElementById('cfWrap');if(!w)return;
+  w.innerHTML='';
+  const c='#f59e0b #0d9488 #e11d48 #7c3aed #0284c7 #16a34a'.split(' ');
+  for(let i=0;i<70;i++){
+    const el=document.createElement('div');
+    el.className='cf';
+    el.textContent=['■','●','▲','★'][i%4];
+    el.style.cssText=`left:${Math.random()*100}%;bottom:-20px;color:${c[i%c.length]};font-size:${10+Math.random()*12}px;animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*1.2}s;`;
+    w.appendChild(el);
+  }
+  setTimeout(()=>w.innerHTML='',4500);
 }
 
-// Call after picking answer
-const _origPick=pick;
-window.pick=function(idx,chosen){
-  _origPick(idx,chosen);
-  setTimeout(updatePresenceScore,200);
-};
+// ── SAVE MEMORY ──
+function saveMemory(){
+  const btn=document.querySelector('.saveMem')||document.getElementById('saveMemBtn');
+  if(!finalScores||!finalScores.length){toast('❌ ไม่มีข้อมูล');return;}
+  if(btn){btn.textContent='⏳...';btn.disabled=true;}
+  setTimeout(()=>{
+    try{
+      // Small canvas for reliability
+      const W=380,ROW=42,H=260+finalScores.length*ROW;
+      const cv=document.createElement('canvas');
+      cv.width=W;cv.height=H;
+      const x=cv.getContext('2d');
+      if(!x)throw new Error('no canvas context');
 
-// ══════════════════════════════════════
-//  QUESTIONS (100 balanced)
-// ══════════════════════════════════════
+      // BG
+      const g=x.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'#0f766e');g.addColorStop(1,'#064e3b');
+      x.fillStyle=g;x.fillRect(0,0,W,H);
+
+      // Header
+      x.textAlign='center';
+      x.fillStyle='rgba(255,255,255,.45)';x.font='11px sans-serif';
+      x.fillText('Vet RMUTTO Log Book',W/2,18);
+      x.fillStyle='white';x.font='bold 18px sans-serif';
+      x.fillText('VetQuiz Live — Result',W/2,42);
+      x.fillStyle='rgba(255,255,255,.5)';x.font='11px sans-serif';
+      x.fillText(finalTotalQ+' Q  |  '+finalScores.length+' Players  |  '+new Date().toLocaleDateString(),W/2,60);
+      x.strokeStyle='rgba(255,255,255,.15)';x.lineWidth=1;
+      x.beginPath();x.moveTo(14,70);x.lineTo(W-14,70);x.stroke();
+
+      // Podium top3
+      const pc=['#f59e0b','#94a3b8','#b45309'];
+      const ph=[72,56,44],px=[W/2,W/2-66,W/2+66],pb=200;
+      [[1,2],[0,1],[2,3]].forEach(([rank,pos])=>{
+        const p=finalScores[rank];if(!p)return;
+        const cx=px[rank],ch=ph[rank];
+        x.fillStyle=pc[rank];
+        x.fillRect(cx-26,pb-ch,52,ch);
+        x.fillStyle='white';x.font='bold 10px sans-serif';x.textAlign='center';
+        x.fillText(rank===0?'1st':rank===1?'2nd':'3rd',cx,pb-ch+13);
+        const ay=pb-ch-34;
+        x.fillStyle=aC(p.name);x.beginPath();x.arc(cx,ay,14,0,6.28);x.fill();
+        x.fillStyle='white';x.font='bold 11px sans-serif';
+        x.fillText(aL(p.name),cx,ay+4);
+        x.fillStyle='rgba(255,255,255,.7)';x.font='9px sans-serif';
+        x.fillText(p.name.slice(0,8),cx,ay+26);
+        x.fillStyle='white';x.font='bold 10px sans-serif';
+        x.fillText(p.score+' pts',cx,ay+40);
+      });
+
+      // List
+      const ly=218;
+      x.fillStyle='rgba(0,0,0,.15)';x.fillRect(12,ly,W-24,finalScores.length*ROW+4);
+      finalScores.forEach((p,i)=>{
+        const y=ly+2+(i*ROW);
+        const rc=['#fbbf24','#d1d5db','#b45309'];
+        x.fillStyle=i<3?rc[i]:'rgba(255,255,255,.3)';
+        x.font='bold 11px sans-serif';x.textAlign='left';
+        x.fillText(i+1,20,y+17);
+        x.fillStyle=aC(p.name);x.beginPath();x.arc(46,y+13,10,0,6.28);x.fill();
+        x.fillStyle='white';x.font='bold 8px sans-serif';x.textAlign='center';
+        x.fillText(aL(p.name),46,y+17);
+        x.fillStyle='white';x.font=(p.id===myId?'bold ':'')+'11px sans-serif';x.textAlign='left';
+        x.fillText(p.name.slice(0,18)+(p.id===myId?' ★':''),62,y+15);
+        x.fillStyle='rgba(255,255,255,.35)';x.font='9px sans-serif';
+        x.fillText(p.correct+'/'+finalTotalQ+' correct',62,y+27);
+        x.fillStyle='#6ee7b7';x.font='bold 13px sans-serif';x.textAlign='right';
+        x.fillText(p.score,W-12,y+17);
+        if(i<finalScores.length-1){
+          x.strokeStyle='rgba(255,255,255,.06)';x.lineWidth=1;
+          x.beginPath();x.moveTo(14,y+ROW);x.lineTo(W-14,y+ROW);x.stroke();
+        }
+      });
+
+      // Footer
+      x.textAlign='center';x.fillStyle='rgba(255,255,255,.2)';x.font='9px sans-serif';
+      x.fillText('pitipatKitpipatkun.github.io/lb',W/2,H-6);
+
+      const url=cv.toDataURL('image/png');
+
+      // Show overlay
+      const ovl=document.getElementById('saveOvl');
+      const img=document.getElementById('saveOvlImg');
+      if(img)img.src=url;
+      if(ovl)ovl.classList.add('on');
+
+      // Try download
+      const a=document.createElement('a');
+      a.href=url;a.download='VetQuiz-'+Date.now()+'.png';
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>document.body.removeChild(a),500);
+      toast('📸 กดค้างที่รูปเพื่อบันทึก (iOS)');
+    }catch(e){
+      toast('❌ '+String(e.message||e));
+      console.error('[save]',e);
+    }
+    if(btn){btn.textContent='📸 บันทึกความทรงจำ';btn.disabled=false;}
+  },50);
+}
+
+// ── QUESTIONS ──
 const RAW_Q=[
 {"q":"กระดูก Cervical ของสุนัขมีกี่ชิ้น?","a":"7","w":["5","9","12"],"animal":"🦴","lv":"easy","cat":"กายวิภาค"},
 {"q":"หัวใจห้องใดมีผนังหนาที่สุด?","a":"Left ventricle","w":["Right ventricle","Left atrium","Right atrium"],"animal":"❤️","lv":"easy","cat":"กายวิภาค"},
-{"q":"Rumen คือส่วนใดของกระเพาะวัว?","a":"กระเพาะส่วนแรก","w":["ส่วนสอง","ส่วนสาม","ส่วนสี่"],"animal":"🐄","lv":"easy","cat":"กายวิภาค"},
 {"q":"กระเพาะวัวมีกี่ห้อง?","a":"4","w":["2","3","5"],"animal":"🐄","lv":"easy","cat":"กายวิภาค"},
 {"q":"Femur คือกระดูกส่วนใด?","a":"กระดูกต้นขา","w":["กระดูกแข้ง","กระดูกสะโพก","กระดูกน่อง"],"animal":"🦵","lv":"easy","cat":"กายวิภาค"},
-{"q":"อุณหภูมิร่างกายปกติของสุนัข?","a":"38.0–39.2 °C","w":["36.0–37.0 °C","40.0–41.5 °C","35.0 °C"],"animal":"🌡️","lv":"easy","cat":"สรีรวิทยา"},
-{"q":"อุณหภูมิร่างกายปกติของแมว?","a":"38.0–39.2 °C","w":["36.5–37.5 °C","40.5–42.0 °C","37.8–38.0 °C"],"animal":"🌡️","lv":"easy","cat":"สรีรวิทยา"},
+{"q":"อุณหภูมิร่างกายปกติสุนัข?","a":"38.0–39.2 °C","w":["36.0–37.0 °C","40.0–41.5 °C","35.0 °C"],"animal":"🌡️","lv":"easy","cat":"สรีรวิทยา"},
 {"q":"PCV ปกติของสุนัข?","a":"37–55%","w":["10–15%","70–85%","20–25%"],"animal":"🩸","lv":"medium","cat":"สรีรวิทยา"},
-{"q":"เม็ดเลือดขาวชนิดใดมากที่สุดในสุนัขปกติ?","a":"Neutrophil","w":["Lymphocyte","Eosinophil","Basophil"],"animal":"🩸","lv":"medium","cat":"สรีรวิทยา"},
-{"q":"ฮอร์โมนใดกระตุ้นให้ไตดูดน้ำกลับ?","a":"ADH (Vasopressin)","w":["Insulin","Glucagon","Cortisol"],"animal":"🧬","lv":"medium","cat":"สรีรวิทยา"},
-{"q":"Amoxicillin จัดในกลุ่มยาใด?","a":"Beta-lactam antibiotic","w":["Aminoglycoside","Fluoroquinolone","Macrolide"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
-{"q":"ยาใดห้ามใช้ในแมวเพราะพิษสูง?","a":"Acetaminophen (Paracetamol)","w":["Amoxicillin","Metronidazole","Fenbendazole"],"animal":"🐈","lv":"hard","cat":"เภสัชวิทยา"},
-{"q":"Furosemide ออกฤทธิ์อย่างไร?","a":"ขับปัสสาวะ (Diuretic)","w":["ลดความดัน","ฆ่าแบคทีเรีย","กดภูมิ"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
-{"q":"Praziquantel ใช้รักษาพยาธิชนิดใด?","a":"Tapeworm พยาธิตัวแบน","w":["Roundworm","Hookworm","Heartworm"],"animal":"🐛","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"Neutrophil เป็น WBC ชนิดใด?","a":"Granulocyte","w":["Agranulocyte","Lymphocyte","Monocyte"],"animal":"🩸","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"Amoxicillin จัดในกลุ่มยาใด?","a":"Beta-lactam","w":["Aminoglycoside","Fluoroquinolone","Macrolide"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"ยาใดห้ามใช้ในแมวเพราะพิษสูง?","a":"Acetaminophen","w":["Amoxicillin","Metronidazole","Fenbendazole"],"animal":"🐈","lv":"hard","cat":"เภสัชวิทยา"},
+{"q":"Furosemide ออกฤทธิ์อย่างไร?","a":"ขับปัสสาวะ","w":["ลดความดัน","ฆ่าแบคทีเรีย","กดภูมิ"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"Praziquantel ใช้รักษาพยาธิชนิดใด?","a":"Tapeworm","w":["Roundworm","Hookworm","Heartworm"],"animal":"🐛","lv":"easy","cat":"เภสัชวิทยา"},
 {"q":"Antidote ของ Opioid overdose?","a":"Naloxone","w":["Atropine","Flumazenil","Vitamin K"],"animal":"💊","lv":"hard","cat":"เภสัชวิทยา"},
-{"q":"Rabies virus จัดใน Family ใด?","a":"Rhabdoviridae","w":["Parvoviridae","Herpesviridae","Adenoviridae"],"animal":"🦠","lv":"medium","cat":"จุลชีววิทยา"},
-{"q":"Gram staining แบ่งแบคทีเรียออกเป็นกี่กลุ่ม?","a":"2 กลุ่ม","w":["3","4","ไม่สามารถแบ่ง"],"animal":"🔬","lv":"easy","cat":"จุลชีววิทยา"},
-{"q":"Toxoplasma gondii ใช้สัตว์ใดเป็น Definitive host?","a":"แมว","w":["สุนัข","วัว","หนู"],"animal":"🐈","lv":"hard","cat":"จุลชีววิทยา"},
-{"q":"FIP เกิดจากอะไร?","a":"Feline Coronavirus mutation","w":["Parvovirus","Herpesvirus","Calicivirus"],"animal":"🐈","lv":"hard","cat":"จุลชีววิทยา"},
-{"q":"Newcastle Disease เกิดจากอะไร?","a":"Paramyxovirus","w":["Orthomyxovirus","Retrovirus","Reovirus"],"animal":"🐔","lv":"medium","cat":"จุลชีววิทยา"},
-{"q":"Toxocara canis เป็นพยาธิชนิดใด?","a":"Roundworm พยาธิตัวกลม","w":["Tapeworm","Hookworm","Whipworm"],"animal":"🐛","lv":"easy","cat":"ปรสิตวิทยา"},
-{"q":"Dirofilaria ติดต่อโดยพาหะใด?","a":"ยุง Culex spp.","w":["หมัด","เห็บ","แมลงวัน"],"animal":"🦟","lv":"medium","cat":"ปรสิตวิทยา"},
-{"q":"Dipylidium caninum แพร่ผ่านพาหะใด?","a":"หมัด (Flea)","w":["ยุง","เห็บ","แมลงวัน"],"animal":"🐛","lv":"medium","cat":"ปรสิตวิทยา"},
-{"q":"Float test ใช้ตรวจอะไร?","a":"ไข่พยาธิในอุจจาระ","w":["แบคทีเรีย","ไวรัส","เลือดในปัสสาวะ"],"animal":"🔬","lv":"easy","cat":"ปรสิตวิทยา"},
-{"q":"Sarcoptes scabiei ทำให้เกิดอาการใด?","a":"คันรุนแรง Sarcoptic mange","w":["ผมร่วง","ผิวหนังหนา","ตัวเหลือง"],"animal":"🐕","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Toxoplasma gondii Definitive host?","a":"แมว","w":["สุนัข","วัว","หนู"],"animal":"🐈","lv":"hard","cat":"จุลชีววิทยา"},
+{"q":"FIP เกิดจากอะไร?","a":"Feline Coronavirus","w":["Parvovirus","Herpesvirus","Calicivirus"],"animal":"🐈","lv":"hard","cat":"จุลชีววิทยา"},
+{"q":"Gram staining แบ่งแบคทีเรียกี่กลุ่ม?","a":"2 กลุ่ม","w":["3","4","ไม่สามารถแบ่ง"],"animal":"🔬","lv":"easy","cat":"จุลชีววิทยา"},
+{"q":"Toxocara canis เป็นพยาธิชนิดใด?","a":"Roundworm","w":["Tapeworm","Hookworm","Whipworm"],"animal":"🐛","lv":"easy","cat":"ปรสิตวิทยา"},
+{"q":"Dirofilaria ติดต่อโดยพาหะใด?","a":"ยุง","w":["หมัด","เห็บ","แมลงวัน"],"animal":"🦟","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"Float test ใช้ตรวจอะไร?","a":"ไข่พยาธิในอุจจาระ","w":["แบคทีเรีย","ไวรัส","เลือด"],"animal":"🔬","lv":"easy","cat":"ปรสิตวิทยา"},
 {"q":"Jaundice เกิดจากสิ่งใดสะสม?","a":"Bilirubin","w":["Glucose","Creatinine","Albumin"],"animal":"🟡","lv":"easy","cat":"พยาธิวิทยา"},
-{"q":"Edema คือการสะสมของ?","a":"น้ำในเนื้อเยื่อ","w":["ไขมัน","แคลเซียม","เหล็ก"],"animal":"💧","lv":"easy","cat":"พยาธิวิทยา"},
-{"q":"Metastasis หมายถึง?","a":"เนื้องอกร้ายแพร่กระจาย","w":["เนื้องอกโต","เนื้องอกหาย","การอักเสบ"],"animal":"🔬","lv":"medium","cat":"พยาธิวิทยา"},
 {"q":"Ascites คือ?","a":"น้ำสะสมในช่องท้อง","w":["น้ำในปอด","น้ำในหัวใจ","น้ำในสมอง"],"animal":"💧","lv":"easy","cat":"พยาธิวิทยา"},
-{"q":"Mast cell tumor พบมากในสุนัขสายพันธุ์ใด?","a":"Boxer","w":["Poodle","Shih Tzu","Chihuahua"],"animal":"🐕","lv":"hard","cat":"พยาธิวิทยา"},
-{"q":"Parvovirus ในสุนัขทำให้เกิดอาการหลักอะไร?","a":"ท้องเสียรุนแรงมีเลือดและ Leukopenia","w":["ไอ น้ำมูก","ชัก","ผิวหนังอักเสบ"],"animal":"🐕","lv":"easy","cat":"อายุรกรรม"},
-{"q":"Cushing's disease เกิดจากอะไร?","a":"Cortisol สูงเกิน","w":["Cortisol ต่ำ","Insulin ต่ำ","Thyroid สูง"],"animal":"🐕","lv":"medium","cat":"อายุรกรรม"},
-{"q":"Hyperthyroidism พบบ่อยในสัตว์ชนิดใด?","a":"แมวสูงอายุ","w":["สุนัขอายุน้อย","วัว","หมู"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Parvovirus ในสุนัขอาการหลักคือ?","a":"ท้องเสียรุนแรงมีเลือด","w":["ไอ น้ำมูก","ชัก","ผิวหนังอักเสบ"],"animal":"🐕","lv":"easy","cat":"อายุรกรรม"},
 {"q":"GDV พบบ่อยในสุนัขสายพันธุ์ใด?","a":"สายพันธุ์ใหญ่ Deep chest","w":["Chihuahua","Poodle","Shih Tzu"],"animal":"🐕","lv":"medium","cat":"อายุรกรรม"},
-{"q":"Pancreatitis วินิจฉัยโดยดูค่าเอนไซม์ใด?","a":"Lipase และ Amylase","w":["ALT และ AST","BUN และ Creatinine","Glucose"],"animal":"🧪","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Hyperthyroidism พบบ่อยในสัตว์ใด?","a":"แมวสูงอายุ","w":["สุนัขอายุน้อย","วัว","หมู"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
 {"q":"Pyometra คือ?","a":"หนองสะสมในมดลูก","w":["รังไข่อักเสบ","เนื้องอก","มดลูกอักเสบ"],"animal":"🏥","lv":"medium","cat":"ศัลยกรรม"},
 {"q":"Cruciate ligament อยู่บริเวณใด?","a":"ข้อเข่า","w":["ข้อสะโพก","ข้อมือ","ข้อเท้า"],"animal":"🦵","lv":"easy","cat":"ศัลยกรรม"},
-{"q":"Hip dysplasia พบบ่อยในสุนัขสายพันธุ์ใด?","a":"German Shepherd, Labrador","w":["Chihuahua","Poodle","Dachshund"],"animal":"🐕","lv":"easy","cat":"ศัลยกรรม"},
-{"q":"Isoflurane ให้ทาง?","a":"สูดดม Inhalation","w":["ฉีดเข้าเส้นเลือด","ทางปาก","ฉีดกล้ามเนื้อ"],"animal":"💨","lv":"easy","cat":"ศัลยกรรม"},
-{"q":"Shock ชนิด Hypovolemic เกิดจาก?","a":"เสียเลือดหรือน้ำมาก","w":["หัวใจล้มเหลว","ติดเชื้อในเลือด","แพ้ยา"],"animal":"🩸","lv":"medium","cat":"ศัลยกรรม"},
-{"q":"FMD เกิดจาก?","a":"Picornavirus","w":["Paramyxovirus","Herpesvirus","Rhabdovirus"],"animal":"🐄","lv":"medium","cat":"สัตว์ใหญ่"},
 {"q":"ระยะตั้งท้องของวัว?","a":"ประมาณ 280 วัน","w":["63 วัน","114 วัน","365 วัน"],"animal":"🐄","lv":"easy","cat":"สัตว์ใหญ่"},
-{"q":"ระยะตั้งท้องของหมู?","a":"ประมาณ 114 วัน","w":["63 วัน","280 วัน","340 วัน"],"animal":"🐷","lv":"easy","cat":"สัตว์ใหญ่"},
-{"q":"Milk fever เกิดจาก?","a":"Hypocalcemia หลังคลอด","w":["Hypomagnesemia","Hyperkalemia","Hypoglycemia"],"animal":"🐄","lv":"medium","cat":"สัตว์ใหญ่"},
-{"q":"ASF เกิดจาก?","a":"Asfivirus","w":["Paramyxovirus","Parvovirus","Reovirus"],"animal":"🐷","lv":"hard","cat":"สัตว์ใหญ่"},
-{"q":"Psittacosis เกิดจาก?","a":"Chlamydophila psittaci","w":["Salmonella","E. coli","Pasteurella"],"animal":"🦜","lv":"hard","cat":"Exotic"},
-{"q":"กระต่ายควรกินหญ้าชนิดใดเป็นหลัก?","a":"Timothy hay","w":["Alfalfa hay","Orchardgrass","Ryegrass"],"animal":"🐰","lv":"easy","cat":"Exotic"},
-{"q":"Metabolic bone disease ในเต่าเกิดจาก?","a":"ขาด UVB + Calcium","w":["ติดเชื้อ","ปรสิต","ขาดน้ำ"],"animal":"🐢","lv":"medium","cat":"Exotic"},
+{"q":"Milk fever เกิดจาก?","a":"Hypocalcemia","w":["Hypomagnesemia","Hyperkalemia","Hypoglycemia"],"animal":"🐄","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"กระต่ายควรกินหญ้าชนิดใดเป็นหลัก?","a":"Timothy hay","w":["Alfalfa","Orchardgrass","Ryegrass"],"animal":"🐰","lv":"easy","cat":"Exotic"},
 {"q":"Guinea pig ต้องการวิตามินใด?","a":"Vitamin C","w":["Vitamin A","Vitamin B12","Vitamin D"],"animal":"🐾","lv":"easy","cat":"Exotic"},
-{"q":"Snuffles ในกระต่ายเกิดจาก?","a":"Pasteurella multocida","w":["Herpesvirus","E. coli","Staphylococcus"],"animal":"🐰","lv":"medium","cat":"Exotic"},
 {"q":"CBC ย่อมาจาก?","a":"Complete Blood Count","w":["Canine Blood Check","Clinical Blood Chemistry","Complete Blood Check"],"animal":"🩸","lv":"easy","cat":"คลินิกรวม"},
 {"q":"ALT บ่งบอกการทำงานของอวัยวะใด?","a":"ตับ","w":["ไต","หัวใจ","ปอด"],"animal":"🧪","lv":"easy","cat":"คลินิกรวม"},
 {"q":"Creatinine บ่งบอกการทำงานของอวัยวะใด?","a":"ไต","w":["ตับ","หัวใจ","ม้าม"],"animal":"🧪","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Zoonosis คือ?","a":"โรคที่ติดต่อระหว่างสัตว์และคน","w":["โรคเฉพาะสัตว์","โรคจากพันธุกรรม","โรคจากสิ่งแวดล้อม"],"animal":"🦠","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Dyspnea หมายถึง?","a":"หายใจลำบาก","w":["หายใจเร็ว","หายใจช้า","ไอ"],"animal":"🫁","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Tachycardia หมายถึง?","a":"หัวใจเต้นเร็วผิดปกติ","w":["เต้นช้า","เต้นไม่สม่ำเสมอ","หัวใจหยุด"],"animal":"❤️","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Zoonosis คือ?","a":"โรคติดต่อระหว่างสัตว์และคน","w":["โรคเฉพาะสัตว์","โรคพันธุกรรม","โรคจากสิ่งแวดล้อม"],"animal":"🦠","lv":"easy","cat":"คลินิกรวม"},
 {"q":"SpO2 ปกติควรสูงกว่า?","a":"95%","w":["80%","70%","60%"],"animal":"🫁","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Capillary refill time ปกติไม่เกิน?","a":"2 วินาที","w":["10 วินาที","30 วินาที","5 นาที"],"animal":"💊","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Icterus สังเกตได้จาก?","a":"เยื่อเมือก ผิวหนัง ตาขาว สีเหลือง","w":["ขนร่วง","ผิวแดง","บวมน้ำ"],"animal":"🟡","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Anaphylaxis รักษาด้วย?","a":"Epinephrine + IV fluids + Steroid","w":["Antihistamine เท่านั้น","Antibiotic","Antifungal"],"animal":"🚨","lv":"hard","cat":"คลินิกรวม"},
-{"q":"Insulin สร้างจาก cell ชนิดใด?","a":"Beta cells ของ Pancreatic islets","w":["Alpha cells","Delta cells","Acinar cells"],"animal":"💉","lv":"medium","cat":"สรีรวิทยา"},
-{"q":"Sympathetic NS กระตุ้น?","a":"Fight or flight","w":["Rest and digest","การนอนหลับ","การย่อยอาหาร"],"animal":"🧠","lv":"easy","cat":"สรีรวิทยา"},
-{"q":"Erythropoietin สร้างจาก?","a":"ไต","w":["ตับ","ไขกระดูก","ม้าม"],"animal":"🫘","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"Anaphylaxis รักษาด้วย?","a":"Epinephrine + IV fluids","w":["Antihistamine เท่านั้น","Antibiotic","Antifungal"],"animal":"🚨","lv":"hard","cat":"คลินิกรวม"},
+{"q":"Insulin สร้างจาก cell ชนิดใด?","a":"Beta cells","w":["Alpha cells","Delta cells","Acinar cells"],"animal":"💉","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"MAP ย่อมาจาก?","a":"Mean Arterial Pressure","w":["Maximum Arterial Pressure","Median Arterial Point","Mean Atrial Pressure"],"animal":"❤️","lv":"medium","cat":"อายุรกรรม"},
 {"q":"Meloxicam จัดในกลุ่มใด?","a":"NSAID","w":["Opioid","Corticosteroid","Antibiotic"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
-{"q":"Phenobarbital ใช้รักษาอาการใด?","a":"ชัก (Seizure)","w":["ติดเชื้อ","ปวด","อักเสบ"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
-{"q":"Dexamethasone จัดในกลุ่มใด?","a":"Corticosteroid","w":["NSAID","Antihistamine","Diuretic"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
-{"q":"Ketamine ออกฤทธิ์เป็น?","a":"Dissociative anesthetic","w":["Opioid agonist","Benzodiazepine","Alpha-2 agonist"],"animal":"💉","lv":"medium","cat":"เภสัชวิทยา"},
-{"q":"Canine Parvovirus มีลักษณะอย่างไร?","a":"DNA virus ทนทาน ไม่มี Envelope","w":["RNA virus","มี Envelope","ทนความร้อนไม่ได้"],"animal":"🐕","lv":"hard","cat":"จุลชีววิทยา"},
+{"q":"Phenobarbital ใช้รักษาอาการใด?","a":"ชัก","w":["ติดเชื้อ","ปวด","อักเสบ"],"animal":"💊","lv":"easy","cat":"เภสัชวิทยา"},
+{"q":"FMD เกิดจาก?","a":"Picornavirus","w":["Paramyxovirus","Herpesvirus","Rhabdovirus"],"animal":"🐄","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"Heartworm วินิจฉัยด้วย?","a":"Antigen test","w":["CBC","Urinalysis","Fecal float"],"animal":"❤️","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Hip dysplasia พบบ่อยในสุนัขสายพันธุ์ใด?","a":"German Shepherd","w":["Chihuahua","Poodle","Dachshund"],"animal":"🐕","lv":"easy","cat":"ศัลยกรรม"},
+{"q":"Isoflurane ให้ทาง?","a":"สูดดม","w":["ฉีดเข้าเส้นเลือด","ทางปาก","ฉีดกล้ามเนื้อ"],"animal":"💨","lv":"easy","cat":"ศัลยกรรม"},
 {"q":"Leptospirosis เกิดจากเชื้ออะไร?","a":"Leptospira spp.","w":["Brucella","Salmonella","E.coli"],"animal":"🦠","lv":"medium","cat":"จุลชีววิทยา"},
 {"q":"FIV คล้ายกับไวรัสใดในคน?","a":"HIV","w":["Hepatitis B","Rabies","Influenza"],"animal":"🐈","lv":"medium","cat":"จุลชีววิทยา"},
-{"q":"Heartworm disease วินิจฉัยด้วยวิธีใด?","a":"Antigen test","w":["CBC","Urinalysis","Fecal float"],"animal":"❤️","lv":"medium","cat":"อายุรกรรม"},
-{"q":"FLUTD พบในแมวเพศใดบ่อยกว่า?","a":"แมวเพศผู้","w":["แมวเพศเมีย","เท่ากัน","ไม่เกี่ยวกับเพศ"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
-{"q":"Anemia สังเกตจากอาการใด?","a":"เยื่อเมือก Mucous membrane ซีด","w":["ตัวเหลือง","ท้องบวม","ขนร่วง"],"animal":"🩸","lv":"easy","cat":"อายุรกรรม"},
-{"q":"Dirofilaria immitis ทำให้เกิดโรคใดในสุนัข?","a":"Heartworm disease","w":["Hookworm","Ringworm","Tapeworm"],"animal":"❤️","lv":"medium","cat":"ปรสิตวิทยา"},
-{"q":"Demodex canis ทำให้เกิดโรคอะไร?","a":"Demodicosis mange","w":["Ringworm","Scabies","Cheyletiellosis"],"animal":"🐕","lv":"medium","cat":"ปรสิตวิทยา"},
-{"q":"Giardia lamblia ติดต่อทาง?","a":"Fecal-oral route","w":["สัมผัสโดยตรง","แมลงกัด","ทางอากาศ"],"animal":"🦠","lv":"medium","cat":"ปรสิตวิทยา"},
-{"q":"Hyperplasia หมายถึง?","a":"จำนวนเซลล์เพิ่มขึ้น","w":["ขนาดเซลล์ใหญ่","เซลล์ตาย","เซลล์เปลี่ยนชนิด"],"animal":"🔬","lv":"medium","cat":"พยาธิวิทยา"},
-{"q":"Granuloma เกิดจากอะไร?","a":"การอักเสบเรื้อรัง Macrophage รวมตัว","w":["ติดเชื้อเฉียบพลัน","เนื้องอก","เลือดออก"],"animal":"🔬","lv":"hard","cat":"พยาธิวิทยา"},
-{"q":"DIC ย่อมาจาก?","a":"Disseminated Intravascular Coagulation","w":["Direct Immune Complex","Diluted Intravenous Clotting","Diffuse Inflammatory Condition"],"animal":"🩸","lv":"hard","cat":"พยาธิวิทยา"},
-{"q":"Addison's disease มีลักษณะอย่างไร?","a":"Cortisol และ Aldosterone ต่ำ","w":["Cortisol สูง","Insulin สูง","Thyroid สูง"],"animal":"🐕","lv":"hard","cat":"อายุรกรรม"},
-{"q":"Hepatic lipidosis ในแมวเกิดจาก?","a":"ไม่กินอาหาร 2-3 วัน ไขมันสะสมตับ","w":["ติดเชื้อ","พยาธิ","สารพิษ"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
-{"q":"FIP แบบ Wet มีลักษณะอะไร?","a":"Effusion โปรตีนสูง","w":["ไข้เท่านั้น","ชัก","ตาอักเสบ"],"animal":"🐈","lv":"hard","cat":"อายุรกรรม"},
-{"q":"MPL พบมากในสายพันธุ์ใด?","a":"สายพันธุ์เล็ก Poodle Chihuahua","w":["German Shepherd","Labrador","Husky"],"animal":"🐕","lv":"medium","cat":"ศัลยกรรม"},
-{"q":"Gastropexy ทำเพื่อ?","a":"ป้องกัน GDV","w":["รักษา Pyometra","รักษาตับ","รักษาไต"],"animal":"🐕","lv":"medium","cat":"ศัลยกรรม"},
-{"q":"TPLO ใช้รักษาอะไร?","a":"Cranial Cruciate Ligament rupture","w":["Hip dysplasia","Elbow dysplasia","Fracture"],"animal":"🦵","lv":"hard","cat":"ศัลยกรรม"},
-{"q":"Ketosis ในวัวนมเกิดจาก?","a":"พลังงานขาดหลังคลอด ร่างกายเผาไขมัน","w":["ติดเชื้อ","ขาดน้ำ","ขาดแคลเซียม"],"animal":"🐄","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"Demodex canis ทำให้เกิด?","a":"Demodicosis","w":["Ringworm","Scabies","Cheyletiellosis"],"animal":"🐕","lv":"medium","cat":"ปรสิตวิทยา"},
+{"q":"FLUTD พบในแมวเพศใดบ่อยกว่า?","a":"เพศผู้","w":["เพศเมีย","เท่ากัน","ไม่เกี่ยว"],"animal":"🐈","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Cushing's disease เกิดจาก?","a":"Cortisol สูงเกิน","w":["Cortisol ต่ำ","Insulin ต่ำ","Thyroid สูง"],"animal":"🐕","lv":"medium","cat":"อายุรกรรม"},
+{"q":"Strangles ในม้าเกิดจาก?","a":"Streptococcus equi","w":["Pasteurella","Actinobacillus","Rhodococcus"],"animal":"🐴","lv":"hard","cat":"สัตว์ใหญ่"},
+{"q":"Trichomoniasis ในนกพิราบทำให้เกิด?","a":"Canker แผลในปาก","w":["ท้องเสีย","ชัก","ขนร่วง"],"animal":"🐦","lv":"medium","cat":"Exotic"},
+{"q":"Hematuria หมายถึง?","a":"เลือดในปัสสาวะ","w":["เลือดในอุจจาระ","เลือดออกปาก","เลือดออกผิวหนัง"],"animal":"🩸","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Tachycardia หมายถึง?","a":"หัวใจเต้นเร็ว","w":["เต้นช้า","เต้นไม่สม่ำเสมอ","หัวใจหยุด"],"animal":"❤️","lv":"easy","cat":"คลินิกรวม"},
+{"q":"Shock ชนิด Hypovolemic เกิดจาก?","a":"เสียเลือดหรือน้ำมาก","w":["หัวใจล้มเหลว","ติดเชื้อ","แพ้ยา"],"animal":"🩸","lv":"medium","cat":"ศัลยกรรม"},
+{"q":"Metacarpus คืออะไร?","a":"กระดูกฝ่ามือ","w":["กระดูกนิ้ว","กระดูกข้อมือ","กระดูกแขน"],"animal":"🦴","lv":"medium","cat":"กายวิภาค"},
+{"q":"Erythropoietin สร้างจาก?","a":"ไต","w":["ตับ","ไขกระดูก","ม้าม"],"animal":"🫘","lv":"medium","cat":"สรีรวิทยา"},
+{"q":"Beta-1 receptor อยู่ที่ไหนหลัก?","a":"หัวใจ","w":["ปอด","หลอดเลือด","กระเพาะ"],"animal":"❤️","lv":"hard","cat":"สรีรวิทยา"},
+{"q":"Ivermectin ห้ามใช้ในสุนัขสายพันธุ์ใด?","a":"Collie (MDR1)","w":["German Shepherd","Labrador","Poodle"],"animal":"🐕","lv":"hard","cat":"เภสัชวิทยา"},
 {"q":"Bloat ในวัวเกิดจาก?","a":"แก๊สสะสมใน Rumen","w":["อาหารอุดตัน","ติดเชื้อ","เลือดออก"],"animal":"🐄","lv":"easy","cat":"สัตว์ใหญ่"},
-{"q":"Strangles ในม้าเกิดจาก?","a":"Streptococcus equi subsp. equi","w":["Pasteurella","Actinobacillus","Rhodococcus"],"animal":"🐴","lv":"hard","cat":"สัตว์ใหญ่"},
-{"q":"Laminitis ในม้าเกิดที่?","a":"กีบ (Hoof)","w":["ข้อเข่า","ข้อสะโพก","คอ"],"animal":"🐴","lv":"medium","cat":"สัตว์ใหญ่"},
-{"q":"Ferret มักเป็นโรคใดเมื่ออายุมาก?","a":"Adrenal disease","w":["Parvo","Distemper","Rabies"],"animal":"🦦","lv":"hard","cat":"Exotic"},
+{"q":"Laminitis ในม้าเกิดที่?","a":"กีบ","w":["ข้อเข่า","ข้อสะโพก","คอ"],"animal":"🐴","lv":"medium","cat":"สัตว์ใหญ่"},
+{"q":"Ferret มักเป็นโรคใดเมื่อสูงอายุ?","a":"Adrenal disease","w":["Parvo","Distemper","Rabies"],"animal":"🦦","lv":"hard","cat":"Exotic"},
 {"q":"PBFD เกิดจาก?","a":"Circovirus","w":["Bornavirus","Herpesvirus","Poxvirus"],"animal":"🦜","lv":"hard","cat":"Exotic"},
-{"q":"Rabbit ไม่สามารถอาเจียนเพราะ?","a":"กล้ามเนื้อกระเพาะแข็งแรง pyloric sphincter แน่น","w":["ไม่มีกระเพาะ","ไม่มีหลอดอาหาร","สมองควบคุม"],"animal":"🐰","lv":"hard","cat":"Exotic"},
-{"q":"One Health concept หมายถึง?","a":"สุขภาพคน สัตว์ สิ่งแวดล้อม เชื่อมโยงกัน","w":["สุขภาพคนเท่านั้น","สัตว์อยู่คนละส่วน","สิ่งแวดล้อมไม่เกี่ยว"],"animal":"🌍","lv":"medium","cat":"คลินิกรวม"},
-{"q":"Euthanasia ใช้ยาใดเป็นมาตรฐาน?","a":"Pentobarbital sodium","w":["Ketamine","Propofol","Isoflurane"],"animal":"💊","lv":"medium","cat":"คลินิกรวม"},
-{"q":"Shock index = HR / Systolic BP ค่าปกติต่ำกว่า?","a":"1.0","w":["2.0","0.5","3.0"],"animal":"🏥","lv":"hard","cat":"คลินิกรวม"},
-{"q":"Hematuria หมายถึง?","a":"เลือดในปัสสาวะ","w":["เลือดในอุจจาระ","เลือดจากผิวหนัง","เลือดออกปาก"],"animal":"🩸","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Melena หมายถึง?","a":"อุจจาระดำจากเลือดในระบบย่อยบน","w":["ท้องเสียรุนแรง","เลือดสดในอุจจาระ","อุจจาระขาว"],"animal":"🩸","lv":"medium","cat":"คลินิกรวม"},
-{"q":"Rabies ในสัตว์ติดต่อสู่คนทางใด?","a":"น้ำลายจากสัตว์ที่ติดเชื้อผ่านบาดแผล","w":["ทางอากาศ","น้ำดื่ม","การสัมผัสเท่านั้น"],"animal":"🦠","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Vaccine Core สำหรับสุนัขครอบคลุมโรคใด?","a":"Distemper, Parvovirus, Adenovirus, Rabies","w":["Rabies เท่านั้น","Bordetella เท่านั้น","ทุกโรค"],"animal":"💉","lv":"easy","cat":"คลินิกรวม"},
-{"q":"Microchipping ใช้สำหรับ?","a":"การระบุตัวตนสัตว์เลี้ยง","w":["รักษาโรค","ผสมพันธุ์","วัดอุณหภูมิ"],"animal":"📡","lv":"easy","cat":"คลินิกรวม"},
-{"q":"สัตวแพทยสภาไทยก่อตั้งเมื่อปี?","a":"พ.ศ. 2536","w":["2500","2520","2550"],"animal":"📋","lv":"easy","cat":"คลินิกรวม"},
+{"q":"DIC ย่อมาจาก?","a":"Disseminated Intravascular Coagulation","w":["Direct Immune Complex","Diluted Intravenous Clotting","Diffuse Inflammatory Condition"],"animal":"🩸","lv":"hard","cat":"พยาธิวิทยา"},
 ];
-
-// ── CONFETTI ──
-function launchConfetti(){
-  const wrap=document.getElementById('confettiWrap');
-  if(!wrap)return;
-  wrap.innerHTML='';
-  const colors=['#f59e0b','#0d9488','#e11d48','#7c3aed','#0284c7','#16a34a','#f97316','#ec4899'];
-  const shapes=['■','●','▲','★','◆'];
-  for(let i=0;i<80;i++){
-    const el=document.createElement('div');
-    el.className='confetti-piece';
-    el.textContent=shapes[i%shapes.length];
-    el.style.cssText=`
-      left:${Math.random()*100}%;
-      bottom:-20px;
-      color:${colors[i%colors.length]};
-      font-size:${10+Math.random()*14}px;
-      animation-duration:${1.5+Math.random()*2.5}s;
-      animation-delay:${Math.random()*1.5}s;
-    `;
-    wrap.appendChild(el);
-  }
-  setTimeout(()=>wrap.innerHTML='',5000);
-}
-
-
-function avColors(name){
-  const cols=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea'];
-  let h=0; for(const ch of name) h=(h+ch.charCodeAt(0))%cols.length;
-  return cols[h];
-}
-
 </script>
 <script src="livechat.js"></script>
 </body>
