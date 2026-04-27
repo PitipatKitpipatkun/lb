@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🎮 Games Hub — VetQuiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Prompt:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0d9488;--teal-d:#0f766e;--teal-l:#ccfbf1;--teal-50:#f0fdfa;
+  --violet:#7c3aed;--violet-l:#ede9fe;--violet-50:#faf5ff;
+  --rose:#e11d48;--rose-l:#ffe4e6;
+  --amber:#d97706;--amber-l:#fef3c7;
+  --slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;
+  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh;padding-bottom:32px;}
+
+.hdr{background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:18px 16px 22px;position:relative;overflow:hidden;}
+.hdr::after{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.07);}
+.hdr::before{content:'';position:absolute;bottom:-60px;left:-30px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,0.05);}
+.hdr-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.hdr-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:white;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hdr-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-sub{font-size:12px;color:rgba(255,255,255,0.75);}
+.search-bar{display:flex;gap:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:12px;padding:9px 14px;align-items:center;}
+.search-bar input{background:none;border:none;outline:none;color:white;font-family:'Sarabun',sans-serif;font-size:13px;flex:1;}
+.search-bar input::placeholder{color:rgba(255,255,255,0.5);}
+
+.content{padding:14px;}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.stat-box{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:12px 8px;text-align:center;}
+.stat-num{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--violet);}
+.stat-lbl{font-size:10px;color:var(--slate-l);font-weight:700;text-transform:uppercase;margin-top:2px;}
+
+/* Section */
+.section{margin-bottom:20px;}
+.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sec-icon{font-size:17px;}
+.sec-name{font-family:'Prompt',sans-serif;font-size:12px;font-weight:700;color:var(--slate-m);text-transform:uppercase;letter-spacing:0.4px;}
+.sec-line{flex:1;height:1px;background:var(--border);}
+
+/* Game Cards */
+.game-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.game-card{background:var(--white);border-radius:18px;border:1.5px solid var(--border);padding:15px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.game-card:active{transform:scale(0.96);}
+.game-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:4px 4px 0 0;}
+.gc-vetquiz::before{background:linear-gradient(90deg,var(--teal),#059669);}
+.gc-live::before{background:linear-gradient(90deg,#7c3aed,#9333ea);}
+.gc-coming::before{background:linear-gradient(90deg,#94a3b8,#cbd5e1);}
+.game-card.gc-solo::before{background:linear-gradient(90deg,var(--teal),#0284c7);}
+.gc-icon{font-size:28px;margin-bottom:7px;}
+.gc-name{font-size:13px;font-weight:700;color:var(--slate);}
+.gc-desc{font-size:11px;color:var(--slate-l);margin-top:3px;line-height:1.4;}
+.gc-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;}
+.badge-live{background:#dcfce7;color:#166534;}
+.badge-soon{background:var(--amber-l);color:#92400e;}
+.badge-new{background:var(--violet-l);color:#6d28d9;}
+.game-card.coming{opacity:0.65;}
+
+/* Featured card (full width) */
+.game-grid-featured{margin-bottom:10px;}
+.featured-card{background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:18px;padding:18px 16px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px;}
+.featured-card:active{transform:scale(0.98);}
+.fc-icon{font-size:44px;flex-shrink:0;}
+.fc-body{flex:1;}
+.fc-name{font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:white;}
+.fc-desc{font-size:12px;color:rgba(255,255,255,0.75);margin-top:3px;}
+.fc-badge{display:inline-block;background:rgba(255,255,255,0.2);color:white;font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px;margin-top:6px;}
+.fc-arrow{color:rgba(255,255,255,0.6);font-size:20px;}
+
+/* Info card */
+.info-card{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.ic-emoji{font-size:28px;}
+.ic-body{flex:1;}
+.ic-title{font-size:13px;font-weight:700;}
+.ic-sub{font-size:11px;color:var(--slate-l);margin-top:2px;}
+.ic-action{font-size:12px;font-weight:700;color:var(--violet);padding:6px 12px;background:var(--violet-50);border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;}
+
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-row">
+    <button class="hdr-back" onclick="window.location.href='index.html'">←</button>
+    <div>
+      <div class="hdr-title">🎮 Games Hub</div>
+      <div class="hdr-sub">เกมและสาระความรู้สัตวแพทย์</div>
+    </div>
+  </div>
+  <div class="search-bar">
+    <span style="color:rgba(255,255,255,0.6)">🔍</span>
+    <input id="searchIn" placeholder="ค้นหาเกม..." oninput="doSearch(this.value)">
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-box">
+      <div class="stat-num" id="statGames">0</div>
+      <div class="stat-lbl">เล่นแล้ว</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="statBest">—</div>
+      <div class="stat-lbl">สถิติสูงสุด</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="statLive">0</div>
+      <div class="stat-lbl">Live wins</div>
+    </div>
+  </div>
+
+  <!-- Featured: VetQuiz Live -->
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">⚡</span><span class="sec-name">แนะนำ</span><div class="sec-line"></div></div>
+    <div class="game-grid-featured">
+      <div class="featured-card" onclick="window.location.href='quiz-live.html'" data-name="vetquiz live multiplayer แข่ง">
+        <div class="fc-icon">⚡</div>
+        <div class="fc-body">
+          <div class="fc-name">VetQuiz Live</div>
+          <div class="fc-desc">แข่งแบบ Real-time หลายคนพร้อมกัน สร้างห้องหรือเข้าร่วม</div>
+          <span class="fc-badge">🆕 Multiplayer</span>
+        </div>
+        <div class="fc-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Solo Games -->
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">🎮</span><span class="sec-name">เล่นคนเดียว</span><div class="sec-line"></div></div>
+    <div class="game-grid">
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game.html'" data-name="vetquiz solo คนเดียว ทายคำถาม">
+        <div class="gc-icon">🐾</div>
+        <div class="gc-name">VetQuiz</div>
+        <div class="gc-desc">ทายคำถามสัตวแพทย์ 1,005 ข้อ</div>
+        <span class="gc-badge badge-live">▶ เล่นได้เลย</span>
+      </div>
+      <div class="game-card gc-solo coming" onclick="showSoon('Drug Dose Quiz','เกมคำนวณขนาดยาตาม BW และสายพันธุ์สัตว์ กำลังพัฒนา')" data-name="drug dose quiz ยา dose คำนวณ">
+        <div class="gc-icon">💊</div>
+        <div class="gc-name">Drug Dose Quiz</div>
+        <div class="gc-desc">ทายขนาดยาตาม BW และสายพันธุ์</div>
+        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      </div>
+      <div class="game-card gc-solo coming" onclick="showSoon('Anatomy Flash Cards','Flash card กายวิภาคสัตว์ พร้อมภาพ กำลังพัฒนา')" data-name="anatomy flash card กายวิภาค">
+        <div class="gc-icon">🦴</div>
+        <div class="gc-name">Anatomy Cards</div>
+        <div class="gc-desc">Flash card กายวิภาคพร้อมภาพ</div>
+        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      </div>
+      <div class="game-card gc-solo coming" onclick="showSoon('Clinical Case Scenario','กรณีศึกษาทางคลินิก เลือก Diagnosis และ Treatment กำลังพัฒนา')" data-name="clinical case scenario diagnosis">
+        <div class="gc-icon">🩺</div>
+        <div class="gc-name">Clinical Cases</div>
+        <div class="gc-desc">กรณีศึกษา เลือก Diagnosis</div>
+        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study Tools -->
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">📚</span><span class="sec-name">สาระความรู้</span><div class="sec-line"></div></div>
+    <div class="game-grid">
+      <div class="game-card gc-solo coming" onclick="showSoon('Parasite ID Challenge','ดูภาพถ่ายพยาธิแล้วทายชนิด กำลังพัฒนา')" data-name="parasite id ปรสิต">
+        <div class="gc-icon">🐛</div>
+        <div class="gc-name">Parasite ID</div>
+        <div class="gc-desc">ดูภาพทายชนิดปรสิต</div>
+        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      </div>
+      <div class="game-card gc-solo coming" onclick="showSoon('Pathology Image Quiz','ดูภาพ Pathology แล้วทาย Diagnosis กำลังพัฒนา')" data-name="pathology image รูปภาพ">
+        <div class="gc-icon">🔬</div>
+        <div class="gc-name">Pathology Quiz</div>
+        <div class="gc-desc">ดูภาพ Pathology ทาย Diagnosis</div>
+        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      </div>
+      <div class="game-card gc-solo coming" onclick="showSoon('ECG Rhythm Challenge','ดู ECG trace แล้ววินิจฉัย Arrhythmia กำลังพัฒนา')" data-name="ecg rhythm arrhythmia">
+        <div class="gc-icon">📈</div>
+        <div class="gc-name">ECG Challenge</div>
+        <div class="gc-desc">วินิจฉัย Arrhythmia จาก ECG</div>
+        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      </div>
+      <div class="game-card gc-solo coming" onclick="showSoon('Drug Interaction Checker','ตรวจสอบ Drug interaction ก่อนสั่งยา กำลังพัฒนา')" data-name="drug interaction ยา">
+        <div class="gc-icon">⚗️</div>
+        <div class="gc-name">Drug Interaction</div>
+        <div class="gc-desc">ตรวจสอบ Drug interaction</div>
+        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">🔗</span><span class="sec-name">ลิงก์ด่วน</span><div class="sec-line"></div></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="info-card" onclick="window.location.href='calculators.html'">
+        <div class="ic-emoji">🧮</div>
+        <div class="ic-body">
+          <div class="ic-title">Veterinary Calculator Hub</div>
+          <div class="ic-sub">เครื่องคำนวณ 30+ รายการ</div>
+        </div>
+        <button class="ic-action">เปิด →</button>
+      </div>
+      <div class="info-card" onclick="window.location.href='index.html'">
+        <div class="ic-emoji">🏠</div>
+        <div class="ic-body">
+          <div class="ic-title">กลับหน้าหลัก</div>
+          <div class="ic-sub">เข้าสู่ระบบ Log Book</div>
+        </div>
+        <button class="ic-action">ไป →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Coming Soon Modal -->
+<div id="soonModal" onclick="this.classList.remove('on')" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:24px;padding:28px 20px;max-width:340px;width:90%;text-align:center;" onclick="event.stopPropagation()">
+    <div style="font-size:52px;margin-bottom:12px;">🚧</div>
+    <div style="font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;margin-bottom:8px;" id="soonTitle"></div>
+    <div style="font-size:13px;color:var(--slate-m);line-height:1.6;margin-bottom:20px;" id="soonDesc"></div>
+    <button onclick="document.getElementById('soonModal').classList.remove('on')" style="width:100%;padding:11px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;color:var(--slate-m);">ปิด</button>
+  </div>
+</div>
+
+<script>
+// Load stats
+(function(){
+  try{
+    const s=JSON.parse(localStorage.getItem('vetquiz_stats')||'{}');
+    document.getElementById('statGames').textContent=s.games||0;
+    document.getElementById('statBest').textContent=s.best||'—';
+    const ls=JSON.parse(localStorage.getItem('vetquiz_live_stats')||'{}');
+    document.getElementById('statLive').textContent=ls.wins||0;
+  }catch(e){}
+})();
+
+function showSoon(title,desc){
+  document.getElementById('soonTitle').textContent=title;
+  document.getElementById('soonDesc').textContent=desc;
+  const m=document.getElementById('soonModal');
+  m.style.display='flex'; setTimeout(()=>m.classList.add('on'),10);
+}
+
+function doSearch(q){
+  document.querySelectorAll('[data-name]').forEach(el=>{
+    const match=!q||el.dataset.name.toLowerCase().includes(q.toLowerCase());
+    const card=el.closest('.game-card,.featured-card,.info-card')||el;
+    card.classList.toggle('hidden',!match);
+  });
+  document.querySelectorAll('.section').forEach(s=>{
+    const visible=[...s.querySelectorAll('[data-name]')].some(el=>!el.closest('.game-card,.featured-card,.info-card')?.classList.contains('hidden'));
+    s.style.display=q&&!visible?'none':'';
+  });
+}
+</script>
+</body>
+</html>

@@ -4,7 +4,66 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>⚡ VetQuiz Live</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0">
+// ── CONFETTI ──
+function launchConfetti(){
+  const wrap=document.getElementById('confettiWrap');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  const colors=['#f59e0b','#0d9488','#e11d48','#7c3aed','#0284c7','#16a34a','#f97316','#ec4899'];
+  const shapes=['■','●','▲','★','◆'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.textContent=shapes[i%shapes.length];
+    el.style.cssText=`
+      left:${Math.random()*100}%;
+      bottom:-20px;
+      color:${colors[i%colors.length]};
+      font-size:${10+Math.random()*14}px;
+      animation-duration:${1.5+Math.random()*2.5}s;
+      animation-delay:${Math.random()*1.5}s;
+    `;
+    wrap.appendChild(el);
+  }
+  setTimeout(()=>wrap.innerHTML='',5000);
+}
+
+// ── SHARE ──
+let _shareText='';
+
+function buildShareText(scores,totalQ){
+  const me=scores.find(s=>s.id===myId);
+  const rank=scores.findIndex(s=>s.id===myId)+1;
+  const rankEmoji=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`;
+  _shareText=`🐾 VetQuiz Live — คณะสัตวแพทยศาสตร์ มทร.ตะวันออก
+`
+    +`
+${rankEmoji} ${myName} — ${me?.score||0} คะแนน`
+    +`
+✅ ตอบถูก ${me?.correct||0}/${totalQ} ข้อ`
+    +`
+👥 แข่งกับ ${scores.length} คน`
+    +`
+
+🎮 เล่นที่: ${location.origin}${location.pathname.replace('quiz-live.html','index.html')}`;
+  return _shareText;
+}
+
+function shareFB(){
+  const url=encodeURIComponent(location.origin+location.pathname.replace('quiz-live.html','index.html'));
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${encodeURIComponent(_shareText)}`,'_blank','width=600,height=400');
+}
+function shareLINE(){
+  window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(_shareText)}`,'_blank');
+}
+function copyResult(){
+  navigator.clipboard?.writeText(_shareText).then(()=>toast('📋 คัดลอกแล้ว!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=_shareText;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 คัดลอกแล้ว!');
+  });
+}
+
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -155,6 +214,25 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .spin-txt{font-size:14px;color:white;font-weight:600;}
 .toast{position:fixed;bottom:max(20px,var(--safe-b));left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
 .toast.on{opacity:1;}
+
+/* ── WINNER ANIMATION ── */
+@keyframes float-up{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(-100vh) rotate(720deg)}}
+@keyframes winner-pop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes shine{0%,100%{opacity:0.6}50%{opacity:1}}
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
+.confetti-piece{position:absolute;width:10px;height:10px;opacity:0;animation:float-up linear forwards;}
+.winner-crown{font-size:64px;animation:winner-pop 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+.winner-name{animation:winner-pop 0.6s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;}
+.winner-score{animation:winner-pop 0.6s 0.4s cubic-bezier(0.34,1.56,0.64,1) both;}
+.podium-wrap{animation:winner-pop 0.7s 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
+/* share buttons */
+.share-row{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px 0;}
+.share-btn{flex:1;min-width:100px;padding:11px 8px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;}
+.share-btn:active{transform:scale(0.96);}
+.sbtn-fb{background:#1877f2;color:white;}
+.sbtn-copy{background:var(--bg);color:var(--slate);border:1.5px solid var(--border);}
+.sbtn-line{background:#00b900;color:white;}
+
 </style>
 </head>
 <body>
@@ -285,6 +363,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
   </div>
   <div class="podium" id="podium"></div>
   <div class="final-list" id="finalList"></div>
+  <div class="share-row" id="shareRow" style="display:none;">
+    <button class="share-btn sbtn-fb" onclick="shareFB()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.5h-2.8V24C19.62 23.1 24 18.1 24 12.07z"/></svg>
+      Facebook
+    </button>
+    <button class="share-btn sbtn-line" onclick="shareLINE()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.070 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+      LINE
+    </button>
+    <button class="share-btn sbtn-copy" onclick="copyResult()">
+      📋 คัดลอก
+    </button>
+  </div>
   <div class="final-btns">
     <button class="fbtn fbtn-main" onclick="playAgain()">🔄 เล่นอีกรอบ</button>
     <button class="fbtn fbtn-sub" onclick="goHome()">🏠 กลับหน้าหลัก</button>
@@ -292,6 +383,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <!-- OVERLAY -->
+<div class="confetti-wrap" id="confettiWrap"></div>
 <div class="overlay" id="overlay"><div class="spin"></div><div class="spin-txt" id="overlayTxt">กำลังเชื่อมต่อ...</div></div>
 <div class="toast" id="toast"></div>
 
@@ -710,6 +802,9 @@ function onFinal(d){
   clearInterval(timerInt);
   const {scores,totalQ}=d;
   showScreen('s-final');
+  setTimeout(launchConfetti,300);
+  document.getElementById('shareRow').style.display='flex';
+  buildShareText(scores,totalQ);
   document.getElementById('finalSub').textContent=totalQ+' คำถาม | '+Object.keys(players).length+' ผู้เล่น';
   const order=[1,0,2];
   const ht=['p2','p1','p3'],lb=['🥈','🥇','🥉'];
@@ -895,6 +990,65 @@ const RAW_Q=[
 {"q":"Microchipping ใช้สำหรับ?","a":"การระบุตัวตนสัตว์เลี้ยง","w":["รักษาโรค","ผสมพันธุ์","วัดอุณหภูมิ"],"animal":"📡","lv":"easy","cat":"คลินิกรวม"},
 {"q":"สัตวแพทยสภาไทยก่อตั้งเมื่อปี?","a":"พ.ศ. 2536","w":["2500","2520","2550"],"animal":"📋","lv":"easy","cat":"คลินิกรวม"},
 ];
+
+// ── CONFETTI ──
+function launchConfetti(){
+  const wrap=document.getElementById('confettiWrap');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  const colors=['#f59e0b','#0d9488','#e11d48','#7c3aed','#0284c7','#16a34a','#f97316','#ec4899'];
+  const shapes=['■','●','▲','★','◆'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.textContent=shapes[i%shapes.length];
+    el.style.cssText=`
+      left:${Math.random()*100}%;
+      bottom:-20px;
+      color:${colors[i%colors.length]};
+      font-size:${10+Math.random()*14}px;
+      animation-duration:${1.5+Math.random()*2.5}s;
+      animation-delay:${Math.random()*1.5}s;
+    `;
+    wrap.appendChild(el);
+  }
+  setTimeout(()=>wrap.innerHTML='',5000);
+}
+
+// ── SHARE ──
+let _shareText='';
+
+function buildShareText(scores,totalQ){
+  const me=scores.find(s=>s.id===myId);
+  const rank=scores.findIndex(s=>s.id===myId)+1;
+  const rankEmoji=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`;
+  _shareText=`🐾 VetQuiz Live — คณะสัตวแพทยศาสตร์ มทร.ตะวันออก
+`
+    +`
+${rankEmoji} ${myName} — ${me?.score||0} คะแนน`
+    +`
+✅ ตอบถูก ${me?.correct||0}/${totalQ} ข้อ`
+    +`
+👥 แข่งกับ ${scores.length} คน`
+    +`
+
+🎮 เล่นที่: ${location.origin}${location.pathname.replace('quiz-live.html','index.html')}`;
+  return _shareText;
+}
+
+function shareFB(){
+  const url=encodeURIComponent(location.origin+location.pathname.replace('quiz-live.html','index.html'));
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${encodeURIComponent(_shareText)}`,'_blank','width=600,height=400');
+}
+function shareLINE(){
+  window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(_shareText)}`,'_blank');
+}
+function copyResult(){
+  navigator.clipboard?.writeText(_shareText).then(()=>toast('📋 คัดลอกแล้ว!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=_shareText;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 คัดลอกแล้ว!');
+  });
+}
+
 </script>
 </body>
 </html>

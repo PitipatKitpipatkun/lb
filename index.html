@@ -167,36 +167,28 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
   <!-- GAMES -->
   <div class="section">
     <div class="section-title">🎮 เกม & สาระความรู้</div>
-    <div class="game-grid">
-      <div class="game-card gc-vetquiz" onclick="window.location.href='game.html'">
+    <!-- Games Hub Banner -->
+    <div onclick="window.location.href='games.html'" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px;box-shadow:0 4px 16px rgba(124,58,237,0.25);">
+      <span style="font-size:36px;">🎮</span>
+      <div style="flex:1;">
+        <div style="font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:white;">Games Hub</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-top:1px;">VetQuiz · Live · Clinical Cases · Flash Cards และอีกมาก</div>
+      </div>
+      <span style="color:rgba(255,255,255,0.7);font-size:18px;">›</span>
+    </div>
+    <!-- Quick shortcuts -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game.html'" style="border-color:var(--teal-l);background:linear-gradient(135deg,var(--teal-50),white);">
         <div class="gc-icon">🐾</div>
         <div class="gc-title">VetQuiz</div>
-        <div class="gc-sub">ทายคำถามสัตวแพทย์</div>
-        <span class="gc-badge gc-live">▶ เล่นได้เลย</span>
+        <div class="gc-sub">เล่นคนเดียว</div>
+        <span class="gc-badge gc-live">▶ Solo</span>
       </div>
       <div class="game-card" onclick="window.location.href='quiz-live.html'" style="border-color:#ede9fe;background:linear-gradient(135deg,#faf5ff,white);">
         <div class="gc-icon">⚡</div>
         <div class="gc-title">VetQuiz Live</div>
-        <div class="gc-sub">แข่งแบบ Real-time หลายคน</div>
-        <span class="gc-badge" style="background:#ede9fe;color:#7c3aed;">🆕 ใหม่</span>
-      </div>
-      <div class="game-card gc-coming" onclick="showSoon('Drug Dose Calculator','เกมทายขนาดยาและการคำนวณ dose สำหรับสัตว์แต่ละชนิด')">
-        <div class="gc-icon">💊</div>
-        <div class="gc-title">Drug Dose Quiz</div>
-        <div class="gc-sub">ทายขนาดยาและ dose</div>
-        <span class="gc-badge gc-soon">เร็วๆ นี้</span>
-      </div>
-      <div class="game-card gc-coming" onclick="showSoon('Anatomy Flash Card','เกมจำกายวิภาคด้วย Flash Card ภาพอวัยวะสัตว์')">
-        <div class="gc-icon">🦴</div>
-        <div class="gc-title">Anatomy Cards</div>
-        <div class="gc-sub">Flash card กายวิภาค</div>
-        <span class="gc-badge gc-soon">เร็วๆ นี้</span>
-      </div>
-      <div class="game-card gc-coming" onclick="showSoon('Clinical Case Scenario','กรณีศึกษาทางคลินิก เลือก diagnosis ที่ถูกต้อง')">
-        <div class="gc-icon">🩺</div>
-        <div class="gc-title">Clinical Cases</div>
-        <div class="gc-sub">กรณีศึกษาทางคลินิก</div>
-        <span class="gc-badge gc-soon">เร็วๆ นี้</span>
+        <div class="gc-sub">แข่ง Real-time</div>
+        <span class="gc-badge" style="background:#ede9fe;color:#7c3aed;">⚡ Live</span>
       </div>
     </div>
   </div>
