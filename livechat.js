@@ -203,7 +203,7 @@ function buildHTML(){
       <div class="_lcHdrTitle">Live Chat</div>
       <div class="_lcOnline" id="_lcOnlineTxt">🟢 กำลังโหลด...</div>
     </div>
-    <button class="_lcClose" id="_lcCloseBtn">✕</button>
+    <button class="_lcClose" id="_lcCloseBtn" title="ย่อ">—</button>
   </div>
 
   <!-- JOIN SCREEN -->
@@ -277,11 +277,12 @@ function lcJoin(){
   if(!nick){ document.getElementById('_lcNickField').focus(); return; }
   saveProfile(nick,_selectedAv);
   showChat();
-  loadHistory();
+  if(!_historyLoaded){ _historyLoaded=true; loadHistory(); }
   // Announce join
   if(ch) ch.send({type:'broadcast',event:'msg',payload:{uid:'sys',nick:'',avatar:'',text:'👋 '+nick+' เข้าร่วมห้อง',ts:new Date().toISOString()}}).catch(()=>{});
 }
 
+let _historyLoaded=false;
 function showChat(){
   document.getElementById('_lcJoin').style.display='none';
   document.getElementById('_lcChat').style.display='flex';
@@ -334,7 +335,10 @@ function connect(){
       await ch.track(trackData).catch(()=>{});
       updateOnline();
       // Auto-show chat if profile already set
-      if(profileSet&&isOpen) showChat();
+      if(profileSet&&isOpen){
+        showChat();
+        if(!_historyLoaded){ _historyLoaded=true; loadHistory(); }
+      }
     }
   });
 }
@@ -412,6 +416,7 @@ function lcToggle(){
   isOpen=!isOpen;
   document.getElementById('_lcPanel').classList.toggle('on',isOpen);
   document.getElementById('_lcFab').classList.toggle('open',isOpen);
+  document.getElementById('_lcFab').querySelector('span')||null;
   if(isOpen){
     unread=0; updateBadge();
     if(profileSet) showChat();

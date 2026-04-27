@@ -35,123 +35,131 @@ let _finalScores=[], _finalTotalQ=0;
 
 async function saveMemory(){
   const btn=document.getElementById('saveMemBtn');
-  btn.textContent='⏳ กำลังสร้างภาพ...';
-  btn.disabled=true;
+  btn.textContent='⏳ กำลังสร้างภาพ...'; btn.disabled=true;
   try{
-    const canvas=document.createElement('canvas');
-    const dpr=Math.min(window.devicePixelRatio||2,3);
-    const W=420, H=560;
-    canvas.width=W*dpr; canvas.height=H*dpr;
-    const ctx=canvas.getContext('2d');
+    const W=420, H=Math.max(520, 160+_finalScores.length*44);
+    const dpr=Math.min(window.devicePixelRatio||2,2);
+    const cv=document.createElement('canvas');
+    cv.width=W*dpr; cv.height=H*dpr;
+    const ctx=cv.getContext('2d');
     ctx.scale(dpr,dpr);
 
-    // Background gradient
+    // Custom roundRect (cross-browser)
+    function rr(x,y,w,h,r){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+      ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+      ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+      ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+      ctx.closePath();
+    }
+
+    // Background
     const grad=ctx.createLinearGradient(0,0,0,H);
     grad.addColorStop(0,'#0d9488'); grad.addColorStop(1,'#134e4a');
     ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
 
     // Decorative circles
-    ctx.fillStyle='rgba(255,255,255,0.06)';
-    ctx.beginPath(); ctx.arc(380,80,130,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(40,480,100,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.07)';
+    ctx.beginPath(); ctx.arc(370,60,110,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(50,H-60,80,0,Math.PI*2); ctx.fill();
 
     // Header
     ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,255,255,0.6)';
-    ctx.font='13px Sarabun,sans-serif';
-    ctx.fillText('คณะสัตวแพทยศาสตร์ มทร.ตะวันออก',W/2,24);
-
+    ctx.fillStyle='rgba(255,255,255,0.55)';
+    ctx.font='13px sans-serif';
+    ctx.fillText('คณะสัตวแพทยศาสตร์ มทร.ตะวันออก', W/2, 26);
     ctx.fillStyle='white';
-    ctx.font='bold 28px Prompt,sans-serif';
-    ctx.fillText('🏆 VetQuiz Live',W/2,56);
-
-    ctx.fillStyle='rgba(255,255,255,0.7)';
-    ctx.font='13px Sarabun,sans-serif';
-    ctx.fillText(_finalTotalQ+' คำถาม | '+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}),W/2,76);
+    ctx.font='bold 24px sans-serif';
+    ctx.fillText('VetQuiz Live', W/2, 56);
+    ctx.fillStyle='rgba(255,255,255,0.65)';
+    ctx.font='12px sans-serif';
+    ctx.fillText(_finalTotalQ+' คำถาม  |  '+new Date().toLocaleDateString('th-TH'), W/2, 76);
 
     // Divider
-    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(24,88); ctx.lineTo(W-24,88); ctx.stroke();
 
-    // Podium area (top 3)
-    const podColors=['#f59e0b','#94a3b8','#cd7f32'];
-    const podH=[90,70,55];
-    const podX=[W/2,W/2-85,W/2+85];
-    const podOrder=[0,1,2]; // 1st, 2nd, 3rd
+    // Podium (top 3)
+    const pColors=['#f59e0b','#94a3b8','#cd7f32'];
+    const pHts=[85,65,50];
+    const pXs=[W/2, W/2-80, W/2+80];
     const medals=['🥇','🥈','🥉'];
-    const podBaseY=280;
-    podOrder.forEach((rank,col)=>{
+    const pBaseY=270;
+    [1,0,2].forEach((rank,ci)=>{
       const p=_finalScores[rank]; if(!p)return;
-      const x=podX[col], h=podH[col];
-      // Base
-      const bg=ctx.createLinearGradient(x-35,0,x+35,0);
-      bg.addColorStop(0,podColors[col]); bg.addColorStop(1,podColors[col]+'cc');
-      ctx.fillStyle=bg;
-      ctx.beginPath(); ctx.roundRect(x-36,podBaseY-h,72,h,8); ctx.fill();
-      // Medal emoji
-      ctx.font='18px serif'; ctx.textAlign='center';
-      ctx.fillText(medals[rank],x,podBaseY-h+20);
-      // Avatar circle
-      const avY=podBaseY-h-52;
-      ctx.fillStyle=avColors(p.name);
-      ctx.beginPath(); ctx.arc(x,avY,22,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 16px Sarabun,sans-serif';
-      ctx.fillText(p.name[0]?.toUpperCase()||'?',x,avY+6);
-      // Name
-      ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='bold 12px Sarabun,sans-serif';
-      const nm=p.name.length>8?p.name.slice(0,8)+'..':p.name;
-      ctx.fillText(nm,x,avY+36);
-      // Score
-      ctx.fillStyle='white'; ctx.font='bold 14px Prompt,sans-serif';
-      ctx.fillText(p.score+' pts',x,avY+52);
+      const x=pXs[rank], h=pHts[rank];
+      ctx.fillStyle=pColors[rank];
+      rr(x-32,pBaseY-h,64,h,6); ctx.fill();
+      ctx.fillStyle='white'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(rank===0?'1':rank===1?'2':'3', x, pBaseY-h+16);
+      const avY=pBaseY-h-46;
+      ctx.fillStyle=avCol(p.name);
+      ctx.beginPath(); ctx.arc(x,avY,19,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='white'; ctx.font='bold 14px sans-serif';
+      ctx.fillText((p.name[0]||'?').toUpperCase(), x, avY+5);
+      ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='11px sans-serif';
+      ctx.fillText(p.name.slice(0,9), x, avY+34);
+      ctx.fillStyle='white'; ctx.font='bold 13px sans-serif';
+      ctx.fillText(p.score+' pts', x, avY+50);
     });
 
-    // Full list
-    ctx.textAlign='left';
-    let rowY=310;
+    // Score list
+    const listY=290;
     ctx.fillStyle='rgba(255,255,255,0.08)';
-    ctx.beginPath(); ctx.roundRect(16,rowY-4,W-32,_finalScores.length*38+8,10); ctx.fill();
+    rr(14,listY,W-28,_finalScores.length*44+10,10); ctx.fill();
     _finalScores.forEach((p,i)=>{
-      const y=rowY+(i*38);
-      // Rank
-      ctx.fillStyle=i<3?['#f59e0b','#e2e8f0','#cd7f32'][i]:'rgba(255,255,255,0.4)';
-      ctx.font='bold 13px Prompt,sans-serif'; ctx.textAlign='left';
-      ctx.fillText(i+1,26,y+16);
+      const y=listY+10+(i*44);
+      // Rank badge
+      const rc=['#f59e0b','#94a3b8','#cd7f32'];
+      ctx.fillStyle=i<3?rc[i]:'rgba(255,255,255,0.3)';
+      ctx.font='bold 13px sans-serif'; ctx.textAlign='left';
+      ctx.fillText(i+1, 26, y+18);
       // Avatar
-      ctx.fillStyle=avColors(p.name);
-      ctx.beginPath(); ctx.arc(58,y+10,12,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 10px Sarabun,sans-serif'; ctx.textAlign='center';
-      ctx.fillText(p.name[0]?.toUpperCase()||'?',58,y+14);
-      // Name
-      ctx.fillStyle='white'; ctx.font='bold 13px Sarabun,sans-serif'; ctx.textAlign='left';
-      const nm2=p.name.length>14?p.name.slice(0,14)+'..':p.name;
-      ctx.fillText(nm2+(p.id===myId?' ★':''),78,y+14);
+      ctx.fillStyle=avCol(p.name);
+      ctx.beginPath(); ctx.arc(52,y+13,11,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='white'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+      ctx.fillText((p.name[0]||'?').toUpperCase(), 52, y+17);
+      // Name + star for self
+      ctx.fillStyle='white'; ctx.font=p.id===myId?'bold 13px sans-serif':'13px sans-serif';
+      ctx.textAlign='left';
+      ctx.fillText(p.name.slice(0,16)+(p.id===myId?' ★':''), 70, y+18);
+      // Correct count
+      ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font='11px sans-serif';
+      ctx.fillText(p.correct+'/'+_finalTotalQ+' ถูก', 70, y+34);
       // Score
-      ctx.font='bold 14px Prompt,sans-serif'; ctx.textAlign='right';
-      ctx.fillStyle='#ccfbf1';
-      ctx.fillText(p.score,W-28,y+14);
-      // Correct
-      ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='11px Sarabun,sans-serif';
-      ctx.fillText(p.correct+'/'+_finalTotalQ,W-28,y+28);
-      rowY;
+      ctx.fillStyle='#99f6e4'; ctx.font='bold 16px sans-serif'; ctx.textAlign='right';
+      ctx.fillText(p.score, W-22, y+18);
+      // Divider
+      if(i<_finalScores.length-1){
+        ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(20,y+42); ctx.lineTo(W-20,y+42); ctx.stroke();
+      }
     });
 
     // Footer
-    ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='11px Sarabun,sans-serif';
-    ctx.fillText('pitipatKitpipatkun.github.io/lb',W/2,H-12);
+    ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='11px sans-serif';
+    ctx.fillText('pitipatKitpipatkun.github.io/lb', W/2, H-10);
 
-    // Download
+    // Append to body (needed for iOS), then click
     const link=document.createElement('a');
-    link.download='VetQuiz-Live-'+new Date().toLocaleDateString('th-TH').replace(/\//g,'-')+'.png';
-    link.href=canvas.toDataURL('image/png');
+    link.download='VetQuiz-Live-'+Date.now()+'.png';
+    link.href=cv.toDataURL('image/png');
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     toast('📸 บันทึกภาพเรียบร้อย!');
   }catch(e){
-    console.error(e);
-    toast('❌ ไม่สามารถบันทึกได้: '+e.message);
+    console.error('[saveMemory]',e);
+    toast('❌ '+e.message);
   }
   btn.textContent='📸 บันทึกความทรงจำ'; btn.disabled=false;
+}
+
+function avCol(name){
+  const cols=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea'];
+  let h=0; for(const ch of String(name||'?'))h=(h+ch.charCodeAt(0))%cols.length; return cols[h];
 }
 
 function avColors(name){
