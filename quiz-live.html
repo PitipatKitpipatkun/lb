@@ -887,7 +887,7 @@ function onFinal(d){
   setTimeout(launchConfetti,300);
   document.getElementById('shareRow').style.display='flex';
   _finalScores=scores; _finalTotalQ=totalQ;
-  document.getElementById('finalSub').textContent=totalQ+' คำถาม | '+Object.keys(players).length+' ผู้เล่น';
+  document.getElementById('finalSub').textContent=totalQ+' คำถาม | '+scores.length+' ผู้เล่น';
   const order=[1,0,2];
   const ht=['p2','p1','p3'],lb=['🥈','🥇','🥉'];
   document.getElementById('podium').innerHTML=order.map((rank,ci)=>{
@@ -1105,5 +1105,6 @@ function avColors(name){
 }
 
 </script>
+<script src="livechat.js"></script>
 </body>
 </html>
