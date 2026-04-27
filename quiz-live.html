@@ -37,125 +37,133 @@ async function saveMemory(){
   const btn=document.getElementById('saveMemBtn');
   btn.textContent='⏳ กำลังสร้างภาพ...'; btn.disabled=true;
   try{
-    const W=420, H=Math.max(520, 160+_finalScores.length*44);
-    const dpr=Math.min(window.devicePixelRatio||2,2);
+    const W=420;
+    const listRows=Math.max(1,_finalScores.length);
+    const H=300+listRows*46;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
     const cv=document.createElement('canvas');
     cv.width=W*dpr; cv.height=H*dpr;
     const ctx=cv.getContext('2d');
     ctx.scale(dpr,dpr);
 
-    // Custom roundRect (cross-browser)
+    // Polyfill roundRect
     function rr(x,y,w,h,r){
+      r=Math.min(r,w/2,h/2);
       ctx.beginPath();
       ctx.moveTo(x+r,y);
-      ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-      ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-      ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-      ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+      ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+      ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+      ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+      ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
       ctx.closePath();
     }
 
-    // Background
-    const grad=ctx.createLinearGradient(0,0,0,H);
-    grad.addColorStop(0,'#0d9488'); grad.addColorStop(1,'#134e4a');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+    // ── Background ──
+    const bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#0d9488'); bg.addColorStop(1,'#134e4a');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-    // Decorative circles
-    ctx.fillStyle='rgba(255,255,255,0.07)';
-    ctx.beginPath(); ctx.arc(370,60,110,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(50,H-60,80,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.arc(380,40,120,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(30,H-30,80,0,Math.PI*2); ctx.fill();
 
-    // Header
+    // ── Header text ──
     ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,255,255,0.55)';
-    ctx.font='13px sans-serif';
-    ctx.fillText('คณะสัตวแพทยศาสตร์ มทร.ตะวันออก', W/2, 26);
-    ctx.fillStyle='white';
-    ctx.font='bold 24px sans-serif';
-    ctx.fillText('VetQuiz Live', W/2, 56);
-    ctx.fillStyle='rgba(255,255,255,0.65)';
-    ctx.font='12px sans-serif';
-    ctx.fillText(_finalTotalQ+' คำถาม  |  '+new Date().toLocaleDateString('th-TH'), W/2, 76);
+    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='12px sans-serif';
+    ctx.fillText('VetQuiz Live — Vet RMUTTO Log Book', W/2, 22);
+    ctx.fillStyle='white'; ctx.font='bold 22px sans-serif';
+    ctx.fillText('🏆 ผลการแข่งขัน', W/2, 50);
+    ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.font='12px sans-serif';
+    ctx.fillText(_finalTotalQ+' คำถาม  •  '+_finalScores.length+' ผู้เล่น  •  '+new Date().toLocaleDateString('th-TH'), W/2, 70);
 
-    // Divider
-    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(24,88); ctx.lineTo(W-24,88); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(20,82); ctx.lineTo(W-20,82); ctx.stroke();
 
-    // Podium (top 3)
-    const pColors=['#f59e0b','#94a3b8','#cd7f32'];
-    const pHts=[85,65,50];
-    const pXs=[W/2, W/2-80, W/2+80];
-    const medals=['🥇','🥈','🥉'];
-    const pBaseY=270;
-    [1,0,2].forEach((rank,ci)=>{
+    // ── Podium top 3 ──
+    const podC=['#f59e0b','#94a3b8','#cd7f32'];
+    const podH=[80,62,50]; const podX=[W/2,W/2-78,W/2+78];
+    const podBase=230;
+    [1,0,2].forEach((rank,col)=>{
       const p=_finalScores[rank]; if(!p)return;
-      const x=pXs[rank], h=pHts[rank];
-      ctx.fillStyle=pColors[rank];
-      rr(x-32,pBaseY-h,64,h,6); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
-      ctx.fillText(rank===0?'1':rank===1?'2':'3', x, pBaseY-h+16);
-      const avY=pBaseY-h-46;
-      ctx.fillStyle=avCol(p.name);
-      ctx.beginPath(); ctx.arc(x,avY,19,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 14px sans-serif';
-      ctx.fillText((p.name[0]||'?').toUpperCase(), x, avY+5);
-      ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='11px sans-serif';
-      ctx.fillText(p.name.slice(0,9), x, avY+34);
+      const x=podX[rank], ph=podH[rank];
+      ctx.fillStyle=podC[rank];
+      rr(x-30,podBase-ph,60,ph,6); ctx.fill();
+      ctx.fillStyle='white'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(rank===0?'1st':rank===1?'2nd':'3rd', x, podBase-ph+14);
+      const ay=podBase-ph-42;
+      ctx.fillStyle=avCol(p.name); ctx.beginPath(); ctx.arc(x,ay,17,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='white'; ctx.font='bold 13px sans-serif';
-      ctx.fillText(p.score+' pts', x, avY+50);
+      ctx.fillText((p.name[0]||'?').toUpperCase(), x, ay+5);
+      ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font='10px sans-serif';
+      const nm=p.name.length>8?p.name.slice(0,7)+'..':p.name;
+      ctx.fillText(nm, x, ay+30);
+      ctx.fillStyle='white'; ctx.font='bold 12px sans-serif';
+      ctx.fillText(p.score+' pts', x, ay+46);
     });
 
-    // Score list
-    const listY=290;
-    ctx.fillStyle='rgba(255,255,255,0.08)';
-    rr(14,listY,W-28,_finalScores.length*44+10,10); ctx.fill();
+    // ── Score list ──
+    const ly=246;
+    ctx.fillStyle='rgba(0,0,0,0.15)';
+    rr(12,ly,W-24,listRows*46+8,10); ctx.fill();
     _finalScores.forEach((p,i)=>{
-      const y=listY+10+(i*44);
-      // Rank badge
-      const rc=['#f59e0b','#94a3b8','#cd7f32'];
-      ctx.fillStyle=i<3?rc[i]:'rgba(255,255,255,0.3)';
-      ctx.font='bold 13px sans-serif'; ctx.textAlign='left';
-      ctx.fillText(i+1, 26, y+18);
-      // Avatar
-      ctx.fillStyle=avCol(p.name);
-      ctx.beginPath(); ctx.arc(52,y+13,11,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='white'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
-      ctx.fillText((p.name[0]||'?').toUpperCase(), 52, y+17);
-      // Name + star for self
-      ctx.fillStyle='white'; ctx.font=p.id===myId?'bold 13px sans-serif':'13px sans-serif';
-      ctx.textAlign='left';
-      ctx.fillText(p.name.slice(0,16)+(p.id===myId?' ★':''), 70, y+18);
-      // Correct count
-      ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font='11px sans-serif';
-      ctx.fillText(p.correct+'/'+_finalTotalQ+' ถูก', 70, y+34);
+      const y=ly+6+(i*46);
+      // Row bg for self
+      if(p.id===myId){ ctx.fillStyle='rgba(255,255,255,0.08)'; rr(14,y,W-28,44,8); ctx.fill(); }
+      // Rank
+      const rc=['#fbbf24','#d1d5db','#cd7f32'];
+      ctx.fillStyle=i<3?rc[i]:'rgba(255,255,255,0.35)';
+      ctx.font='bold 14px sans-serif'; ctx.textAlign='left';
+      ctx.fillText(i+1, 24, y+22);
+      // Avatar circle
+      ctx.fillStyle=avCol(p.name); ctx.beginPath(); ctx.arc(56,y+18,13,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='white'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
+      ctx.fillText((p.name[0]||'?').toUpperCase(), 56, y+22);
+      // Name
+      ctx.fillStyle='white'; ctx.font=(p.id===myId?'bold ':'')+'13px sans-serif'; ctx.textAlign='left';
+      ctx.fillText(p.name.slice(0,17)+(p.id===myId?' ★':''), 76, y+20);
+      // Correct
+      ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='11px sans-serif';
+      ctx.fillText(p.correct+'/'+_finalTotalQ+' correct', 76, y+34);
       // Score
-      ctx.fillStyle='#99f6e4'; ctx.font='bold 16px sans-serif'; ctx.textAlign='right';
-      ctx.fillText(p.score, W-22, y+18);
+      ctx.fillStyle='#6ee7b7'; ctx.font='bold 15px sans-serif'; ctx.textAlign='right';
+      ctx.fillText(p.score, W-18, y+22);
       // Divider
       if(i<_finalScores.length-1){
-        ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(20,y+42); ctx.lineTo(W-20,y+42); ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(18,y+44); ctx.lineTo(W-18,y+44); ctx.stroke();
       }
     });
 
     // Footer
-    ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='11px sans-serif';
-    ctx.fillText('pitipatKitpipatkun.github.io/lb', W/2, H-10);
+    ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='10px sans-serif';
+    ctx.fillText('pitipatKitpipatkun.github.io/lb', W/2, H-8);
 
-    // Append to body (needed for iOS), then click
-    const link=document.createElement('a');
-    link.download='VetQuiz-Live-'+Date.now()+'.png';
-    link.href=cv.toDataURL('image/png');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast('📸 บันทึกภาพเรียบร้อย!');
+    // ── Save ──
+    const dataURL=cv.toDataURL('image/png');
+
+    // Show in overlay (works on all devices incl iOS)
+    const img=document.getElementById('saveOverlayImg');
+    if(img){ img.src=dataURL; document.getElementById('saveOverlay').classList.add('on'); }
+
+    // Also try auto-download (works on desktop/Android)
+    try{
+      const a=document.createElement('a');
+      a.href=dataURL;
+      a.download='VetQuiz-'+Date.now()+'.png';
+      a.style.display='none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>document.body.removeChild(a),1000);
+    }catch(de){ console.log('download fallback:',de); }
+
+    toast('📸 กดค้างที่รูปเพื่อบันทึก (iOS) หรือรอดาวน์โหลด');
   }catch(e){
     console.error('[saveMemory]',e);
-    toast('❌ '+e.message);
+    toast('❌ Error: '+e.message);
   }
   btn.textContent='📸 บันทึกความทรงจำ'; btn.disabled=false;
 }
+
 
 function avCol(name){
   const cols=['#0d9488','#7c3aed','#e11d48','#d97706','#0284c7','#16a34a','#dc2626','#9333ea'];
@@ -320,6 +328,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .toast{position:fixed;bottom:max(20px,var(--safe-b));left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
 .toast.on{opacity:1;}
 
+/* ── SAVE OVERLAY ── */
+#saveOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+#saveOverlay.on{display:flex;}
+#saveOverlayImg{max-width:100%;max-height:75vh;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+#saveOverlayHint{color:rgba(255,255,255,0.8);font-size:13px;margin-top:12px;text-align:center;font-family:"Sarabun",sans-serif;}
+#saveOverlayClose{margin-top:14px;padding:10px 28px;background:white;color:#1e293b;border:none;border-radius:12px;font-family:"Sarabun",sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 /* ── WINNER ANIMATION ── */
 @keyframes float-up{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(-100vh) rotate(720deg)}}
 @keyframes winner-pop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
@@ -477,6 +491,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 
 <!-- OVERLAY -->
 <div class="confetti-wrap" id="confettiWrap"></div>
+<div id="saveOverlay"><img id="saveOverlayImg"><div id="saveOverlayHint">📱 iOS: กดค้างที่รูป → "บันทึกรูปภาพ"<br>🤖 Android/PC: รูปถูกดาวน์โหลดอัตโนมัติ</div><button id="saveOverlayClose" onclick="document.getElementById('saveOverlay').classList.remove('on')">✕ ปิด</button></div>
 <div class="overlay" id="overlay"><div class="spin"></div><div class="spin-txt" id="overlayTxt">กำลังเชื่อมต่อ...</div></div>
 <div class="toast" id="toast"></div>
 
