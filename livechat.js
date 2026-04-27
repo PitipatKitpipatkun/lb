@@ -73,8 +73,8 @@ function buildCSS(){
   display:flex;align-items:center;justify-content:center;
   font-size:26px;transition:transform 0.2s,background 0.2s;}
 #_lcFab:active{transform:scale(0.93);}
-#_lcFab{cursor:grab;}
-#_lcFab:active{cursor:grabbing;}
+#_lcFab{cursor:grab !important;touch-action:none;}
+
 #_lcFab.open{background:linear-gradient(135deg,#475569,#334155);}
 #_lcBadge{
   position:absolute;top:-3px;right:-3px;
@@ -245,7 +245,7 @@ function buildHTML(){
 
   // Events
   document.getElementById('_lcFab').addEventListener('click',lcToggle);
-  initDrag();
+  setTimeout(initDrag, 0);
   document.getElementById('_lcCloseBtn').addEventListener('click',lcToggle);
   document.getElementById('_lcSend').addEventListener('click',lcSend);
   const inp=document.getElementById('_lcInput');
@@ -255,7 +255,6 @@ function buildHTML(){
   // Expose globals
   window.lcPickAv=lcPickAv;
   // Re-sync panel pos after open
-  document.getElementById('_lcFab').removeEventListener('click',lcToggle);
   window.lcJoin=lcJoin;
   window.lcShowJoin=lcShowJoin;
 }
@@ -452,90 +451,103 @@ function esc(s){
 }
 
 
-// ── DRAGGABLE FAB ────────────────────────
+
+// ══════════════════════════════════════
+//  DRAGGABLE FAB (Pointer Events)
+// ══════════════════════════════════════
 function initDrag(){
   const fab=document.getElementById('_lcFab');
   if(!fab)return;
-  let dragging=false, startX=0, startY=0, fabX=0, fabY=0, moved=false;
 
-  // Load saved position
-  try{
-    const pos=JSON.parse(localStorage.getItem('lc_pos')||'null');
-    if(pos){ setFabPos(pos.x, pos.y); }
-  }catch(e){}
+  let active=false, ox=0, oy=0, fx=0, fy=0, moved=false;
+  const MARGIN=8, FAB_S=54;
 
-  function setFabPos(x,y){
+  // Restore saved position
+  (function loadPos(){
+    try{
+      const s=localStorage.getItem('lc_fab_pos');
+      if(!s)return;
+      const p=JSON.parse(s);
+      applyPos(p.x,p.y);
+    }catch(e){}
+  })();
+
+  function clamp(x,y){
     const W=window.innerWidth, H=window.innerHeight;
-    const S=54; // fab size
-    x=Math.max(8, Math.min(x, W-S-8));
-    y=Math.max(8, Math.min(y, H-S-8));
+    return {
+      x:Math.max(MARGIN, Math.min(x, W-FAB_S-MARGIN)),
+      y:Math.max(MARGIN, Math.min(y, H-FAB_S-MARGIN))
+    };
+  }
+
+  function applyPos(x,y){
+    const p=clamp(x,y);
+    fab.style.cssText=fab.style.cssText
+      .replace(/right:[^;]+;?/g,'')
+      .replace(/bottom:[^;]+;?/g,'');
+    fab.style.left=p.x+'px';
+    fab.style.top=p.y+'px';
     fab.style.right='auto';
     fab.style.bottom='auto';
-    fab.style.left=x+'px';
-    fab.style.top=y+'px';
-    syncPanel(x,y);
+    repositionPanel(p.x,p.y);
   }
 
-  function syncPanel(fx,fy){
+  function repositionPanel(fx,fy){
     const panel=document.getElementById('_lcPanel');
-    if(!panel)return;
+    if(!panel||!panel.classList.contains('on'))return;
     const W=window.innerWidth, H=window.innerHeight;
-    const fabS=54, panelW=320, panelH=460;
-    // Panel appears above/below fab depending on space
-    let px=fx+fabS/2-panelW/2;
-    let py=fy-panelH-10;
-    if(py<8){ py=fy+fabS+8; } // flip below if no space above
-    px=Math.max(8, Math.min(px, W-panelW-8));
-    panel.style.right='auto'; panel.style.bottom='auto';
+    const PW=320, PH=460;
+    // Prefer above, else below
+    let px=fx+FAB_S/2-PW/2;
+    let py=fy-PH-10;
+    if(py<MARGIN){ py=fy+FAB_S+10; }
+    px=Math.max(MARGIN, Math.min(px, W-PW-MARGIN));
     panel.style.left=px+'px'; panel.style.top=py+'px';
-    panel.style.transformOrigin='bottom center';
+    panel.style.right='auto'; panel.style.bottom='auto';
+    panel.style.transformOrigin='center bottom';
   }
 
-  function onStart(e){
-    const touch=e.touches?e.touches[0]:e;
-    startX=touch.clientX; startY=touch.clientY;
-    const rect=fab.getBoundingClientRect();
-    fabX=rect.left; fabY=rect.top;
-    dragging=true; moved=false;
+  function getRect(){
+    return fab.getBoundingClientRect();
+  }
+
+  fab.addEventListener('pointerdown', function(e){
+    const r=getRect();
+    fx=r.left; fy=r.top;
+    ox=e.clientX; oy=e.clientY;
+    active=true; moved=false;
+    fab.setPointerCapture(e.pointerId);
     fab.style.transition='none';
     e.preventDefault();
-  }
-  function onMove(e){
-    if(!dragging)return;
-    const touch=e.touches?e.touches[0]:e;
-    const dx=touch.clientX-startX, dy=touch.clientY-startY;
-    if(Math.abs(dx)+Math.abs(dy)>6) moved=true;
-    if(moved) setFabPos(fabX+dx, fabY+dy);
+  },{passive:false});
+
+  fab.addEventListener('pointermove', function(e){
+    if(!active)return;
+    const dx=e.clientX-ox, dy=e.clientY-oy;
+    if(!moved && Math.hypot(dx,dy)<6)return;
+    moved=true;
+    applyPos(fx+dx, fy+dy);
     e.preventDefault();
-  }
-  function onEnd(e){
-    if(!dragging)return;
-    dragging=false;
-    fab.style.transition='transform 0.2s, background 0.2s';
+  },{passive:false});
+
+  fab.addEventListener('pointerup', function(e){
+    if(!active)return;
+    active=false;
+    fab.style.transition='transform 0.2s,background 0.2s';
     if(moved){
-      const rect=fab.getBoundingClientRect();
-      try{ localStorage.setItem('lc_pos', JSON.stringify({x:rect.left,y:rect.top})); }catch(e2){}
-      // Prevent click from firing after drag
-      fab._suppressClick=true;
-      setTimeout(()=>{ fab._suppressClick=false; },200);
+      const r=getRect();
+      try{ localStorage.setItem('lc_fab_pos',JSON.stringify({x:r.left,y:r.top})); }catch(e2){}
+    } else {
+      lcToggle(); // tap = toggle
     }
-  }
+  });
 
-  fab.addEventListener('mousedown', onStart);
-  fab.addEventListener('touchstart', onStart, {passive:false});
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('touchmove', onMove, {passive:false});
-  document.addEventListener('mouseup', onEnd);
-  document.addEventListener('touchend', onEnd);
+  fab.addEventListener('pointercancel',()=>{ active=false; });
 
-  // Suppress click after drag
-  const origToggle=lcToggle;
-  fab.addEventListener('click', ()=>{ if(fab._suppressClick) return; origToggle(); }, true);
-  fab.removeEventListener('click', lcToggle);
+  // Remove the direct click handler (pointerup handles it)
+  fab.removeEventListener('click',lcToggle);
+  fab.addEventListener('click',(e)=>e.stopImmediatePropagation(),true);
 }
-
-// Update panel position when opened
-const _origToggle2=lcToggle;
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
 else boot();
