@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🧮 Veterinary Calculator Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Prompt:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0d9488;--teal-d:#0f766e;--teal-l:#ccfbf1;--teal-50:#f0fdfa;
+  --slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;
+  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh;padding-bottom:32px;}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,var(--teal),var(--teal-d));padding:18px 16px 22px;position:relative;overflow:hidden;}
+.hdr::after{content:'';position:absolute;top:-50px;right:-50px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.07);}
+.hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.hdr-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:white;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hdr-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-sub{font-size:12px;color:rgba(255,255,255,0.75);}
+.search-bar{display:flex;gap:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:12px;padding:9px 14px;align-items:center;}
+.search-bar input{background:none;border:none;outline:none;color:white;font-family:'Sarabun',sans-serif;font-size:13px;flex:1;}
+.search-bar input::placeholder{color:rgba(255,255,255,0.5);}
+
+/* Content */
+.content{padding:16px 14px 0;}
+
+/* Section */
+.section{margin-bottom:20px;}
+.section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.section-icon{font-size:18px;}
+.section-name{font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:var(--slate-m);text-transform:uppercase;letter-spacing:0.4px;}
+.section-line{flex:1;height:1px;background:var(--border);}
+
+/* Calc Grid */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.calc-card{background:var(--white);border-radius:16px;border:1.5px solid var(--border);padding:14px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.calc-card:active{transform:scale(0.96);}
+.calc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;}
+.cc-fluid::before{background:linear-gradient(90deg,#0284c7,#0ea5e9);}
+.cc-drug::before{background:linear-gradient(90deg,var(--teal),#059669);}
+.cc-cardiac::before{background:linear-gradient(90deg,#e11d48,#f43f5e);}
+.cc-renal::before{background:linear-gradient(90deg,#7c3aed,#a855f7);}
+.cc-lab::before{background:linear-gradient(90deg,#d97706,#f59e0b);}
+.cc-general::before{background:linear-gradient(90deg,#475569,#64748b);}
+.calc-icon{font-size:26px;margin-bottom:6px;}
+.calc-name{font-size:12px;font-weight:700;color:var(--slate);line-height:1.3;}
+.calc-desc{font-size:10px;color:var(--slate-l);margin-top:3px;line-height:1.4;}
+.calc-card.hidden{display:none;}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.on{display:flex;}
+.modal-box{background:var(--white);border-radius:24px 24px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,16px);}
+.modal-handle-row{padding:12px 0 0;text-align:center;}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;display:inline-block;}
+.modal-head{padding:12px 20px 14px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;}
+.modal-sub{font-size:11px;color:var(--slate-l);margin-top:2px;}
+.modal-body{padding:16px 20px;}
+
+/* Form elements */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--slate-m);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.field input,.field select{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:11px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--slate);background:var(--bg);outline:none;transition:border-color 0.2s;}
+.field input:focus,.field select:focus{border-color:var(--teal);background:var(--white);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.calc-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;transition:all 0.2s;}
+.calc-btn:active{transform:scale(0.98);}
+.result-box{background:var(--teal-50);border:1.5px solid var(--teal-l);border-radius:14px;padding:14px;margin-top:12px;display:none;}
+.result-row{display:flex;align-items:baseline;justify-content:space-between;padding:5px 0;border-bottom:1px dashed rgba(13,148,136,0.15);}
+.result-row:last-child{border-bottom:none;}
+.result-lbl{font-size:12px;color:var(--teal-d);flex:1;}
+.result-val{font-family:'Prompt',sans-serif;font-size:15px;font-weight:800;color:var(--teal-d);}
+.result-unit{font-size:11px;color:var(--slate-l);margin-left:4px;}
+.result-note{font-size:11px;color:var(--slate-m);margin-top:8px;line-height:1.6;border-top:1px dashed rgba(13,148,136,0.2);padding-top:8px;}
+.warn-box{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:10px 12px;font-size:11px;color:#92400e;margin-top:8px;line-height:1.5;}
+.info-box{background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:10px 12px;font-size:11px;color:#0369a1;margin-top:8px;line-height:1.5;}
+.ref-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.ref-table th{background:var(--teal-50);color:var(--teal-d);padding:6px 8px;text-align:left;font-weight:700;}
+.ref-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
+.ref-table tr:last-child td{border-bottom:none;}
+.tag{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;margin-right:4px;}
+.tag-warn{background:#fee2e2;color:#991b1b;}
+.tag-ok{background:#dcfce7;color:#166534;}
+.tag-info{background:#dbeafe;color:#1d4ed8;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <button class="hdr-back" onclick="window.location.href='index.html'">←</button>
+    <div>
+      <div class="hdr-title">🧮 Veterinary Calculators</div>
+      <div class="hdr-sub">เครื่องคำนวณทางสัตวแพทย์ 20+ รายการ</div>
+    </div>
+  </div>
+  <div class="search-bar">
+    <span style="color:rgba(255,255,255,0.6);">🔍</span>
+    <input id="searchInput" placeholder="ค้นหาเครื่องคำนวณ..." oninput="searchCalc(this.value)">
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ── Fluid & Emergency ── -->
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon">💧</span>
+    <span class="section-name">Fluid & Emergency</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-fluid" onclick="open('fluid')" data-name="fluid therapy dehydration">
+      <div class="calc-icon">🩺</div>
+      <div class="calc-name">Fluid Therapy</div>
+      <div class="calc-desc">Deficit + Maintenance + Ongoing loss</div>
+    </div>
+    <div class="calc-card cc-fluid" onclick="open('cri')" data-name="cri constant rate infusion drip">
+      <div class="calc-icon">⏱️</div>
+      <div class="calc-name">CRI Calculator</div>
+      <div class="calc-desc">Fentanyl, Lidocaine, Dopamine ฯลฯ</div>
+    </div>
+    <div class="calc-card cc-fluid" onclick="open('transfusion')" data-name="blood transfusion">
+      <div class="calc-icon">🩸</div>
+      <div class="calc-name">Blood Transfusion</div>
+      <div class="calc-desc">ปริมาณเลือดที่ต้องให้</div>
+    </div>
+    <div class="calc-card cc-fluid" onclick="open('shock')" data-name="shock fluid rate resuscitation">
+      <div class="calc-icon">🚨</div>
+      <div class="calc-name">Shock Fluid Rate</div>
+      <div class="calc-desc">Bolus ฉุกเฉินตามชนิด shock</div>
+    </div>
+    <div class="calc-card cc-fluid" onclick="open('oxygen')" data-name="oxygen flow rate fio2">
+      <div class="calc-icon">🫁</div>
+      <div class="calc-name">O₂ Flow Rate</div>
+      <div class="calc-desc">%FiO₂ ตามชนิดอุปกรณ์</div>
+    </div>
+    <div class="calc-card cc-fluid" onclick="open('dilution')" data-name="drug dilution concentration">
+      <div class="calc-icon">🧪</div>
+      <div class="calc-name">Drug Dilution</div>
+      <div class="calc-desc">คำนวณการเจือจางยา</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Drug Dosing ── -->
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon">💊</span>
+    <span class="section-name">Drug Dosing</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-drug" onclick="open('dose')" data-name="drug dose calculator weight">
+      <div class="calc-icon">💉</div>
+      <div class="calc-name">Drug Dose</div>
+      <div class="calc-desc">ป้อน BW → คำนวณปริมาณยาทันที</div>
+    </div>
+    <div class="calc-card cc-drug" onclick="open('anesthesia')" data-name="anesthesia premedication induction">
+      <div class="calc-icon">😴</div>
+      <div class="calc-name">Anesthesia Drugs</div>
+      <div class="calc-desc">Premedication + Induction รวม</div>
+    </div>
+    <div class="calc-card cc-drug" onclick="open('chemo')" data-name="chemotherapy bsa doxorubicin vincristine">
+      <div class="calc-icon">🔬</div>
+      <div class="calc-name">Chemotherapy</div>
+      <div class="calc-desc">BSA-based dosing</div>
+    </div>
+    <div class="calc-card cc-drug" onclick="open('insulin')" data-name="insulin dose diabetes glucose">
+      <div class="calc-icon">🍬</div>
+      <div class="calc-name">Insulin Dose</div>
+      <div class="calc-desc">DM + Glucose curve guide</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Cardiac ── -->
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon">❤️</span>
+    <span class="section-name">Cardiac</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-cardiac" onclick="open('map')" data-name="mean arterial pressure blood pressure">
+      <div class="calc-icon">📊</div>
+      <div class="calc-name">MAP Calculator</div>
+      <div class="calc-desc">Mean Arterial Pressure</div>
+    </div>
+    <div class="calc-card cc-cardiac" onclick="open('shockindex')" data-name="shock index heart rate blood pressure">
+      <div class="calc-icon">⚡</div>
+      <div class="calc-name">Shock Index</div>
+      <div class="calc-desc">HR ÷ Systolic BP</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Renal ── -->
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon">🫘</span>
+    <span class="section-name">Renal</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-renal" onclick="open('iris')" data-name="iris ckd staging creatinine sdma">
+      <div class="calc-icon">🏥</div>
+      <div class="calc-name">IRIS CKD Staging</div>
+      <div class="calc-desc">Creatinine + SDMA + UPC + BP</div>
+    </div>
+    <div class="calc-card cc-renal" onclick="open('upc')" data-name="upc urine protein creatinine">
+      <div class="calc-icon">🧫</div>
+      <div class="calc-name">UPC Ratio</div>
+      <div class="calc-desc">Urine Protein:Creatinine</div>
+    </div>
+    <div class="calc-card cc-renal" onclick="open('fe')" data-name="fractional excretion electrolytes sodium">
+      <div class="calc-icon">⚗️</div>
+      <div class="calc-name">Fractional Excretion</div>
+      <div class="calc-desc">FENa, FEK, FEUN</div>
+    </div>
+    <div class="calc-card cc-renal" onclick="open('feline_ckd')" data-name="feline cat kidney disease staging">
+      <div class="calc-icon">🐈</div>
+      <div class="calc-name">Feline CKD Guide</div>
+      <div class="calc-desc">แนวทาง IRIS แมว</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Lab & Nutrition ── -->
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon">🧪</span>
+    <span class="section-name">Lab & Nutrition</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-lab" onclick="open('aniongap')" data-name="anion gap acidosis">
+      <div class="calc-icon">🔭</div>
+      <div class="calc-name">Anion Gap</div>
+      <div class="calc-desc">Na - (Cl + HCO₃)</div>
+    </div>
+    <div class="calc-card cc-lab" onclick="open('osmolality')" data-name="osmolality serum calculated">
+      <div class="calc-icon">🌡️</div>
+      <div class="calc-name">Serum Osmolality</div>
+      <div class="calc-desc">Calculated vs Measured</div>
+    </div>
+    <div class="calc-card cc-lab" onclick="open('corrca')" data-name="corrected calcium albumin hypoalbuminemia">
+      <div class="calc-icon">🦴</div>
+      <div class="calc-name">Corrected Calcium</div>
+      <div class="calc-desc">ปรับค่า Ca สำหรับ Hypoalbuminemia</div>
+    </div>
+    <div class="calc-card cc-lab" onclick="open('rer')" data-name="rer der resting energy requirement nutrition">
+      <div class="calc-icon">🍽️</div>
+      <div class="calc-name">RER / DER</div>
+      <div class="calc-desc">Energy requirement ต่อวัน</div>
+    </div>
+    <div class="calc-card cc-lab" onclick="open('bcs')" data-name="body condition score target weight obesity">
+      <div class="calc-icon">⚖️</div>
+      <div class="calc-name">BCS → Target BW</div>
+      <div class="calc-desc">คำนวณน้ำหนักเป้าหมาย</div>
+    </div>
+    <div class="calc-card cc-lab" onclick="open('glucose_curve')" data-name="glucose curve diabetes interpretation">
+      <div class="calc-icon">📈</div>
+      <div class="calc-name">Glucose Curve</div>
+      <div class="calc-desc">แปลผล + Nadir</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── General ── -->
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon">🐾</span>
+    <span class="section-name">General</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-general" onclick="open('bsa')" data-name="bsa body surface area m2">
+      <div class="calc-icon">📐</div>
+      <div class="calc-name">BSA / m²</div>
+      <div class="calc-desc">Body Surface Area สุนัข/แมว</div>
+    </div>
+    <div class="calc-card cc-general" onclick="open('petage')" data-name="pet age human equivalent dog cat">
+      <div class="calc-icon">🎂</div>
+      <div class="calc-name">Pet Age</div>
+      <div class="calc-desc">เทียบอายุกับมนุษย์</div>
+    </div>
+    <div class="calc-card cc-general" onclick="open('unit')" data-name="unit conversion mg kg lb celsius fahrenheit">
+      <div class="calc-icon">🔄</div>
+      <div class="calc-name">Unit Conversion</div>
+      <div class="calc-desc">น้ำหนัก อุณหภูมิ ความเข้มข้น</div>
+    </div>
+    <div class="calc-card cc-general" onclick="open('pain')" data-name="pain scale csu assessment">
+      <div class="calc-icon">😣</div>
+      <div class="calc-name">Pain Scale</div>
+      <div class="calc-desc">CSU Pain Score + NRS</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-handle-row"><div class="modal-handle"></div></div>
+    <div class="modal-head">
+      <div class="modal-title" id="mTitle">Calculator</div>
+      <div class="modal-sub" id="mSub"></div>
+    </div>
+    <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<script>
+function open(id){
+  const cfg=CALCS[id];
+  if(!cfg)return;
+  document.getElementById('mTitle').textContent=cfg.title;
+  document.getElementById('mSub').textContent=cfg.sub||'';
+  document.getElementById('mBody').innerHTML=cfg.html;
+  document.getElementById('modal').classList.add('on');
+  if(cfg.init)setTimeout(cfg.init,50);
+}
+function closeModal(e){
+  if(e.target===e.currentTarget)document.getElementById('modal').classList.remove('on');
+}
+function searchCalc(q){
+  document.querySelectorAll('.calc-card').forEach(c=>{
+    const name=c.dataset.name||'';
+    const title=c.querySelector('.calc-name')?.textContent||'';
+    c.classList.toggle('hidden',!!q&&!name.includes(q.toLowerCase())&&!title.toLowerCase().includes(q.toLowerCase()));
+  });
+  document.querySelectorAll('.section').forEach(s=>{
+    const visible=[...s.querySelectorAll('.calc-card')].some(c=>!c.classList.contains('hidden'));
+    s.style.display=visible?'':'none';
+  });
+}
+
+// ═══ CALCULATORS ═══
+const CALCS = {
+
+// ─── FLUID THERAPY ───
+fluid:{
+  title:'💧 Fluid Therapy',sub:'Dehydration + Maintenance + Ongoing loss',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="ft_bw" type="number" placeholder="เช่น 10" min="0.1" step="0.1"></div>
+    <div class="field"><label>% Dehydration</label>
+      <select id="ft_deh">
+        <option value="5">5% (ปากแห้ง CRT ปกติ)</option>
+        <option value="8" selected>8% (CRT > 2s, tacky)</option>
+        <option value="10">10% (eyes sunken, weak)</option>
+        <option value="12">12% (shock)</option>
+        <option value="15">15% (severe shock)</option>
+      </select>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="ft_sp">
+        <option value="dog">สุนัข (60 mL/kg/day)</option>
+        <option value="cat">แมว (50 mL/kg/day)</option>
+        <option value="rabbit">กระต่าย (100 mL/kg/day)</option>
+        <option value="horse">ม้า (50 mL/kg/day)</option>
+      </select>
+    </div>
+    <div class="field"><label>Ongoing loss (mL/hr)</label><input id="ft_loss" type="number" placeholder="0" min="0" value="0"></div>
+  </div>
+  <div class="field"><label>ให้ชดเชย Deficit ภายใน (ชั่วโมง)</label>
+    <select id="ft_hr">
+      <option value="4">4 ชั่วโมง (acute)</option>
+      <option value="8" selected>8 ชั่วโมง (standard)</option>
+      <option value="12">12 ชั่วโมง (gentle)</option>
+      <option value="24">24 ชั่วโมง (mild/CKD)</option>
+    </select>
+  </div>
+  <button class="calc-btn" onclick="calcFluid()">🧮 คำนวณ</button>
+  <div class="result-box" id="ft_res"></div>`,
+},
+
+// ─── CRI ───
+cri:{
+  title:'⏱️ CRI Calculator',sub:'Constant Rate Infusion — mcg/kg/min → mL/hr',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="cri_bw" type="number" placeholder="เช่น 10" min="0.1" step="0.1"></div>
+    <div class="field"><label>ยา</label>
+      <select id="cri_drug" onchange="updateCRIRange()">
+        <option value="fentanyl|0.002|0.04|mcg/kg/min|50 mcg/mL">Fentanyl (50 mcg/mL)</option>
+        <option value="lidocaine|25|80|mcg/kg/min|10000 mcg/mL">Lidocaine (10 mg/mL)</option>
+        <option value="ketamine|2|10|mcg/kg/min|100000 mcg/mL">Ketamine (100 mg/mL)</option>
+        <option value="morphine|0.1|0.3|mcg/kg/min|1000 mcg/mL">Morphine (1 mg/mL)</option>
+        <option value="dopamine|2|10|mcg/kg/min|800 mcg/mL">Dopamine CRI (800 mcg/mL)</option>
+        <option value="dobutamine|2|10|mcg/kg/min|500 mcg/mL">Dobutamine (500 mcg/mL)</option>
+        <option value="norepinephrine|0.05|1|mcg/kg/min|64 mcg/mL">Norepinephrine (64 mcg/mL)</option>
+        <option value="vasopressin|0.4|4|mU/kg/min|200000 mU/mL">Vasopressin (custom)</option>
+        <option value="custom|0|0|mcg/kg/min|1000">กำหนดเอง</option>
+      </select>
+    </div>
+  </div>
+  <div id="cri_custom" style="display:none;">
+    <div class="field-row">
+      <div class="field"><label>Concentration (mcg/mL)</label><input id="cri_conc" type="number" placeholder="เช่น 50"></div>
+      <div class="field"><label>หน่วย rate</label><select id="cri_unit"><option>mcg/kg/min</option><option>mcg/kg/hr</option></select></div>
+    </div>
+  </div>
+  <div class="field"><label>Dose rate ที่ต้องการ</label>
+    <input id="cri_dose" type="number" placeholder="" step="0.001" min="0">
+    <div style="font-size:11px;color:var(--slate-l);margin-top:3px;" id="cri_range_hint">ช่วง: —</div>
+  </div>
+  <button class="calc-btn" onclick="calcCRI()">🧮 คำนวณ</button>
+  <div class="result-box" id="cri_res"></div>`,
+  init:()=>updateCRIRange()
+},
+
+// ─── TRANSFUSION ───
+transfusion:{
+  title:'🩸 Blood Transfusion',sub:'คำนวณปริมาณเลือดที่ต้องให้',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="tr_bw" type="number" placeholder="เช่น 10" min="0.1"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="tr_sp">
+        <option value="90">สุนัข (BV 90 mL/kg)</option>
+        <option value="70">แมว (BV 70 mL/kg)</option>
+        <option value="80">กระต่าย (BV 80 mL/kg)</option>
+      </select>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>PCV ปัจจุบัน (%)</label><input id="tr_cur" type="number" placeholder="เช่น 18" min="1" max="60"></div>
+    <div class="field"><label>PCV เป้าหมาย (%)</label><input id="tr_tgt" type="number" placeholder="เช่น 30" min="10" max="55" value="30"></div>
+  </div>
+  <div class="field"><label>PCV ของผู้บริจาค (%)</label><input id="tr_don" type="number" value="40" min="20" max="60"></div>
+  <button class="calc-btn" onclick="calcTransfusion()">🧮 คำนวณ</button>
+  <div class="result-box" id="tr_res"></div>
+  <div class="info-box">⚠️ Max safe rate: 2–4 mL/kg/hr (pRBC) | 22 mL/kg/hr (emergency)<br>ตรวจ crossmatch ก่อนให้เลือดทุกครั้ง</div>`,
+},
+
+// ─── SHOCK FLUID ───
+shock:{
+  title:'🚨 Shock Fluid Rate',sub:'Fluid resuscitation ตามชนิด shock',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="sf_bw" type="number" placeholder="เช่น 10" min="0.1"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="sf_sp">
+        <option value="dog">สุนัข</option>
+        <option value="cat">แมว</option>
+      </select>
+    </div>
+  </div>
+  <div class="field"><label>ชนิด Fluid</label>
+    <select id="sf_fl">
+      <option value="crystalloid">Crystalloid (LRS / NSS)</option>
+      <option value="colloid">Colloid (Hetastarch)</option>
+      <option value="hypertonic">Hypertonic saline 7.5%</option>
+    </select>
+  </div>
+  <button class="calc-btn" onclick="calcShock()">🧮 คำนวณ</button>
+  <div class="result-box" id="sf_res"></div>`,
+},
+
+// ─── OXYGEN ───
+oxygen:{
+  title:'🫁 O₂ Flow Rate',sub:'%FiO₂ ตามชนิดอุปกรณ์',
+  html:`
+  <div class="info-box" style="margin-bottom:12px;">Air = 21% FiO₂ — SpO₂ เป้าหมาย ≥ 95%</div>
+  <table class="ref-table">
+    <tr><th>อุปกรณ์</th><th>Flow (L/min)</th><th>%FiO₂</th></tr>
+    <tr><td>Nasal cannula</td><td>1</td><td>24%</td></tr>
+    <tr><td>Nasal cannula</td><td>2</td><td>28%</td></tr>
+    <tr><td>Nasal cannula</td><td>3</td><td>32%</td></tr>
+    <tr><td>Nasal cannula</td><td>4</td><td>36%</td></tr>
+    <tr><td>Nasal cannula</td><td>5–6</td><td>40%</td></tr>
+    <tr><td>Simple mask</td><td>6–10</td><td>35–50%</td></tr>
+    <tr><td>Partial rebreather</td><td>8–12</td><td>50–70%</td></tr>
+    <tr><td>Non-rebreather</td><td>10–15</td><td>80–100%</td></tr>
+    <tr><td>Oxygen cage</td><td>3–5</td><td>30–40%</td></tr>
+    <tr><td>Flow-by O₂</td><td>2–3</td><td>25–30%</td></tr>
+  </table>
+  <div class="warn-box" style="margin-top:10px;">O₂ toxicity อาจเกิดได้เมื่อให้ FiO₂ > 60% นานกว่า 24 ชั่วโมง</div>`,
+},
+
+// ─── DILUTION ───
+dilution:{
+  title:'🧪 Drug Dilution',sub:'คำนวณการเจือจางยา',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>ความเข้มข้นเริ่มต้น</label><input id="dl_c1" type="number" placeholder="เช่น 50" min="0"></div>
+    <div class="field"><label>ความเข้มข้นที่ต้องการ</label><input id="dl_c2" type="number" placeholder="เช่น 5" min="0"></div>
+  </div>
+  <div class="field"><label>ปริมาตรสุดท้ายที่ต้องการ (mL)</label><input id="dl_v2" type="number" placeholder="เช่น 50" min="0"></div>
+  <div class="info-box" style="margin-bottom:8px;">สูตร C₁V₁ = C₂V₂ → V₁ = (C₂ × V₂) ÷ C₁</div>
+  <button class="calc-btn" onclick="calcDilution()">🧮 คำนวณ</button>
+  <div class="result-box" id="dl_res"></div>`,
+},
+
+// ─── DRUG DOSE ───
+dose:{
+  title:'💉 Drug Dose Calculator',sub:'ป้อน BW → ได้ปริมาณยาทันที',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="dd_bw" type="number" placeholder="เช่น 10" min="0.1" step="0.1" oninput="calcDose()"></div>
+    <div class="field"><label>ยา</label>
+      <select id="dd_drug" onchange="calcDose()">
+        <option value="amoxicillin|10|20|mg/kg|250 mg/5mL|250">Amoxicillin 250mg/5mL</option>
+        <option value="amoxiclav|12.5|25|mg/kg|50 mg/mL|50">Amoxicillin-Clavulanate 50mg/mL</option>
+        <option value="enrofloxacin|5|20|mg/kg|50 mg/mL|50">Enrofloxacin 50mg/mL</option>
+        <option value="meloxicam|0.1|0.2|mg/kg|5 mg/mL|5">Meloxicam 5mg/mL</option>
+        <option value="carprofen|2.2|4.4|mg/kg|50 mg/mL|50">Carprofen 50mg/mL</option>
+        <option value="metronidazole|10|15|mg/kg|500 mg/100mL IV|5">Metronidazole 5mg/mL IV</option>
+        <option value="tramadol|2|5|mg/kg|50 mg/mL oral|50">Tramadol 50mg/mL</option>
+        <option value="prednisolone|1|2|mg/kg|5 mg/mL|5">Prednisolone 5mg/mL</option>
+        <option value="furosemide|1|4|mg/kg|10 mg/mL|10">Furosemide 10mg/mL</option>
+        <option value="dexamethasone|0.1|0.5|mg/kg|2 mg/mL|2">Dexamethasone 2mg/mL</option>
+        <option value="phenobarbital|2|5|mg/kg|32.4 mg/mL|32.4">Phenobarbital 32.4mg/mL</option>
+        <option value="atropine|0.02|0.04|mg/kg|0.6 mg/mL|0.6">Atropine 0.6mg/mL</option>
+        <option value="buprenorphine|0.01|0.02|mg/kg|0.3 mg/mL|0.3">Buprenorphine 0.3mg/mL</option>
+        <option value="maropitant|1|1|mg/kg|10 mg/mL|10">Maropitant 10mg/mL SC</option>
+        <option value="ondansetron|0.1|0.3|mg/kg|2 mg/mL|2">Ondansetron 2mg/mL</option>
+        <option value="custom|0|0|mg/kg|custom|1">กำหนดเอง</option>
+      </select>
+    </div>
+  </div>
+  <div id="dd_custom_fields" style="display:none;">
+    <div class="field-row">
+      <div class="field"><label>Low dose (mg/kg)</label><input id="dd_cl" type="number" placeholder="0" min="0" step="0.001" oninput="calcDose()"></div>
+      <div class="field"><label>High dose (mg/kg)</label><input id="dd_ch" type="number" placeholder="0" min="0" step="0.001" oninput="calcDose()"></div>
+    </div>
+    <div class="field"><label>Concentration (mg/mL)</label><input id="dd_conc" type="number" placeholder="1" min="0" step="0.01" oninput="calcDose()"></div>
+  </div>
+  <div class="result-box" id="dd_res" style="display:block;"></div>`,
+  init:()=>calcDose()
+},
+
+// ─── ANESTHESIA ───
+anesthesia:{
+  title:'😴 Anesthesia Drugs',sub:'Premedication + Induction dose',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="an_bw" type="number" placeholder="เช่น 10" min="0.1" step="0.1"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="an_sp">
+        <option value="dog">สุนัข</option>
+        <option value="cat">แมว</option>
+      </select>
+    </div>
+  </div>
+  <div class="field"><label>ASA Classification</label>
+    <select id="an_asa">
+      <option value="1">ASA I — ปกติ สุขภาพดี</option>
+      <option value="2">ASA II — โรคเบา ไม่กระทบ</option>
+      <option value="3">ASA III — โรคปานกลาง</option>
+      <option value="4">ASA IV — โรครุนแรง ชีวิตมีความเสี่ยง</option>
+    </select>
+  </div>
+  <button class="calc-btn" onclick="calcAnesthesia()">🧮 คำนวณ</button>
+  <div class="result-box" id="an_res"></div>`,
+},
+
+// ─── CHEMO ───
+chemo:{
+  title:'🔬 Chemotherapy',sub:'BSA-based dosing (m²)',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="ch_bw" type="number" placeholder="เช่น 10" min="0.1" step="0.1"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="ch_sp">
+        <option value="dog">สุนัข</option>
+        <option value="cat">แมว</option>
+      </select>
+    </div>
+  </div>
+  <div class="field"><label>ยา Chemotherapy</label>
+    <select id="ch_drug">
+      <option value="vincristine|0.5|0.7|mg/m²|1 mg/mL">Vincristine (0.5–0.7 mg/m²)</option>
+      <option value="doxorubicin_dog|30|30|mg/m²|2 mg/mL">Doxorubicin สุนัข (30 mg/m²)</option>
+      <option value="doxorubicin_cat|1|1|mg/kg|2 mg/mL">Doxorubicin แมว (1 mg/kg)</option>
+      <option value="cyclophosphamide|200|250|mg/m²|50 mg/mL">Cyclophosphamide (200–250 mg/m²)</option>
+      <option value="chlorambucil|4|6|mg/m²|2 mg/tab">Chlorambucil (4–6 mg/m²)</option>
+      <option value="lomustine|70|90|mg/m²|10 mg/cap">Lomustine CCNU (70–90 mg/m²)</option>
+      <option value="carboplatin_dog|300|300|mg/m²|10 mg/mL">Carboplatin สุนัข (300 mg/m²)</option>
+      <option value="carboplatin_cat|180|200|mg/m²|10 mg/mL">Carboplatin แมว (180–200 mg/m²)</option>
+    </select>
+  </div>
+  <button class="calc-btn" onclick="calcChemo()">🧮 คำนวณ</button>
+  <div class="result-box" id="ch_res"></div>
+  <div class="warn-box">⚠️ Chemo ต้องคำนวณโดยสัตวแพทย์ผู้เชี่ยวชาญเท่านั้น</div>`,
+},
+
+// ─── INSULIN ───
+insulin:{
+  title:'🍬 Insulin Dose',sub:'Diabetes mellitus + Glucose curve guide',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="ins_bw" type="number" placeholder="เช่น 5" min="0.1" step="0.1"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="ins_sp" onchange="updateInsulin()">
+        <option value="dog">สุนัข</option>
+        <option value="cat">แมว</option>
+      </select>
+    </div>
+  </div>
+  <div class="field"><label>Insulin ชนิด</label><select id="ins_type"><option>NPH (Caninsulin)</option><option>Glargine (Lantus)</option><option>PZI</option><option>Detemir</option></select></div>
+  <div class="field"><label>Blood Glucose ปัจจุบัน (mg/dL)</label><input id="ins_bg" type="number" placeholder="เช่น 350"></div>
+  <button class="calc-btn" onclick="calcInsulin()">🧮 คำนวณ</button>
+  <div class="result-box" id="ins_res"></div>
+  <div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--slate-m);">📈 Glucose Curve แปลผล</div>
+  <table class="ref-table" style="margin-top:6px;">
+    <tr><th>Glucose (mg/dL)</th><th>ความหมาย</th><th>การปรับ</th></tr>
+    <tr><td>&lt; 80</td><td><span class="tag tag-warn">Hypoglycemia</span></td><td>ลด Insulin 25–50%</td></tr>
+    <tr><td>80–180</td><td><span class="tag tag-ok">ควบคุมดี</span></td><td>คง dose เดิม</td></tr>
+    <tr><td>180–250</td><td><span class="tag tag-info">สูงเล็กน้อย</span></td><td>เพิ่ม Insulin 10–25%</td></tr>
+    <tr><td>250–360</td><td><span class="tag tag-warn">สูง</span></td><td>เพิ่ม Insulin 25%</td></tr>
+    <tr><td>&gt; 360</td><td><span class="tag tag-warn">สูงมาก</span></td><td>เพิ่ม Insulin 25–50%</td></tr>
+  </table>`,
+  init:()=>updateInsulin()
+},
+
+// ─── MAP ───
+map:{
+  title:'📊 MAP Calculator',sub:'Mean Arterial Pressure',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Systolic (mmHg)</label><input id="map_s" type="number" placeholder="เช่น 120" oninput="calcMAP()"></div>
+    <div class="field"><label>Diastolic (mmHg)</label><input id="map_d" type="number" placeholder="เช่น 80" oninput="calcMAP()"></div>
+  </div>
+  <div class="result-box" id="map_res" style="display:block;"></div>
+  <table class="ref-table" style="margin-top:12px;">
+    <tr><th>MAP (mmHg)</th><th>สถานะ</th></tr>
+    <tr><td>&lt; 60</td><td><span class="tag tag-warn">Hypotension ฉุกเฉิน</span></td></tr>
+    <tr><td>60–80</td><td><span class="tag tag-info">ต่ำ — monitor ใกล้ชิด</span></td></tr>
+    <tr><td>80–120</td><td><span class="tag tag-ok">ปกติ</span></td></tr>
+    <tr><td>&gt; 160</td><td><span class="tag tag-warn">Hypertension</span></td></tr>
+  </table>`,
+  init:()=>calcMAP()
+},
+
+// ─── SHOCK INDEX ───
+shockindex:{
+  title:'⚡ Shock Index',sub:'HR ÷ Systolic BP',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Heart Rate (bpm)</label><input id="si_hr" type="number" placeholder="เช่น 120" oninput="calcSI()"></div>
+    <div class="field"><label>Systolic BP (mmHg)</label><input id="si_sbp" type="number" placeholder="เช่น 90" oninput="calcSI()"></div>
+  </div>
+  <div class="result-box" id="si_res" style="display:block;"></div>
+  <table class="ref-table" style="margin-top:12px;">
+    <tr><th>Shock Index</th><th>ความหมาย</th></tr>
+    <tr><td>&lt; 0.8</td><td><span class="tag tag-ok">ปกติ</span></td></tr>
+    <tr><td>0.8–1.0</td><td><span class="tag tag-info">Mild compromise</span></td></tr>
+    <tr><td>1.0–1.4</td><td><span class="tag tag-warn">Moderate shock</span></td></tr>
+    <tr><td>&gt; 1.4</td><td><span class="tag tag-warn">Severe shock ฉุกเฉิน</span></td></tr>
+  </table>`,
+  init:()=>calcSI()
+},
+
+// ─── IRIS ───
+iris:{
+  title:'🏥 IRIS CKD Staging',sub:'International Renal Interest Society',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Creatinine (mg/dL)</label><input id="ir_cr" type="number" placeholder="เช่น 2.5" step="0.1" oninput="calcIRIS()"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="ir_sp" onchange="calcIRIS()">
+        <option value="dog">สุนัข</option>
+        <option value="cat">แมว</option>
+      </select>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>SDMA (µg/dL) ถ้ามี</label><input id="ir_sdma" type="number" placeholder="ปล่อยว่างได้" step="0.1" oninput="calcIRIS()"></div>
+    <div class="field"><label>UPC Ratio</label>
+      <select id="ir_upc" onchange="calcIRIS()">
+        <option value="normal">&lt; 0.2 (Normal)</option>
+        <option value="borderline">0.2–0.5 (Borderline)</option>
+        <option value="proteinuric">&gt; 0.5 (Proteinuric)</option>
+        <option value="unknown">ไม่ทราบ</option>
+      </select>
+    </div>
+  </div>
+  <div class="field"><label>Systolic BP (mmHg) ถ้ามี</label><input id="ir_bp" type="number" placeholder="ปล่อยว่างได้" oninput="calcIRIS()"></div>
+  <div class="result-box" id="ir_res" style="display:block;"></div>`,
+  init:()=>calcIRIS()
+},
+
+// ─── UPC ───
+upc:{
+  title:'🧫 UPC Ratio',sub:'Urine Protein:Creatinine Ratio',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Urine Protein (mg/dL)</label><input id="upc_p" type="number" placeholder="เช่น 50" oninput="calcUPC()"></div>
+    <div class="field"><label>Urine Creatinine (mg/dL)</label><input id="upc_c" type="number" placeholder="เช่น 100" oninput="calcUPC()"></div>
+  </div>
+  <div class="result-box" id="upc_res" style="display:block;"></div>
+  <table class="ref-table" style="margin-top:12px;">
+    <tr><th>UPC</th><th>สถานะ (สุนัข/แมว)</th></tr>
+    <tr><td>&lt; 0.2</td><td><span class="tag tag-ok">ปกติ</span></td></tr>
+    <tr><td>0.2–0.5</td><td><span class="tag tag-info">Borderline</span></td></tr>
+    <tr><td>&gt; 0.5</td><td><span class="tag tag-warn">Proteinuria — ตรวจเพิ่มเติม</span></td></tr>
+  </table>`,
+  init:()=>calcUPC()
+},
+
+// ─── FE ───
+fe:{
+  title:'⚗️ Fractional Excretion',sub:'FENa, FEK, FEUN',
+  html:`
+  <div style="font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:8px;">FENa = (Urine Na × Serum Cr) / (Serum Na × Urine Cr) × 100</div>
+  <div class="field-row">
+    <div class="field"><label>Urine Na (mEq/L)</label><input id="fe_una" type="number" placeholder="เช่น 20" oninput="calcFE()"></div>
+    <div class="field"><label>Serum Na (mEq/L)</label><input id="fe_sna" type="number" placeholder="เช่น 145" oninput="calcFE()"></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Urine Cr (mg/dL)</label><input id="fe_ucr" type="number" placeholder="เช่น 150" oninput="calcFE()"></div>
+    <div class="field"><label>Serum Cr (mg/dL)</label><input id="fe_scr" type="number" placeholder="เช่น 2.0" oninput="calcFE()"></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Urine K (mEq/L) ถ้ามี</label><input id="fe_uk" type="number" placeholder="ปล่อยว่างได้" oninput="calcFE()"></div>
+    <div class="field"><label>Serum K (mEq/L) ถ้ามี</label><input id="fe_sk" type="number" placeholder="ปล่อยว่างได้" oninput="calcFE()"></div>
+  </div>
+  <div class="result-box" id="fe_res" style="display:block;"></div>`,
+  init:()=>calcFE()
+},
+
+// ─── FELINE CKD ───
+feline_ckd:{
+  title:'🐈 Feline CKD Guide',sub:'IRIS staging สำหรับแมว',
+  html:`
+  <table class="ref-table">
+    <tr><th>Stage</th><th>Creatinine</th><th>SDMA</th><th>แนวทาง</th></tr>
+    <tr><td><b>1</b></td><td>&lt; 1.6 mg/dL</td><td>&lt; 18 µg/dL</td><td>ปรับอาหาร Monitor q6m</td></tr>
+    <tr><td><b>2</b></td><td>1.6–2.8</td><td>18–25</td><td>Renal diet ลด P Monitor q3m</td></tr>
+    <tr><td><b>3</b></td><td>2.9–5.0</td><td>26–38</td><td>เพิ่ม fluid Phosphate binder q1–3m</td></tr>
+    <tr><td><b>4</b></td><td>&gt; 5.0</td><td>&gt; 38</td><td>Intensive care พิจารณา Dialysis</td></tr>
+  </table>
+  <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--slate-m);">Sub-staging Blood Pressure</div>
+  <table class="ref-table" style="margin-top:6px;">
+    <tr><th>BP Systolic</th><th>Risk</th><th>Target</th></tr>
+    <tr><td>&lt; 140</td><td>Minimal</td><td>Monitor</td></tr>
+    <tr><td>140–159</td><td>Low</td><td>Consider treatment</td></tr>
+    <tr><td>160–179</td><td>Moderate</td><td>Amlodipine 0.625 mg/cat</td></tr>
+    <tr><td>≥ 180</td><td>High</td><td>ต้องรักษาทันที</td></tr>
+  </table>`,
+},
+
+// ─── ANION GAP ───
+aniongap:{
+  title:'🔭 Anion Gap',sub:'Na − (Cl + HCO₃)',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Na (mEq/L)</label><input id="ag_na" type="number" placeholder="เช่น 145" oninput="calcAG()"></div>
+    <div class="field"><label>Cl (mEq/L)</label><input id="ag_cl" type="number" placeholder="เช่น 110" oninput="calcAG()"></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>HCO₃ (mEq/L)</label><input id="ag_hco3" type="number" placeholder="เช่น 20" oninput="calcAG()"></div>
+    <div class="field"><label>Albumin (g/dL) ถ้ามี</label><input id="ag_alb" type="number" placeholder="ปล่อยว่าง" oninput="calcAG()"></div>
+  </div>
+  <div class="result-box" id="ag_res" style="display:block;"></div>
+  <table class="ref-table" style="margin-top:12px;">
+    <tr><th>AG</th><th>ความหมาย</th></tr>
+    <tr><td>&lt; 12</td><td><span class="tag tag-ok">ปกติ</span></td></tr>
+    <tr><td>12–25</td><td><span class="tag tag-info">เล็กน้อย — ตรวจเพิ่ม</span></td></tr>
+    <tr><td>&gt; 25</td><td><span class="tag tag-warn">High AG Metabolic Acidosis</span></td></tr>
+  </table>`,
+  init:()=>calcAG()
+},
+
+// ─── OSMOLALITY ───
+osmolality:{
+  title:'🌡️ Serum Osmolality',sub:'Calculated Osmolality',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Na (mEq/L)</label><input id="os_na" type="number" placeholder="เช่น 145" oninput="calcOS()"></div>
+    <div class="field"><label>Glucose (mg/dL)</label><input id="os_glu" type="number" placeholder="เช่น 100" oninput="calcOS()"></div>
+  </div>
+  <div class="field"><label>BUN (mg/dL)</label><input id="os_bun" type="number" placeholder="เช่น 20" oninput="calcOS()"></div>
+  <div class="result-box" id="os_res" style="display:block;"></div>
+  <div class="info-box" style="margin-top:8px;">Osmol gap = Measured − Calculated<br>ปกติ &lt; 10 mOsm/kg | ถ้าสูง → Ethylene glycol, Mannitol</div>`,
+  init:()=>calcOS()
+},
+
+// ─── CORRECTED CA ───
+corrca:{
+  title:'🦴 Corrected Calcium',sub:'ปรับค่า Ca สำหรับ Hypoalbuminemia',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Total Ca (mg/dL)</label><input id="ca_ca" type="number" placeholder="เช่น 8.0" step="0.1" oninput="calcCA()"></div>
+    <div class="field"><label>Albumin (g/dL)</label><input id="ca_alb" type="number" placeholder="เช่น 2.0" step="0.1" oninput="calcCA()"></div>
+  </div>
+  <div class="field"><label>ชนิดสัตว์</label><select id="ca_sp" onchange="calcCA()"><option value="dog">สุนัข (Normal alb 3.5)</option><option value="cat">แมว (Normal alb 3.2)</option></select></div>
+  <div class="result-box" id="ca_res" style="display:block;"></div>
+  <div class="info-box">สูตร: Corrected Ca = Measured Ca − Albumin + 3.5 (สุนัข) หรือ 3.2 (แมว)</div>`,
+  init:()=>calcCA()
+},
+
+// ─── RER/DER ───
+rer:{
+  title:'🍽️ RER / DER',sub:'Resting Energy Requirement',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="re_bw" type="number" placeholder="เช่น 10" step="0.1" oninput="calcRER()"></div>
+    <div class="field"><label>Life stage</label>
+      <select id="re_stage" onchange="calcRER()">
+        <option value="1.0">ผู้ใหญ่ที่ผ่าตัดทำหมัน (×1.0)</option>
+        <option value="1.2">ผู้ใหญ่ไม่ผ่าตัด (×1.2)</option>
+        <option value="1.4">ลูกสุนัข/แมว &lt;4 เดือน (×1.4–2.0)</option>
+        <option value="1.6">น้ำหนักน้อย / ขาดอาหาร (×1.4–1.6)</option>
+        <option value="0.8">ลดน้ำหนัก (×0.8)</option>
+        <option value="1.5">หลังผ่าตัด (×1.2–1.5)</option>
+        <option value="1.7">บาดแผล / ติดเชื้อ (×1.5–2.0)</option>
+        <option value="1.3">ตั้งท้อง ปลาย (×1.25–1.5)</option>
+        <option value="2.0">ให้นมลูก (×2.0–3.0)</option>
+      </select>
+    </div>
+  </div>
+  <div class="result-box" id="re_res" style="display:block;"></div>`,
+  init:()=>calcRER()
+},
+
+// ─── BCS ───
+bcs:{
+  title:'⚖️ BCS → Target BW',sub:'Body Condition Score 9-point scale',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนักปัจจุบัน (kg)</label><input id="bcs_bw" type="number" placeholder="เช่น 12" step="0.1" oninput="calcBCS()"></div>
+    <div class="field"><label>BCS ปัจจุบัน</label>
+      <select id="bcs_score" onchange="calcBCS()">
+        <option value="1">1/9 — ผอมมาก</option>
+        <option value="2">2/9 — ผอมมาก</option>
+        <option value="3">3/9 — ผอม</option>
+        <option value="4">4/9 — ผอมเล็กน้อย</option>
+        <option value="5" selected>5/9 — เหมาะสม</option>
+        <option value="6">6/9 — เริ่มอ้วน</option>
+        <option value="7">7/9 — อ้วน</option>
+        <option value="8">8/9 — อ้วนมาก</option>
+        <option value="9">9/9 — อ้วนมากที่สุด</option>
+      </select>
+    </div>
+  </div>
+  <div class="result-box" id="bcs_res" style="display:block;"></div>
+  <table class="ref-table" style="margin-top:12px;">
+    <tr><th>BCS</th><th>ลักษณะ</th><th>%BF</th></tr>
+    <tr><td>1–3</td><td>ผอม ซี่โครงและกระดูกเห็นชัด</td><td>&lt;15%</td></tr>
+    <tr><td>4–5</td><td>เหมาะสม จับซี่โครงได้ง่าย</td><td>15–25%</td></tr>
+    <tr><td>6–7</td><td>อ้วน จับซี่โครงยาก</td><td>25–35%</td></tr>
+    <tr><td>8–9</td><td>อ้วนมาก ไม่เห็น waist</td><td>&gt;35%</td></tr>
+  </table>`,
+  init:()=>calcBCS()
+},
+
+// ─── GLUCOSE CURVE ───
+glucose_curve:{
+  title:'📈 Glucose Curve',sub:'บันทึกและแปลผล glucose curve',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>Glucose ก่อนอาหาร (mg/dL)</label><input id="gc_pre" type="number" placeholder="เช่น 380"></div>
+    <div class="field"><label>Glucose Nadir ต่ำสุด (mg/dL)</label><input id="gc_nadir" type="number" placeholder="เช่น 120"></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Glucose หลัง 12h (mg/dL)</label><input id="gc_12h" type="number" placeholder="เช่น 280"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="gc_sp">
+        <option value="dog">สุนัข (target 80–180)</option>
+        <option value="cat">แมว (target 80–250)</option>
+      </select>
+    </div>
+  </div>
+  <button class="calc-btn" onclick="calcGC()">🧮 แปลผล</button>
+  <div class="result-box" id="gc_res"></div>`,
+},
+
+// ─── BSA ───
+bsa:{
+  title:'📐 BSA / m²',sub:'Body Surface Area',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>น้ำหนัก (kg)</label><input id="bsa_bw" type="number" placeholder="เช่น 10" step="0.1" oninput="calcBSA2()"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="bsa_sp" onchange="calcBSA2()">
+        <option value="dog">สุนัข (k=0.101)</option>
+        <option value="cat">แมว (k=0.100)</option>
+        <option value="rabbit">กระต่าย (k=0.099)</option>
+      </select>
+    </div>
+  </div>
+  <div class="result-box" id="bsa_res" style="display:block;"></div>
+  <div class="info-box">สูตร: BSA (m²) = k × W(kg)^⅔<br>ใช้สำหรับคำนวณ Chemo dose</div>`,
+  init:()=>calcBSA2()
+},
+
+// ─── PET AGE ───
+petage:{
+  title:'🎂 Pet Age',sub:'เทียบอายุสัตว์กับมนุษย์',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>อายุสัตว์ (ปี)</label><input id="pa_age" type="number" placeholder="เช่น 5" step="0.5" min="0" oninput="calcPA()"></div>
+    <div class="field"><label>ชนิดสัตว์</label>
+      <select id="pa_sp" onchange="calcPA()">
+        <option value="dog_small">สุนัขเล็ก &lt;10kg</option>
+        <option value="dog_large">สุนัขใหญ่ &gt;25kg</option>
+        <option value="cat">แมว</option>
+      </select>
+    </div>
+  </div>
+  <div class="result-box" id="pa_res" style="display:block;"></div>`,
+  init:()=>calcPA()
+},
+
+// ─── UNIT ───
+unit:{
+  title:'🔄 Unit Conversion',sub:'น้ำหนัก อุณหภูมิ ความเข้มข้น',
+  html:`
+  <div class="field-row">
+    <div class="field"><label>ค่าที่ต้องการแปลง</label><input id="uc_val" type="number" placeholder="กรอกตัวเลข" oninput="calcUC()"></div>
+    <div class="field"><label>แปลงจาก → ถึง</label>
+      <select id="uc_type" onchange="calcUC()">
+        <option value="kg_lb">kg → lb</option>
+        <option value="lb_kg">lb → kg</option>
+        <option value="c_f">°C → °F</option>
+        <option value="f_c">°F → °C</option>
+        <option value="mg_mcg">mg → mcg</option>
+        <option value="mcg_mg">mcg → mg</option>
+        <option value="mgdl_mmol_glu">mg/dL → mmol/L (Glucose)</option>
+        <option value="mmol_mgdl_glu">mmol/L → mg/dL (Glucose)</option>
+        <option value="mgdl_umol_cr">mg/dL → µmol/L (Creatinine)</option>
+        <option value="umol_mgdl_cr">µmol/L → mg/dL (Creatinine)</option>
+        <option value="gdl_gl">g/dL → g/L</option>
+        <option value="mbar_mmhg">mbar → mmHg</option>
+      </select>
+    </div>
+  </div>
+  <div class="result-box" id="uc_res" style="display:block;"></div>`,
+  init:()=>calcUC()
+},
+
+// ─── PAIN ───
+pain:{
+  title:'😣 Pain Scale',sub:'CSU Pain Scale + NRS',
+  html:`
+  <div class="info-box" style="margin-bottom:12px;">Colorado State University (CSU) Pain Scale สำหรับสุนัขและแมว</div>
+  <table class="ref-table">
+    <tr><th>ระดับ</th><th>อาการ</th><th>การจัดการ</th></tr>
+    <tr><td><span class="tag tag-ok">0</span></td><td>ไม่มีปวด ตอบสนองปกติ</td><td>ไม่ต้องให้ยา</td></tr>
+    <tr><td><span class="tag tag-ok">1–2</span></td><td>ปวดเล็กน้อย ยังกินอาหาร</td><td>NSAID PO</td></tr>
+    <tr><td><span class="tag tag-info">3–4</span></td><td>ปวดปานกลาง เงียบ กระสับ</td><td>NSAID + Opioid</td></tr>
+    <tr><td><span class="tag tag-warn">5–6</span></td><td>ปวดรุนแรง ไม่สนใจสิ่งแวดล้อม</td><td>Opioid IV + Multimodal</td></tr>
+    <tr><td><span class="tag tag-warn">7–10</span></td><td>ปวดรุนแรงมาก ก้าวร้าว</td><td>ต้องการยาทันที + Sedation</td></tr>
+  </table>
+  <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--slate-m);">🐱 Feline Grimace Scale สัญญาณปวดในแมว</div>
+  <div class="info-box" style="margin-top:6px;">👁️ Orbital tightening | 👃 Nose/cheek flattening | 😬 Muzzle tension | 👂 Ear rotation | 🐱 Whiskers change</div>`,
+},
+
+};
+
+// ════ CALC FUNCTIONS ════
+
+function calcFluid(){
+  const bw=+document.getElementById('ft_bw').value||0;
+  const deh=+document.getElementById('ft_deh').value||8;
+  const spMap={dog:60,cat:50,rabbit:100,horse:50};
+  const sp=document.getElementById('ft_sp').value;
+  const hrs=+document.getElementById('ft_hr').value||8;
+  const loss=+document.getElementById('ft_loss').value||0;
+  if(!bw){alert('กรุณากรอกน้ำหนัก');return;}
+  const deficit=bw*deh*10;
+  const maint=bw*spMap[sp];
+  const defRate=deficit/hrs;
+  const totalRate=defRate+(maint/24)+loss;
+  const res=document.getElementById('ft_res');
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">Deficit (${deh}%)</span><span class="result-val">${deficit.toFixed(0)}<span class="result-unit">mL</span></span></div>
+    <div class="result-row"><span class="result-lbl">Maintenance (24h)</span><span class="result-val">${maint.toFixed(0)}<span class="result-unit">mL/day</span></span></div>
+    <div class="result-row"><span class="result-lbl">Deficit Rate (${hrs}h)</span><span class="result-val">${defRate.toFixed(1)}<span class="result-unit">mL/hr</span></span></div>
+    <div class="result-row"><span class="result-lbl">Total Rate</span><span class="result-val">${totalRate.toFixed(1)}<span class="result-unit">mL/hr</span></span></div>
+    <div class="result-row"><span class="result-lbl">Total ${hrs}h Volume</span><span class="result-val">${(totalRate*hrs).toFixed(0)}<span class="result-unit">mL</span></span></div>
+    <div class="result-note">⚠️ ติดตาม Urine output ≥ 1 mL/kg/hr | ประเมิน hydration ซ้ำทุก 2–4h</div>`;
+  res.style.display='block';
+}
+
+function updateCRIRange(){
+  const val=document.getElementById('cri_drug').value;
+  const parts=val.split('|');
+  const isCustom=parts[0]==='custom';
+  document.getElementById('cri_custom').style.display=isCustom?'block':'none';
+  const hint=document.getElementById('cri_range_hint');
+  if(!isCustom&&parts[1]!=='0') hint.textContent=`ช่วง: ${parts[1]}–${parts[2]} ${parts[3]}`;
+  else hint.textContent='';
+}
+
+function calcCRI(){
+  const bw=+document.getElementById('cri_bw').value||0;
+  const doseRate=+document.getElementById('cri_dose').value||0;
+  const val=document.getElementById('cri_drug').value;
+  const parts=val.split('|');
+  let conc=parseFloat(parts[4]);
+  const isCustom=parts[0]==='custom';
+  if(isCustom) conc=+document.getElementById('cri_conc').value||1;
+  if(!bw||!doseRate||!conc){alert('กรุณากรอกข้อมูลให้ครบ');return;}
+  const rateMLhr=(doseRate*bw*60)/conc;
+  const res=document.getElementById('cri_res');
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">Rate ที่ต้องการ</span><span class="result-val">${rateMLhr.toFixed(3)}<span class="result-unit">mL/hr</span></span></div>
+    <div class="result-row"><span class="result-lbl">ต่อ 24h</span><span class="result-val">${(rateMLhr*24).toFixed(1)}<span class="result-unit">mL</span></span></div>
+    <div class="result-note">Concentration: ${conc} mcg/mL | BW: ${bw} kg | Dose: ${doseRate} ${parts[3]||'mcg/kg/min'}</div>`;
+  res.style.display='block';
+}
+
+function calcTransfusion(){
+  const bw=+document.getElementById('tr_bw').value||0;
+  const bv=+document.getElementById('tr_sp').value||90;
+  const cur=+document.getElementById('tr_cur').value||0;
+  const tgt=+document.getElementById('tr_tgt').value||30;
+  const don=+document.getElementById('tr_don').value||40;
+  if(!bw||!cur){alert('กรุณากรอกข้อมูลให้ครบ');return;}
+  const vol=bv*bw*(tgt-cur)/don;
+  const safe=Math.max(0,vol);
+  const maxRate=bw*4;
+  const minHr=safe/maxRate;
+  const res=document.getElementById('tr_res');
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">ปริมาณเลือดที่ต้องให้</span><span class="result-val">${safe.toFixed(0)}<span class="result-unit">mL</span></span></div>
+    <div class="result-row"><span class="result-lbl">Max safe rate</span><span class="result-val">${maxRate.toFixed(0)}<span class="result-unit">mL/hr</span></span></div>
+    <div class="result-row"><span class="result-lbl">เวลาให้ขั้นต่ำ</span><span class="result-val">${minHr.toFixed(1)}<span class="result-unit">ชั่วโมง</span></span></div>
+    <div class="result-note">BV = ${bv} mL/kg | Start 1 mL/kg/hr × 15 min ก่อนแล้วเพิ่ม rate</div>`;
+  res.style.display='block';
+}
+
+function calcShock(){
+  const bw=+document.getElementById('sf_bw').value||0;
+  const sp=document.getElementById('sf_sp').value;
+  const fl=document.getElementById('sf_fl').value;
+  if(!bw){alert('กรุณากรอกน้ำหนัก');return;}
+  const dogFull=90,catFull=60;
+  const maxVol=sp==='dog'?dogFull:catFull;
+  let bolus='',note='',rate='';
+  if(fl==='crystalloid'){
+    const b=bw*(maxVol/4); rate=(b/0.25);
+    bolus=`${b.toFixed(0)} mL (¼ shock dose)`;
+    note=`ให้ IV bolus เร็ว 10–15 นาที แล้วประเมิน | ให้ซ้ำได้ถึง Full dose ${(bw*maxVol).toFixed(0)} mL`;
+  } else if(fl==='colloid'){
+    const b=bw*5;
+    bolus=`${b.toFixed(0)} mL (5 mL/kg)`;
+    note=`ให้ Hetastarch 5 mL/kg slow IV | Max total 20 mL/kg/day`;
+  } else {
+    const b=bw*4;
+    bolus=`${b.toFixed(0)} mL (4 mL/kg)`;
+    note=`Hypertonic saline 7.5% ให้ IV bolus 10 min | ระวัง Hypernatremia`;
+  }
+  const res=document.getElementById('sf_res');
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">Initial bolus</span><span class="result-val">${bolus}</span></div>
+    <div class="result-row"><span class="result-lbl">Full shock dose</span><span class="result-val">${(bw*maxVol).toFixed(0)}<span class="result-unit">mL</span></span></div>
+    <div class="result-note">${note}</div>`;
+  res.style.display='block';
+}
+
+function calcDilution(){
+  const c1=+document.getElementById('dl_c1').value||0;
+  const c2=+document.getElementById('dl_c2').value||0;
+  const v2=+document.getElementById('dl_v2').value||0;
+  if(!c1||!c2||!v2){alert('กรุณากรอกข้อมูลให้ครบ');return;}
+  const v1=(c2*v2)/c1;
+  const diluent=v2-v1;
+  const res=document.getElementById('dl_res');
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">ปริมาตรยาที่ดูด (V₁)</span><span class="result-val">${v1.toFixed(2)}<span class="result-unit">mL</span></span></div>
+    <div class="result-row"><span class="result-lbl">Diluent ที่เติม</span><span class="result-val">${diluent.toFixed(2)}<span class="result-unit">mL</span></span></div>
+    <div class="result-row"><span class="result-lbl">ปริมาตรสุดท้าย</span><span class="result-val">${v2.toFixed(0)}<span class="result-unit">mL</span></span></div>`;
+  res.style.display='block';
+}
+
+function calcDose(){
+  const bw=+document.getElementById('dd_bw').value||0;
+  const val=document.getElementById('dd_drug').value;
+  const parts=val.split('|');
+  const isCustom=parts[0]==='custom';
+  document.getElementById('dd_custom_fields').style.display=isCustom?'block':'none';
+  const res=document.getElementById('dd_res');
+  if(!bw){res.innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอกน้ำหนักเพื่อคำนวณ</div>';return;}
+  let low,high,conc;
+  if(isCustom){
+    low=+document.getElementById('dd_cl').value||0;
+    high=+document.getElementById('dd_ch').value||0;
+    conc=+document.getElementById('dd_conc').value||1;
+  } else {
+    low=parseFloat(parts[1]);high=parseFloat(parts[2]);conc=parseFloat(parts[5]);
+  }
+  const doseLow=bw*low,doseHigh=bw*high;
+  const volLow=doseLow/conc,volHigh=doseHigh/conc;
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">Dose ต่ำ (${low} mg/kg)</span><span class="result-val">${doseLow.toFixed(2)}<span class="result-unit">mg → ${volLow.toFixed(2)} mL</span></span></div>
+    ${high>low?`<div class="result-row"><span class="result-lbl">Dose สูง (${high} mg/kg)</span><span class="result-val">${doseHigh.toFixed(2)}<span class="result-unit">mg → ${volHigh.toFixed(2)} mL</span></span></div>`:''}
+    <div class="result-note">Concentration: ${conc} mg/mL | BW: ${bw} kg</div>`;
+  res.style.display='block';
+}
+
+function calcAnesthesia(){
+  const bw=+document.getElementById('an_bw').value||0;
+  const sp=document.getElementById('an_sp').value;
+  const asa=+document.getElementById('an_asa').value||1;
+  if(!bw){alert('กรุณากรอกน้ำหนัก');return;}
+  const m=asa<=2?1:0.7;
+  const drugs=sp==='dog'?[
+    ['Acepromazine (0.02–0.05 mg/kg IM)',0.02*bw*m,0.05*bw*m,'mg','1 mg/mL',(0.02*bw*m)],
+    ['Butorphanol (0.2–0.4 mg/kg IM)',0.2*bw*m,0.4*bw*m,'mg','10 mg/mL',(0.2*bw*m/10)],
+    ['Propofol IV induction (4–6 mg/kg)',4*bw,6*bw,'mg','10 mg/mL',(4*bw/10)],
+    ['Atropine (0.02–0.04 mg/kg)',0.02*bw,0.04*bw,'mg','0.6 mg/mL',(0.02*bw/0.6)],
+  ]:[
+    ['Butorphanol (0.2–0.4 mg/kg IM)',0.2*bw*m,0.4*bw*m,'mg','10 mg/mL',(0.2*bw*m/10)],
+    ['Medetomidine (10–20 mcg/kg IM)',10*bw*m,20*bw*m,'mcg','1000 mcg/mL',(10*bw*m/1000)],
+    ['Propofol IV induction (4–6 mg/kg)',4*bw,6*bw,'mg','10 mg/mL',(4*bw/10)],
+    ['Atropine (0.02–0.04 mg/kg)',0.02*bw,0.04*bw,'mg','0.6 mg/mL',(0.02*bw/0.6)],
+  ];
+  const res=document.getElementById('an_res');
+  res.innerHTML=drugs.map(d=>`
+    <div class="result-row"><span class="result-lbl" style="font-size:11px;">${d[0]}</span>
+    <span class="result-val" style="font-size:13px;">${d[1].toFixed(2)}–${d[2].toFixed(2)}<span class="result-unit">${d[3]}</span></span></div>`).join('')
+    +`<div class="result-note">ASA ${asa} | BW ${bw} kg | ${asa>=3?'Dose ลด 30%':'Standard dose'} | ปรับตามสภาพผู้ป่วยจริง</div>`;
+  res.style.display='block';
+}
+
+function calcChemo(){
+  const bw=+document.getElementById('ch_bw').value||0;
+  const sp=document.getElementById('ch_sp').value;
+  const val=document.getElementById('ch_drug').value;
+  const parts=val.split('|');
+  if(!bw){alert('กรุณากรอกน้ำหนัก');return;}
+  const k=sp==='dog'?0.101:0.1;
+  const bsa=k*Math.pow(bw,2/3);
+  let doseMin,doseMax,unit,conc;
+  [,doseMin,doseMax,unit,conc]=parts;
+  const isMgKg=unit.includes('mg/kg');
+  const totalMin=isMgKg?parseFloat(doseMin)*bw:parseFloat(doseMin)*bsa;
+  const totalMax=isMgKg?parseFloat(doseMax)*bw:parseFloat(doseMax)*bsa;
+  const concVal=parseFloat(conc.split(' ')[0]);
+  const concUnit=conc.includes('tab')?'tab':conc.includes('cap')?'cap':'mL';
+  const volMin=totalMin/concVal,volMax=totalMax/concVal;
+  const res=document.getElementById('ch_res');
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">BSA</span><span class="result-val">${bsa.toFixed(3)}<span class="result-unit">m²</span></span></div>
+    <div class="result-row"><span class="result-lbl">Dose</span><span class="result-val">${totalMin.toFixed(1)}–${totalMax.toFixed(1)}<span class="result-unit">mg</span></span></div>
+    <div class="result-row"><span class="result-lbl">ปริมาตร (${conc})</span><span class="result-val">${volMin.toFixed(2)}–${volMax.toFixed(2)}<span class="result-unit">${concUnit}</span></span></div>`;
+  res.style.display='block';
+}
+
+function updateInsulin(){
+  const sp=document.getElementById('ins_sp').value;
+  document.getElementById('ins_type').innerHTML=sp==='dog'
+    ?'<option>NPH (Caninsulin)</option><option>Detemir</option><option>Glargine</option>'
+    :'<option>Glargine (Lantus)</option><option>PZI</option><option>Detemir</option>';
+}
+function calcInsulin(){
+  const bw=+document.getElementById('ins_bw').value||0;
+  const bg=+document.getElementById('ins_bg').value||0;
+  const sp=document.getElementById('ins_sp').value;
+  if(!bw){alert('กรุณากรอกน้ำหนัก');return;}
+  const startDose=sp==='dog'?0.5:1.0;
+  const doseU=bw*startDose;
+  const res=document.getElementById('ins_res');
+  res.innerHTML=`
+    <div class="result-row"><span class="result-lbl">Starting dose</span><span class="result-val">${doseU.toFixed(1)}<span class="result-unit">IU q12h</span></span></div>
+    <div class="result-row"><span class="result-lbl">Dose range</span><span class="result-val">${(doseU*0.5).toFixed(1)}–${(doseU*2).toFixed(1)}<span class="result-unit">IU</span></span></div>
+    ${bg?`<div class="result-row"><span class="result-lbl">BG ปัจจุบัน</span><span class="result-val">${bg}<span class="result-unit">mg/dL ${bg<80?'⚠️ Hypo':bg>350?'⬆️ High':bg<=250?'✅ OK':''}</span></span></div>`:''}
+    <div class="result-note">ตรวจ BG ซ้ำ 7–14 วัน | Nadir target 80–150 mg/dL | ปรับ 10–25% ต่อครั้ง</div>`;
+  res.style.display='block';
+}
+
+function calcMAP(){
+  const s=+document.getElementById('map_s').value||0;
+  const d=+document.getElementById('map_d').value||0;
+  if(!s||!d){document.getElementById('map_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอก SBP และ DBP</div>';return;}
+  const map=d+((s-d)/3);
+  const pp=s-d;
+  const status=map<60?'⚠️ Hypotension':map>160?'⬆️ Hypertension':'✅ ปกติ';
+  document.getElementById('map_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">MAP</span><span class="result-val">${map.toFixed(0)}<span class="result-unit">mmHg ${status}</span></span></div>
+    <div class="result-row"><span class="result-lbl">Pulse Pressure</span><span class="result-val">${pp.toFixed(0)}<span class="result-unit">mmHg</span></span></div>`;
+}
+
+function calcSI(){
+  const hr=+document.getElementById('si_hr').value||0;
+  const sbp=+document.getElementById('si_sbp').value||0;
+  if(!hr||!sbp){document.getElementById('si_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอก HR และ Systolic BP</div>';return;}
+  const si=hr/sbp;
+  const status=si<0.8?'✅ ปกติ':si<1.0?'⚠️ Mild':si<1.4?'⚠️ Moderate shock':'🚨 Severe shock';
+  document.getElementById('si_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">Shock Index</span><span class="result-val">${si.toFixed(2)}<span class="result-unit">${status}</span></span></div>`;
+}
+
+function calcIRIS(){
+  const cr=+document.getElementById('ir_cr').value||0;
+  const sdma=+document.getElementById('ir_sdma').value||0;
+  const sp=document.getElementById('ir_sp').value;
+  const upc=document.getElementById('ir_upc').value;
+  const bp=+document.getElementById('ir_bp').value||0;
+  if(!cr){document.getElementById('ir_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอก Creatinine</div>';return;}
+  const stages=sp==='dog'
+    ?[[1.4,'Stage 1'],[2.8,'Stage 2'],[5.0,'Stage 3']]
+    :[[1.6,'Stage 1'],[2.8,'Stage 2'],[5.0,'Stage 3']];
+  let stage='Stage 4';
+  for(const[threshold,s]of stages){if(cr<threshold){stage=s==='Stage 1'?'Stage 1':s;break;}}
+  if(cr<(sp==='dog'?1.4:1.6))stage='Stage 1';
+  const sdmaStage=sdma>0?(sdma<18?'Stage 1':sdma<25?'Stage 2':sdma<38?'Stage 3':'Stage 4'):'—';
+  const upcTxt={normal:'Non-proteinuric',borderline:'Borderline proteinuric',proteinuric:'Proteinuric',unknown:'Unknown'}[upc];
+  const bpStatus=bp>0?(bp<140?'BP1 Minimal':bp<160?'BP2 Low':bp<180?'BP3 Moderate':'BP4 High'):'—';
+  const recs={
+    'Stage 1':'ตรวจซ้ำ 6 เดือน | ปรับอาหาร Phosphorus ต่ำ',
+    'Stage 2':'Renal diet | ลด Phosphorus | Monitor q3–6m',
+    'Stage 3':'Phosphate binders | Fluid support | Monitor q1–3m',
+    'Stage 4':'Intensive care | พิจารณา IV fluid | Dialysis'
+  };
+  document.getElementById('ir_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">IRIS Stage (Creatinine)</span><span class="result-val">${stage}</span></div>
+    ${sdma>0?`<div class="result-row"><span class="result-lbl">IRIS Stage (SDMA)</span><span class="result-val">${sdmaStage}</span></div>`:''}
+    <div class="result-row"><span class="result-lbl">Proteinuria</span><span class="result-val">${upcTxt}</span></div>
+    ${bp>0?`<div class="result-row"><span class="result-lbl">Blood Pressure</span><span class="result-val">${bpStatus}</span></div>`:''}
+    <div class="result-note">💡 ${recs[stage]||''}</div>`;
+}
+
+function calcUPC(){
+  const p=+document.getElementById('upc_p').value||0;
+  const c=+document.getElementById('upc_c').value||0;
+  if(!p||!c){document.getElementById('upc_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอกค่า Protein และ Creatinine</div>';return;}
+  const upc=p/c;
+  const status=upc<0.2?'✅ ปกติ':upc<0.5?'⚠️ Borderline':'❌ Proteinuria';
+  document.getElementById('upc_res').innerHTML=`<div class="result-row"><span class="result-lbl">UPC Ratio</span><span class="result-val">${upc.toFixed(2)}<span class="result-unit">${status}</span></span></div>`;
+}
+
+function calcFE(){
+  const una=+document.getElementById('fe_una').value||0;
+  const sna=+document.getElementById('fe_sna').value||0;
+  const ucr=+document.getElementById('fe_ucr').value||0;
+  const scr=+document.getElementById('fe_scr').value||0;
+  const uk=+document.getElementById('fe_uk').value||0;
+  const sk=+document.getElementById('fe_sk').value||0;
+  if(!una||!sna||!ucr||!scr){document.getElementById('fe_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอก Na และ Creatinine ทั้ง serum/urine</div>';return;}
+  const fena=(una*scr)/(sna*ucr)*100;
+  const fenak=uk&&sk?(uk*scr)/(sk*ucr)*100:null;
+  let html=`<div class="result-row"><span class="result-lbl">FENa</span><span class="result-val">${fena.toFixed(2)}<span class="result-unit">% ${fena<1?'Prerenal/Normal':fena<3?'Borderline':'Renal disease'}</span></span></div>`;
+  if(fenak)html+=`<div class="result-row"><span class="result-lbl">FEK</span><span class="result-val">${fenak.toFixed(2)}<span class="result-unit">%</span></span></div>`;
+  html+=`<div class="result-note">FENa &lt;1% = Prerenal | 1–3% = Mixed | &gt;3% = Intrinsic renal disease</div>`;
+  document.getElementById('fe_res').innerHTML=html;
+}
+
+function calcAG(){
+  const na=+document.getElementById('ag_na').value||0;
+  const cl=+document.getElementById('ag_cl').value||0;
+  const hco3=+document.getElementById('ag_hco3').value||0;
+  const alb=+document.getElementById('ag_alb').value||0;
+  if(!na||!cl||!hco3){document.getElementById('ag_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอก Na, Cl, HCO₃</div>';return;}
+  const ag=na-(cl+hco3);
+  const corrAG=alb>0?ag+2.5*(3.5-alb):ag;
+  const status=ag<12?'ปกติ':ag<25?'สูงเล็กน้อย':'High AG Metabolic Acidosis';
+  document.getElementById('ag_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">Anion Gap</span><span class="result-val">${ag.toFixed(1)}<span class="result-unit">${status}</span></span></div>
+    ${alb>0?`<div class="result-row"><span class="result-lbl">Corrected AG (Alb ${alb})</span><span class="result-val">${corrAG.toFixed(1)}</span></div>`:''}`;
+}
+
+function calcOS(){
+  const na=+document.getElementById('os_na').value||0;
+  const glu=+document.getElementById('os_glu').value||0;
+  const bun=+document.getElementById('os_bun').value||0;
+  if(!na){document.getElementById('os_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอก Na อย่างน้อย</div>';return;}
+  const osm=2*na+(glu/18)+(bun/2.8);
+  const status=osm<280?'Hypo-osmolar':osm>310?'Hyperosmolar':'ปกติ';
+  document.getElementById('os_res').innerHTML=`<div class="result-row"><span class="result-lbl">Calculated Osmolality</span><span class="result-val">${osm.toFixed(0)}<span class="result-unit">mOsm/kg ${status}</span></span></div>`;
+}
+
+function calcCA(){
+  const ca=+document.getElementById('ca_ca').value||0;
+  const alb=+document.getElementById('ca_alb').value||0;
+  const sp=document.getElementById('ca_sp').value;
+  if(!ca||!alb){document.getElementById('ca_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอก Ca และ Albumin</div>';return;}
+  const norm=sp==='dog'?3.5:3.2;
+  const corr=ca-alb+norm;
+  const status=corr<8.5?'⬇️ Hypocalcemia':corr>11?'⬆️ Hypercalcemia':'✅ ปกติ';
+  document.getElementById('ca_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">Total Ca (measured)</span><span class="result-val">${ca}<span class="result-unit">mg/dL</span></span></div>
+    <div class="result-row"><span class="result-lbl">Corrected Ca</span><span class="result-val">${corr.toFixed(1)}<span class="result-unit">mg/dL ${status}</span></span></div>`;
+}
+
+function calcRER(){
+  const bw=+document.getElementById('re_bw').value||0;
+  const factor=+document.getElementById('re_stage').value||1.0;
+  if(!bw){document.getElementById('re_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอกน้ำหนัก</div>';return;}
+  const rer=70*Math.pow(bw,0.75);
+  const der=rer*factor;
+  document.getElementById('re_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">RER</span><span class="result-val">${rer.toFixed(0)}<span class="result-unit">kcal/day</span></span></div>
+    <div class="result-row"><span class="result-lbl">DER (×${factor})</span><span class="result-val">${der.toFixed(0)}<span class="result-unit">kcal/day</span></span></div>
+    <div class="result-note">แบ่งให้ 2–3 มื้อ/วัน | ปรับตาม BCS และน้ำหนักที่เปลี่ยน</div>`;
+}
+
+function calcBCS(){
+  const bw=+document.getElementById('bcs_bw').value||0;
+  const bcs=+document.getElementById('bcs_score').value||5;
+  if(!bw){document.getElementById('bcs_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอกน้ำหนัก</div>';return;}
+  const pctDiff=(bcs-5)*10;
+  const targetBW=bw/(1+pctDiff/100);
+  const status=bcs<4?'ผอม':bcs===5?'เหมาะสม':bcs<7?'อ้วนเล็กน้อย':'อ้วน';
+  document.getElementById('bcs_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">BCS</span><span class="result-val">${bcs}/9 — ${status}</span></div>
+    <div class="result-row"><span class="result-lbl">น้ำหนักเป้าหมาย (BCS 5)</span><span class="result-val">${targetBW.toFixed(1)}<span class="result-unit">kg</span></span></div>
+    ${bcs!==5?`<div class="result-row"><span class="result-lbl">ต้อง${bcs<5?'เพิ่ม':'ลด'}น้ำหนัก</span><span class="result-val">${Math.abs(bw-targetBW).toFixed(1)}<span class="result-unit">kg</span></span></div>`:''}`;
+}
+
+function calcGC(){
+  const pre=+document.getElementById('gc_pre').value||0;
+  const nadir=+document.getElementById('gc_nadir').value||0;
+  const h12=+document.getElementById('gc_12h').value||0;
+  const sp=document.getElementById('gc_sp').value;
+  if(!pre&&!nadir){alert('กรุณากรอกค่า Glucose');return;}
+  const targetLow=80,targetHigh=sp==='dog'?180:250;
+  let advice='';
+  if(nadir<targetLow) advice='⚠️ Nadir ต่ำเกิน → ลด Insulin 25–50%';
+  else if(nadir>=targetLow&&nadir<=targetHigh) advice='✅ Nadir อยู่ในช่วงดี';
+  else if(nadir>targetHigh) advice='⬆️ Nadir สูง → เพิ่ม Insulin 10–25%';
+  if(h12>360) advice+=' | BG 12h สูงมาก → ตรวจ Somogyi effect';
+  const res=document.getElementById('gc_res');
+  res.innerHTML=`
+    ${pre?`<div class="result-row"><span class="result-lbl">Pre-insulin BG</span><span class="result-val">${pre}<span class="result-unit">mg/dL</span></span></div>`:''}
+    ${nadir?`<div class="result-row"><span class="result-lbl">Nadir (ต่ำสุด)</span><span class="result-val">${nadir}<span class="result-unit">mg/dL</span></span></div>`:''}
+    ${h12?`<div class="result-row"><span class="result-lbl">BG 12h</span><span class="result-val">${h12}<span class="result-unit">mg/dL</span></span></div>`:''}
+    <div class="result-note">${advice}</div>`;
+  res.style.display='block';
+}
+
+function calcBSA2(){
+  const bw=+document.getElementById('bsa_bw').value||0;
+  const spMap={dog:0.101,cat:0.100,rabbit:0.099};
+  const k=spMap[document.getElementById('bsa_sp').value]||0.101;
+  if(!bw){document.getElementById('bsa_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอกน้ำหนัก</div>';return;}
+  const bsa=k*Math.pow(bw,2/3);
+  document.getElementById('bsa_res').innerHTML=`<div class="result-row"><span class="result-lbl">BSA</span><span class="result-val">${bsa.toFixed(4)}<span class="result-unit">m²</span></span></div>`;
+}
+
+function calcPA(){
+  const age=+document.getElementById('pa_age').value||0;
+  const sp=document.getElementById('pa_sp').value;
+  if(!age){document.getElementById('pa_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอกอายุ</div>';return;}
+  const tables={dog_small:[15,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80],dog_large:[15,24,28,32,36,45,50,55,61,66,72,77,82,88,93,99],cat:[15,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80]};
+  const t=tables[sp];
+  const idx=Math.min(Math.floor(age)-1,t.length-1);
+  const human=idx>=0?t[idx]+(age%1)*(idx<t.length-1?t[Math.min(idx+1,t.length-1)]-t[idx]:4):0;
+  const stage=human<25?'วัยเด็ก':human<50?'วัยผู้ใหญ่':human<70?'วัยกลางคน':'วัยสูงอายุ';
+  document.getElementById('pa_res').innerHTML=`
+    <div class="result-row"><span class="result-lbl">อายุ ${age} ปี ≈</span><span class="result-val">${Math.round(human)}<span class="result-unit">ปี (มนุษย์)</span></span></div>
+    <div class="result-row"><span class="result-lbl">วัย</span><span class="result-val">${stage}</span></div>`;
+}
+
+function calcUC(){
+  const v=+document.getElementById('uc_val').value||0;
+  const type=document.getElementById('uc_type').value;
+  const conv={
+    kg_lb:[v*2.205,'lb'],lb_kg:[v/2.205,'kg'],
+    c_f:[v*9/5+32,'°F'],f_c:[(v-32)*5/9,'°C'],
+    mg_mcg:[v*1000,'mcg'],mcg_mg:[v/1000,'mg'],
+    mgdl_mmol_glu:[v/18,'mmol/L'],mmol_mgdl_glu:[v*18,'mg/dL'],
+    mgdl_umol_cr:[v*88.4,'µmol/L'],umol_mgdl_cr:[v/88.4,'mg/dL'],
+    gdl_gl:[v*10,'g/L'],mbar_mmhg:[v*0.750,'mmHg']
+  };
+  const result=conv[type];
+  if(!v||!result){document.getElementById('uc_res').innerHTML='<div style="font-size:12px;color:var(--slate-l);text-align:center;">กรอกค่า</div>';return;}
+  document.getElementById('uc_res').innerHTML=`<div class="result-row"><span class="result-lbl">ผลลัพธ์</span><span class="result-val">${result[0].toFixed(4)}<span class="result-unit">${result[1]}</span></span></div>`;
+}
+</script>
+</body>
+</html>
