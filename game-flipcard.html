@@ -169,6 +169,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;colo
 .mr-fill{fill:none;stroke:white;stroke-width:4;stroke-linecap:round;stroke-dasharray:126;transition:stroke-dashoffset 1s linear;}
 .mr-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:white;line-height:1;}
 
+
+/* ── LEARNED PANEL ── */
+#learnedPanel{margin-top:14px;}
+.lp-title{font-size:11px;font-weight:700;color:var(--s2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.lp-title span{flex:1;height:1px;background:var(--bd);}
+.learned-list{display:flex;flex-direction:column;gap:6px;}
+.learned-item{background:white;border-radius:12px;border:1.5px solid #86efac;padding:10px 12px;animation:learnIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes learnIn{from{opacity:0;transform:translateY(10px) scale(.95)}to{opacity:1;transform:none}}
+.li-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.li-emoji{font-size:18px;line-height:1;}
+.li-term{font-size:13px;font-weight:700;color:#166534;}
+.li-cat{font-size:10px;padding:1px 6px;background:#dcfce7;color:#166534;border-radius:100px;font-weight:700;margin-left:auto;}
+.li-def{font-size:12px;color:var(--sm);line-height:1.5;padding-left:26px;}
+
 /* ── Misc ── */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:opacity .3s;white-space:nowrap;}
 .toast.on{opacity:1;}
@@ -231,6 +245,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;colo
   <div class="combo-bar" id="comboBar"></div>
   <div class="card-grid" id="cardGrid"></div>
   <div class="toast" id="toast"></div>
+  <div id="learnedPanel" style="display:none;">
+    <div class="lp-title">✅ จับคู่ได้แล้ว <span></span></div>
+    <div class="learned-list" id="learnedList"></div>
+  </div>
 </div>
 
 <!-- RESULT -->
@@ -371,6 +389,9 @@ function startRound(){
   const pairs=gRoundPairs[gRound];
   gRound++;
   gMatched=0; gFlipped=[]; gLocked=false;
+  // Clear learned panel for new round
+  const lp=document.getElementById('learnedPanel');if(lp)lp.style.display='none';
+  const ll=document.getElementById('learnedList');if(ll)ll.innerHTML='';
   // Build card list: each pair → 2 cards
   const cards=[];
   pairs.forEach((p,i)=>{
@@ -389,17 +410,19 @@ function renderGrid(faceUp){
   const cfg=DIFF_CFG[gDiff];
   const grid=document.getElementById('cardGrid');
   grid.className='card-grid '+cfg.cols;
-  grid.innerHTML=gCards.map((c,i)=>`
-    <div class="card-wrap${faceUp?' flipped':''}" id="cw${c.id}" onclick="flipCard(${c.id})">
+  grid.innerHTML=gCards.map((c,i)=>{
+    const dispEmoji = c.type==='term' ? c.emoji : '📖';
+    return `<div class="card-wrap${faceUp?' flipped':''}" id="cw${c.id}" onclick="flipCard(${c.id})">
       <div class="card-inner">
         <div class="card-back"></div>
         <div class="card-front ${c.type==='term'?'is-term':'is-def'}">
-          <div class="c-emoji">${c.emoji}</div>
+          <div class="c-emoji">${dispEmoji}</div>
           <div class="c-text">${c.text}</div>
-          <div class="c-type ${c.type}">${c.type==='term'?'คำ':'ความหมาย'}</div>
+          <div class="c-type ${c.type}">${c.type==='term'?'คำศัพท์':'ความหมาย'}</div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   updateProgress();
   // Force square cards (fallback for browsers without aspect-ratio:1/1 support)
   requestAnimationFrame(()=>{
@@ -493,6 +516,10 @@ function checkMatch(){
     cw1.classList.add('matched');cw2.classList.add('matched');
     showCombo(gCombo,pts);
     updateProgress();
+    // Add to learned panel
+    const termCard=c1.type==='term'?c1:c2;
+    const defCard=c1.type==='def'?c1:c2;
+    addLearnedItem(termCard,defCard);
     const cfg=DIFF_CFG[gDiff];
     const total=gRoundPairs[gRound-1].length;
     if(gMatched>=total){
@@ -548,6 +575,24 @@ function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('on');
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1800);
+}
+
+
+function addLearnedItem(termCard, defCard){
+  const panel=document.getElementById('learnedPanel');
+  const list=document.getElementById('learnedList');
+  if(!panel||!list)return;
+  panel.style.display='block';
+  const item=document.createElement('div');
+  item.className='learned-item';
+  item.innerHTML=`
+    <div class="li-top">
+      <div class="li-emoji">${termCard.emoji}</div>
+      <div class="li-term">${termCard.text}</div>
+      <div class="li-cat">${termCard.cat}</div>
+    </div>
+    <div class="li-def">= ${defCard.text}</div>`;
+  list.insertBefore(item, list.firstChild); // newest on top
 }
 
 // ── End ──
