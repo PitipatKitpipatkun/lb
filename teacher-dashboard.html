@@ -498,6 +498,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       </button>
     </div>
   </div>
+
+
+<!-- ── Private Inbox ── -->
+<div class="tab-view" id="tab-inbox" style="padding-bottom:calc(var(--nav-h,64px) + 48px + env(safe-area-inset-bottom,0px));">
+  <div style="margin-bottom:14px;">
+    <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--teal-d);">🔐 ข้อความส่วนตัว</div>
+    <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ข้อความเข้ารหัส AES — เฉพาะคุณเท่านั้นที่อ่านได้</div>
+  </div>
+  <div id="inboxContent">
+    <div style="text-align:center;padding:24px;color:var(--slate-l);">
+      <div style="font-size:40px;margin-bottom:8px;">🔐</div>
+      <div style="font-size:13px;">กำลังโหลดข้อความ...</div>
+    </div>
+  </div>
+</div>
 </main>
 
 <nav class="bottom-nav">
@@ -530,19 +545,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 
 <div id="toast" class="toast"></div>
 
-<!-- ── Private Inbox ── -->
-<div class="tab-view" id="tab-inbox" style="padding-bottom:calc(var(--nav-h,64px) + 48px + env(safe-area-inset-bottom,0px));">
-  <div style="margin-bottom:14px;">
-    <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--teal-d);">🔐 ข้อความส่วนตัว</div>
-    <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ข้อความเข้ารหัส AES — เฉพาะคุณเท่านั้นที่อ่านได้</div>
-  </div>
-  <div id="inboxContent">
-    <div style="text-align:center;padding:24px;color:var(--slate-l);">
-      <div style="font-size:40px;margin-bottom:8px;">🔐</div>
-      <div style="font-size:13px;">กำลังโหลดข้อความ...</div>
-    </div>
-  </div>
-</div>
 
 
 <script>
