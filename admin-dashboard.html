@@ -1380,78 +1380,69 @@ window.addEventListener('unhandledrejection',function(e){dbg('⚠️ '+(e.reason
 async function loadDbSpace(){
   const el=document.getElementById('dbSpaceContent');
   if(!el)return;
-  el.innerHTML='<div style="text-align:center;padding:10px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลด...</div>';
-  
-  // Only tables that actually exist in this project
+  el.innerHTML='<div style="text-align:center;padding:16px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลด...</div>';
+
   const tables=[
-    {name:'students',      label:'นักศึกษา',    icon:'👨‍🎓'},
-    {name:'teachers',      label:'อาจารย์',     icon:'👨‍🏫'},
-    {name:'departments',   label:'ภาควิชา',    icon:'🏛️'},
-    {name:'competencies',  label:'สมรรถนะ',    icon:'📋'},
-    {name:'evaluations',   label:'การประเมิน',  icon:'✅'},
-    {name:'activity_logs', label:'Activity Log',icon:'📝'},
+    {name:'students',      label:'นักศึกษา',   icon:'👨‍🎓'},
+    {name:'teachers',      label:'อาจารย์',    icon:'👨‍🏫'},
+    {name:'departments',   label:'ภาควิชา',   icon:'🏛️'},
+    {name:'competencies',  label:'สมรรถนะ',   icon:'📋'},
+    {name:'evaluations',   label:'การประเมิน', icon:'✅'},
+    {name:'activity_logs', label:'บันทึก',     icon:'📝'},
   ];
 
-  // Count each table with per-query timeout
-  async function countTable(tbl){
+  // Query each table individually and collect results
+  const results = [];
+  for(const tbl of tables){
     try{
-      const ctrl=new AbortController();
-      const timer=setTimeout(()=>ctrl.abort(),5000); // 5s timeout
-      const {count,error}=await sb.from(tbl.name)
-        .select('*',{count:'exact',head:true});
-      clearTimeout(timer);
-      return {...tbl, count: error ? '—' : (count||0)};
+      const {count, error} = await sb
+        .from(tbl.name)
+        .select('*', {count:'exact', head:true});
+      results.push({...tbl, count: (!error && count !== null) ? count : '—'});
     }catch(e){
-      return {...tbl, count:'—'};
+      results.push({...tbl, count:'—'});
     }
   }
 
-  try{
-    const counts = await Promise.all(tables.map(countTable));
-    const numericCounts = counts.filter(t=>typeof t.count==='number');
-    const totalRows = numericCounts.reduce((s,t)=>s+t.count,0);
+  const totalRows = results.reduce((s,t)=>s+(typeof t.count==='number'?t.count:0), 0);
+  const estMB = (totalRows * 1024 / 1024 / 1024).toFixed(3);
+  const estMBNum = totalRows * 1024 / 1024 / 1024;
+  const FREE_LIMIT_GB = 0.5;
+  const usedPct = Math.min(Math.round(estMBNum / FREE_LIMIT_GB * 100), 100);
+  const freeMB = Math.max(0, (FREE_LIMIT_GB - estMBNum) * 1024).toFixed(1);
+  const barColor = usedPct > 80 ? '#dc2626' : usedPct > 60 ? '#d97706' : '#0d9488';
+  const usedMBDisplay = (estMBNum * 1024).toFixed(2);
 
-    // Estimate storage: avg ~1KB per row (conservative for Thai text + JSON)
-    const estBytes = totalRows * 1024;
-    const FREE_LIMIT = 500*1024*1024; // 500 MB
-    const usedPct = Math.min(Math.round(estBytes/FREE_LIMIT*100),100);
-    const usedMB = (estBytes/1024/1024).toFixed(2);
-    const freeMB = ((FREE_LIMIT-estBytes)/1024/1024).toFixed(1);
-    const barColor = usedPct>80?'#dc2626':usedPct>60?'#d97706':'#0d9488';
-
-    el.innerHTML=`
-      <div style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-          <span style="font-size:12px;font-weight:700;color:var(--slate-m);">พื้นที่ใช้งาน (ประมาณ)</span>
-          <span style="font-size:12px;font-weight:700;color:${barColor};">${usedMB} MB / 500 MB</span>
-        </div>
-        <div style="height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;">
-          <div style="height:100%;width:${Math.max(usedPct,0.5)}%;background:${barColor};border-radius:5px;"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:4px;">
-          <span style="font-size:11px;color:var(--slate-l);">ใช้ไป ~${usedPct}%</span>
-          <span style="font-size:11px;color:#16a34a;font-weight:700;">เหลือ ~${freeMB} MB</span>
-        </div>
-        <div style="font-size:10px;color:var(--slate-l);margin-top:3px;">* ประมาณการ avg 1KB/row ค่าจริงดูได้ที่ Supabase Dashboard</div>
+  el.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span style="font-size:12px;font-weight:700;color:var(--slate-m);">พื้นที่ใช้งาน (ประมาณ)</span>
+        <span style="font-size:12px;font-weight:700;color:${barColor};">${usedMBDisplay} KB / 500 MB</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;">
-        ${counts.map(t=>`
-          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:12px;color:var(--slate-m);">${t.icon} ${t.label}</span>
-            <span style="font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--teal-d);">${typeof t.count==='number'?t.count.toLocaleString():'—'}</span>
-          </div>`).join('')}
+      <div style="height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;">
+        <div style="height:100%;width:${Math.max(usedPct,0.2)}%;background:${barColor};border-radius:5px;"></div>
       </div>
-      <div style="background:#f0fdf4;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-size:12px;font-weight:700;color:#166534;">📊 รวม Rows ทั้งหมด</span>
-        <span style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:#166534;">${totalRows.toLocaleString()}</span>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;">
+        <span style="font-size:11px;color:var(--slate-l);">ใช้ไป ~${usedPct}%</span>
+        <span style="font-size:11px;color:#16a34a;font-weight:700;">เหลือ ~${freeMB} MB</span>
       </div>
-      <div style="background:#ede9fe;border-radius:8px;padding:8px 10px;font-size:11px;color:#6d28d9;line-height:1.7;">
-        🆓 Free Plan: Database 500MB · Storage 1GB · 50,000 MAU/month<br>
-        📈 <a href="https://supabase.com/dashboard/project/mxnsngomamxtvlbzrqqd/editor" target="_blank" style="color:#7c3aed;font-weight:700;">ดูค่าจริงที่ Supabase Dashboard →</a>
-      </div>`;
-  }catch(e){
-    el.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:8px;">❌ โหลดไม่ได้: ${String(e.message||e)}<br><button onclick="loadDbSpace()" style="margin-top:8px;padding:6px 14px;background:var(--teal);color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;">ลองใหม่</button></div>`;
-  }
+      <div style="font-size:10px;color:var(--slate-l);margin-top:3px;">* ประมาณจาก avg 1 KB/row · ค่าจริงดูที่ Supabase Dashboard</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;">
+      ${results.map(t=>`
+        <div style="background:var(--bg);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--slate-m);">${t.icon} ${t.label}</span>
+          <span style="font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--teal-d);">${typeof t.count==='number'?t.count.toLocaleString():'—'}</span>
+        </div>`).join('')}
+    </div>
+    <div style="background:#f0fdf4;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span style="font-size:12px;font-weight:700;color:#166534;">📊 รวม Rows</span>
+      <span style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:#166534;">${totalRows.toLocaleString()} rows</span>
+    </div>
+    <div style="background:#ede9fe;border-radius:8px;padding:8px 10px;font-size:11px;color:#6d28d9;line-height:1.7;">
+      🆓 Free Plan: 500 MB DB · 1 GB Storage · 50,000 MAU/month<br>
+      📈 <a href="https://supabase.com/dashboard/project/mxnsngomamxtvlbzrqqd" target="_blank" style="color:#7c3aed;font-weight:700;">ดูค่าจริงที่ Supabase Dashboard →</a>
+    </div>`;
 }
 
 </script>
