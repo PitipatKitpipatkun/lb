@@ -45,7 +45,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 
 /* Game Cards */
 .game-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.game-card{background:var(--white);border-radius:18px;border:1.5px solid var(--border);padding:15px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.game-card{background:white;border-radius:18px;border:1.5px solid var(--border);padding:15px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
 .game-card:active{transform:scale(0.96);}
 .game-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:4px 4px 0 0;}
 .gc-vetquiz::before{background:linear-gradient(90deg,var(--teal),#059669);}
@@ -81,6 +81,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .ic-action{font-size:12px;font-weight:700;color:var(--violet);padding:6px 12px;background:var(--violet-50);border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;}
 
 .hidden{display:none!important;}
+
+/* ── Section color themes ── */
+.section[data-theme="live"]{background:linear-gradient(145deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;}
+.section[data-theme="games"]{background:linear-gradient(145deg,#ede9fe,#ddd6fe);border:1.5px solid #c4b5fd;}
+.section[data-theme="links"]{background:linear-gradient(145deg,#f0f9ff,#bae6fd);border:1.5px solid #7dd3fc;}
+/* Game cards — gradient per type */
+.game-card{background:white;}
+.gc-vetquiz{background:linear-gradient(145deg,#f0fdfa,#ccfbf1) !important;border-color:#5eead4 !important;}
+.gc-solo{background:linear-gradient(145deg,#faf5ff,#ede9fe) !important;border-color:#c4b5fd !important;}
+.gc-live-theme{background:linear-gradient(145deg,#ecfdf5,#a7f3d0) !important;border-color:#34d399 !important;}
+.gc-clinical{background:linear-gradient(145deg,#fff1f2,#fecdd3) !important;border-color:#fda4af !important;}
+.gc-drug{background:linear-gradient(145deg,#fff7ed,#fed7aa) !important;border-color:#fdba74 !important;}
+.gc-memory{background:linear-gradient(145deg,#f0f9ff,#bae6fd) !important;border-color:#7dd3fc !important;}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 </head>
@@ -119,10 +133,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
   </div>
 
   <!-- Featured: VetQuiz Live -->
-  <div class="section">
+  <div class="section" data-theme="live">
     <div class="sec-hdr"><span class="sec-icon">⚡</span><span class="sec-name">แนะนำ</span><div class="sec-line"></div></div>
     <div class="game-grid-featured">
-      <div class="featured-card" onclick="window.location.href='quiz-live.html'" data-name="vetquiz live multiplayer แข่ง">
+      <div class="featured-card" onclick="window.location.href='quiz-live.html'" class="game-card gc-live-theme" data-name="vetquiz live multiplayer แข่ง">
         <div class="fc-icon">⚡</div>
         <div class="fc-body">
           <div class="fc-name">VetQuiz Live</div>
@@ -135,7 +149,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
   </div>
 
   <!-- Solo Games -->
-  <div class="section">
+  <div class="section" data-theme="games">
     <div class="sec-hdr"><span class="sec-icon">🎮</span><span class="sec-name">เล่นคนเดียว</span><div class="sec-line"></div></div>
     <div class="game-grid">
       <div class="game-card gc-vetquiz" onclick="window.location.href='game.html'" data-name="vetquiz solo คนเดียว ทายคำถาม">
@@ -144,19 +158,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
         <div class="gc-desc">ทายคำถามสัตวแพทย์ 1,005 ข้อ</div>
         <span class="gc-badge badge-live">▶ เล่นได้เลย</span>
       </div>
-      <div class="game-card gc-vetquiz" onclick="window.location.href='game-drugdose.html'" data-name="drug dose quiz ยา dose คำนวณ คลินิก">
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game-drugdose.html'" class="game-card gc-drug" data-name="drug dose quiz ยา dose คำนวณ คลินิก">
         <div class="gc-icon">💊</div>
         <div class="gc-name">Drug Dose Quiz</div>
         <div class="gc-desc">คำนวณขนาดยา 50 รายการ Hard mode</div>
         <span class="gc-badge badge-live">▶ เล่นได้เลย</span>
       </div>
-      <div class="game-card gc-vetquiz" onclick="window.location.href='game-flipcard.html'" data-name="anatomy flip card match จับคู่ กายวิภาค">
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game-flipcard.html'" class="game-card gc-memory" data-name="anatomy flip card match จับคู่ กายวิภาค">
         <div class="gc-icon">🧩</div>
         <div class="gc-name">Flip Match</div>
         <div class="gc-desc">จับคู่คำศัพท์สัตวแพทย์ 100 คู่</div>
         <span class="gc-badge badge-live">▶ เล่นได้เลย</span>
       </div>
-      <div class="game-card gc-vetquiz" onclick="window.location.href='game-clinical.html'" data-name="clinical case diagnosis treatment คลินิก">
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game-clinical.html'" class="game-card gc-clinical" data-name="clinical case diagnosis treatment คลินิก">
         <div class="gc-icon">🩺</div>
         <div class="gc-name">Clinical Cases</div>
         <div class="gc-desc">วินิจฉัยและรักษา 48 กรณีศึกษา Hard mode</div>
@@ -167,7 +181,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 
   <!-- Study Tools -->
     <!-- Quick Links -->
-  <div class="section">
+  <div class="section" data-theme="links">
     <div class="sec-hdr"><span class="sec-icon">🔗</span><span class="sec-name">ลิงก์ด่วน</span><div class="sec-line"></div></div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       <div class="info-card" onclick="window.location.href='calculators.html'">

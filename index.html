@@ -22,7 +22,7 @@ html{scroll-behavior:smooth;}
 body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 0%,#f0f7ff 50%,#e8fdf5 100%);min-height:100vh;color:var(--slate);}
 
 /* ── Header ── */
-.app-header{background:linear-gradient(160deg,#0d9488 0%,#0f766e 60%,#134e4a 100%);padding:14px 18px;position:relative;overflow:hidden;}
+.app-header{background:linear-gradient(160deg,#1a5f8a 0%,#1d6fa4 50%,#1565a0 100%);padding:20px 18px 18px;position:relative;overflow:hidden;}
 /* Animated orbit rings */
 /* header rings removed for compact layout */
 .hdr-inner{display:flex;align-items:center;gap:14px;position:relative;z-index:1;}
@@ -35,14 +35,22 @@ body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 
 .header-logo{width:96px;height:96px;border-radius:50%;background:none;border:none;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .header-logo img{width:100%;height:100%;object-fit:contain;}
 .header-title{font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:white;line-height:1.2;margin-bottom:3px;letter-spacing:-0.2px;}
-.header-sub{font-size:12px;color:rgba(255,255,255,0.75);font-weight:500;}
+.header-sub{font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;}.header-sub2{font-size:10px;color:rgba(255,255,255,0.65);font-weight:400;margin-top:2px;}
 .header-session{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:10px;padding:6px 12px;font-size:12px;color:white;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);}
 
 /* ── Content ── */
 .content{padding:12px 16px 80px;max-width:480px;margin:0 auto;}
 
 /* ── Section ── */
-.section{margin-bottom:20px;background:rgba(255,255,255,0.6);border-radius:20px;padding:14px;backdrop-filter:blur(8px);}.section:not(:last-child){padding-bottom:4px;}
+.section{margin-bottom:14px;border-radius:20px;padding:14px 14px 12px;backdrop-filter:blur(10px);border:1.5px solid rgba(255,255,255,0.6);}
+/* ── Section color themes ── */
+#sec-login   {background:linear-gradient(145deg,rgba(255,255,255,0.9),rgba(240,253,250,0.9));border:1.5px solid rgba(13,148,136,.2);}
+#sec-games   {background:linear-gradient(145deg,rgba(245,243,255,0.92),rgba(237,233,254,0.85));border:1.5px solid rgba(124,58,237,.2);}
+#sec-tools   {background:linear-gradient(145deg,rgba(240,249,255,0.92),rgba(224,242,254,0.88));border:1.5px solid rgba(29,111,164,.2);}
+#annSection,.section#sec-ann{background:linear-gradient(145deg,rgba(254,252,232,0.92),rgba(254,249,195,0.7));border:1.5px solid rgba(217,119,6,.2);}
+#annSection{background:linear-gradient(145deg,rgba(254,252,232,0.92),rgba(254,249,195,0.7));border:1.5px solid rgba(217,119,6,.2);}
+#sec-feedback{background:linear-gradient(145deg,rgba(255,241,242,0.92),rgba(254,226,226,0.7));border:1.5px solid rgba(225,29,72,.15);}
+.section:not(:last-child){padding-bottom:4px;}
 .section-title{font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:var(--sky-d);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:7px;border-bottom:2.5px solid var(--sky-l);}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
 
@@ -170,7 +178,7 @@ body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 
     </div>
     <div class="hdr-text">
       <div class="header-title">Vet RMUTTO Log Book</div>
-      <div class="header-sub">คณะสัตวแพทยศาสตร์ มทร.ตะวันออก</div>
+      <div class="header-sub">คณะสัตวแพทยศาสตร์</div><div class="header-sub2">มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก</div>
     </div>
   </div>
 </div>
@@ -179,7 +187,7 @@ body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 
 <div class="content">
 
   <!-- LOGIN CARDS -->
-  <div class="section" style="margin-top:16px;">
+  <div class="section" id="sec-login" style="margin-top:16px;">
     <div class="section-title">🔐 เข้าสู่ระบบ</div>
     <div class="login-grid">
       <div class="login-card lc-student" onclick="openLogin('student')">
@@ -201,7 +209,7 @@ body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 
   </div>
 
   <!-- GAMES -->
-  <div class="section">
+  <div class="section" id="sec-games">
     <div class="section-title">🎮 เกม</div>
     <!-- Games Hub Banner -->
     <div onclick="window.location.href='games.html'" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;margin-bottom:12px;box-shadow:0 6px 20px rgba(124,58,237,0.3);">
@@ -216,7 +224,7 @@ body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 
   </div>
 
   <!-- TOOLS -->
-  <div class="section">
+  <div class="section" id="sec-tools">
     <div class="section-title">🛠️ เครื่องมือสัตวแพทย์</div>
     <!-- Calculator Hub Banner -->
     <div onclick="window.location.href='calculators.html'" style="background:linear-gradient(135deg,var(--sky),var(--sky-d));border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 16px rgba(13,148,136,0.25);">
@@ -249,7 +257,7 @@ body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 
   </div>
 
   <!-- FEEDBACK -->
-  <div class="section">
+  <div class="section" id="sec-feedback">
     <div class="section-title" id="fbToggleBtn" onclick="toggleFeedback()" style="cursor:pointer;user-select:none;">
       💬 แนะนำ / ร้องเรียน
       <span id="fbChevron" style="font-size:11px;color:var(--slate-l);transition:transform 0.3s;display:inline-block;float:right;">▼</span>

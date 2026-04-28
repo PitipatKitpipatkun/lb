@@ -122,6 +122,31 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .tag-warn{background:#fee2e2;color:#991b1b;}
 .tag-ok{background:#dcfce7;color:#166534;}
 .tag-info{background:#dbeafe;color:#1d4ed8;}
+
+/* ── Calc Section backgrounds ── */
+#sec-fluids   .calc-grid > .calc-card {background:linear-gradient(145deg,#ecfdf5,#d1fae5);border-color:#6ee7b7;}
+#sec-cardiac  .calc-grid > .calc-card {background:linear-gradient(145deg,#fff1f2,#fecdd3);border-color:#fda4af;}
+#sec-pharma   .calc-grid > .calc-card {background:linear-gradient(145deg,#ede9fe,#ddd6fe);border-color:#c4b5fd;}
+#sec-metabolic .calc-grid > .calc-card{background:linear-gradient(145deg,#fefce8,#fef08a);border-color:#fde047;}
+#sec-renal    .calc-grid > .calc-card {background:linear-gradient(145deg,#f0f9ff,#bae6fd);border-color:#7dd3fc;}
+#sec-others   .calc-grid > .calc-card {background:linear-gradient(145deg,#f8fafc,#e2e8f0);border-color:#cbd5e1;}
+#sec-drugs    .calc-grid > .calc-card {background:linear-gradient(145deg,#fff7ed,#fed7aa);border-color:#fdba74;}
+#sec-ref      .calc-grid > .calc-card {background:linear-gradient(145deg,#f0fdfa,#ccfbf1);border-color:#5eead4;}
+
+/* Section containers */
+.section[id^="sec-"] {background:rgba(255,255,255,0.65);border-radius:18px;padding:14px;backdrop-filter:blur(8px);margin-bottom:14px;}
+#sec-fluids   {background:linear-gradient(145deg,rgba(236,253,245,0.9),rgba(255,255,255,0.95));}
+#sec-cardiac  {background:linear-gradient(145deg,rgba(255,241,242,0.9),rgba(255,255,255,0.95));}
+#sec-pharma   {background:linear-gradient(145deg,rgba(237,233,254,0.9),rgba(255,255,255,0.95));}
+#sec-metabolic{background:linear-gradient(145deg,rgba(254,252,232,0.9),rgba(255,255,255,0.95));}
+#sec-renal    {background:linear-gradient(145deg,rgba(240,249,255,0.9),rgba(255,255,255,0.95));}
+#sec-drugs    {background:linear-gradient(145deg,rgba(255,247,237,0.9),rgba(255,255,255,0.95));}
+#sec-ref      {background:linear-gradient(145deg,rgba(240,253,250,0.9),rgba(255,255,255,0.95));}
+
+/* Calc card hover lift */
+.calc-card{transition:all .15s;}
+.calc-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.1);}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 </head>
@@ -144,7 +169,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 <div class="content">
 
 <!-- ── Fluid & Emergency ── -->
-<div class="section">
+<div class="section" id="sec-fluids">
   <div class="section-hdr">
     <span class="section-icon">💧</span>
     <span class="section-name">Fluid & Emergency</span>
@@ -185,7 +210,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <!-- ── Drug Dosing ── -->
-<div class="section">
+<div class="section" id="sec-pharma">
   <div class="section-hdr">
     <span class="section-icon">💊</span>
     <span class="section-name">Drug Dosing</span>
@@ -216,10 +241,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <!-- ── Cardiac ── -->
-<div class="section">
+<div class="section" id="sec-cardiac">
   <div class="section-hdr">
     <span class="section-icon">❤️</span>
-    <span class="section-name">Cardiac</span>
+    <span class="section-name" data-sid="sec-cardiac">Cardiac</span>
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
@@ -237,10 +262,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <!-- ── Renal ── -->
-<div class="section">
+<div class="section" id="sec-renal">
   <div class="section-hdr">
     <span class="section-icon">🫘</span>
-    <span class="section-name">Renal</span>
+    <span class="section-name" data-sid="sec-renal">Renal</span>
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
@@ -268,7 +293,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <!-- ── Lab & Nutrition ── -->
-<div class="section">
+<div class="section" id="sec-metabolic">
   <div class="section-hdr">
     <span class="section-icon">🧪</span>
     <span class="section-name">Lab & Nutrition</span>
@@ -309,7 +334,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <!-- ── General ── -->
-<div class="section">
+<div class="section" id="sec-others">
   <div class="section-hdr">
     <span class="section-icon">🐾</span>
     <span class="section-name">General</span>
@@ -340,10 +365,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 <!-- ── Drugs Reference ── -->
-<div class="section">
+<div class="section" id="sec-drugs">
   <div class="section-hdr">
     <span class="section-icon">💊</span>
-    <span class="section-name">ยาใช้บ่อย</span>
+    <span class="section-name" data-sid="sec-drugs">ยา</span>
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
@@ -376,7 +401,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 <div class="section" id="sec-ref">
   <div class="section-hdr">
     <span class="section-icon">📊</span>
-    <span class="section-name">อ้างอิง (Reference Values)</span>
+    <span class="section-name" data-sid="sec-ref">อ้างอิง (Reference Values)</span>
     <div class="section-line"></div>
   </div>
   <div class="calc-grid">
