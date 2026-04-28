@@ -618,13 +618,16 @@ tr:hover td{background:var(--amber-50);}
 
 <!-- ── Announcements Tab ── -->
 <div class="tab-view" id="tab-announce">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-    <div>
-      <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;">📢 จัดการข่าวประกาศ</div>
-      <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ประกาศที่ใช้งาน จะแสดงบนหน้าแรกให้ทุกคนเห็น</div>
+  <div style="margin-bottom:14px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div>
+        <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;">📢 จัดการข่าวประกาศ</div>
+        <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ประกาศที่ใช้งาน จะแสดงบนหน้าแรกให้ทุกคนเห็น</div>
+      </div>
+      <button onclick="openAnnModal()" style="background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;padding:10px 18px;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;">➕ เพิ่มประกาศ</button>
     </div>
-    <button onclick="openAnnModal()" style="background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;padding:9px 16px;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">+ เพิ่มประกาศ</button>
   </div>
+  <button onclick="openAnnModal()" id="annFab" style="display:none;position:fixed;bottom:80px;right:16px;z-index:50;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(13,148,136,.4);">+</button>
   <div id="annAdminList">
     <div style="text-align:center;padding:20px;color:var(--slate-l);">⏳ กำลังโหลด...</div>
   </div>
@@ -1093,7 +1096,8 @@ function showTab(tab){
   document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='backup') setTimeout(loadDbSpace,200);
-  if(tab==='announce') loadAnnAdmin();
+  if(tab==='announce'){loadAnnAdmin();document.getElementById('annFab').style.display='flex';document.getElementById('annFab').style.alignItems='center';document.getElementById('annFab').style.justifyContent='center';}
+  else if(document.getElementById('annFab'))document.getElementById('annFab').style.display='none';
   if(tab==='backup') setTimeout(loadDbSpace,150);
   document.getElementById('ni-'+tab)?.classList.add('active');
   document.getElementById('bn-'+tab)?.classList.add('active');
