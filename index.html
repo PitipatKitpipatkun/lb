@@ -48,16 +48,16 @@ body{font-family:'Sarabun',sans-serif;background:linear-gradient(160deg,#e0f2fe 
 
 /* ── Login Cards ── */
 .login-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.login-card{background:var(--white);border-radius:18px;border:1.5px solid var(--border);padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.18s;box-shadow:0 2px 8px rgba(0,0,0,0.04);;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+.login-card{background:white;border-radius:18px;border:1.5px solid var(--border);padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.18s;box-shadow:0 2px 8px rgba(0,0,0,0.04);;box-shadow:0 4px 16px rgba(0,0,0,.12);}
 .login-card:active{transform:scale(0.96);}
 .lc-icon{font-size:32px;margin-bottom:8px;}
 .lc-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:white;}
 .lc-sub{font-size:11px;color:rgba(255,255,255,0.85);margin-top:3px;}
-.lc-student{border-color:var(--teal-l);}
+.lc-student{background:linear-gradient(145deg,#0d9488,#0f766e);border-color:var(--teal-d);}
 .lc-student:hover{background:var(--teal-50);border-color:var(--teal);}
-.lc-teacher{border-color:#dbeafe;}
+.lc-teacher{background:linear-gradient(145deg,#7c3aed,#5b21b6);border-color:#7c3aed;}
 .lc-teacher:hover{background:#eff6ff;border-color:#3b82f6;}
-.lc-admin{border-color:var(--amber-l);}
+.lc-admin{background:linear-gradient(145deg,#1d6fa4,#155e86);border-color:var(--sky-d);}
 .lc-admin:hover{background:var(--amber-50);border-color:var(--amber);}
 
 /* ── Game Cards ── */
@@ -1041,14 +1041,17 @@ async function loadAnnouncements(){
       const icon=a.icon||'📢';
       const anim=a.anim?animCSS[a.anim]:'';
       const pinned=a.is_pinned;
-      return `<div class="ann-card${pinned?' ann-card-pinned':''}" style="background:${bg};">
+      const bodyText=escAnn(a.body||'');
+      const bodyPreview=bodyText.length>80?bodyText.substring(0,80)+'…':bodyText;
+      const hasMore=bodyText.length>80||a.image_url;
+      const cid='ann_'+a.id.replace(/-/g,'').substring(0,8);
+      return `<div class="ann-card${pinned?' ann-card-pinned':''}" style="background:${bg};cursor:${hasMore?'pointer':'default'};" onclick="${hasMore?`openAnnDetail('${cid}','${btoa(unescape(encodeURIComponent(JSON.stringify({title:a.title||'',body:a.body||'',icon,bg,hdrCol,anim,img:a.image_url||'',pinned}))))}')`:''}" >
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
           <span style="font-size:22px;">${icon}</span>
-          <div class="ann-title" style="color:${hdrCol};${anim}">${pinned?'📌 ':''}${escAnn(a.title||'')}</div>
+          <div class="ann-title" style="color:${hdrCol};${anim};flex:1;">${pinned?'📌 ':''}${escAnn(a.title||'')}</div>
+          ${hasMore?'<span style="font-size:11px;color:#94a3b8;flex-shrink:0;">อ่านเพิ่ม ›</span>':''}
         </div>
-        ${a.image_url?`<img src="${a.image_url}" alt="" style="width:100%;border-radius:8px;margin-bottom:8px;object-fit:cover;max-height:180px;">`:'' }
-        <div class="ann-body">${escAnn(a.body||'')}</div>
-
+        <div class="ann-body">${bodyPreview}</div>
       </div>`;
     }).join('');
   }catch(e){
@@ -1063,7 +1066,45 @@ function escAnn(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').r
 // Auto-load announcements on page open
 document.addEventListener("DOMContentLoaded", function(){ setTimeout(loadAnnouncements, 500); });
 
+
+function openAnnDetail(cid, encoded){
+  try{
+    const d=JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    const animCSS={blink:'animation:annBlink 1s step-start infinite;',pulse:'animation:annPulse 1.5s ease-in-out infinite;',bounce:'animation:annBounce 1s ease infinite;',shake:'animation:annShake 0.5s ease infinite;',rainbow:'animation:annRainbow 3s linear infinite;',glow:'animation:annGlow 2s ease-in-out infinite;'};
+    document.getElementById('adIcon').textContent=d.icon||'📢';
+    const titleEl=document.getElementById('adTitle');
+    titleEl.textContent=(d.pinned?'📌 ':'')+d.title;
+    titleEl.style.color=d.hdrCol||'#1e293b';
+    titleEl.style.cssText+=(d.anim?animCSS[d.anim]:'');
+    document.getElementById('adBody').textContent=d.body;
+    const imgWrap=document.getElementById('adImg');
+    if(d.img){imgWrap.style.display='block';document.getElementById('adImgEl').src=d.img;}
+    else imgWrap.style.display='none';
+    const modal=document.getElementById('annDetailModal');
+    modal.style.display='flex';
+    document.body.style.overflow='hidden';
+  }catch(e){console.error('[annDetail]',e);}
+}
+function closeAnnDetail(){
+  document.getElementById('annDetailModal').style.display='none';
+  document.body.style.overflow='';
+}
+
 </script>
+
+
+<!-- ANNOUNCEMENT DETAIL MODAL -->
+<div id="annDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)closeAnnDetail()">
+  <div style="background:white;border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:20px 18px 40px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div id="adIcon" style="font-size:28px;"></div>
+      <button onclick="closeAnnDetail()" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div id="adTitle" style="font-size:18px;font-weight:800;margin-bottom:10px;"></div>
+    <div id="adImg" style="display:none;margin-bottom:12px;"><img id="adImgEl" style="width:100%;border-radius:12px;max-height:240px;object-fit:cover;"></div>
+    <div id="adBody" style="font-size:14px;line-height:1.8;color:#475569;white-space:pre-line;"></div>
+  </div>
+</div>
 
 <script src="livechat.js"></script>
 </body>
