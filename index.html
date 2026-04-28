@@ -247,6 +247,30 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
           <option value="งานโรงพยาบาลสัตว์">🏥 งานโรงพยาบาลสัตว์</option>
           <option value="งานอื่นๆ และทั่วไป">💬 งานอื่นๆ และทั่วไป</option>
         </select>
+        <!-- ระบุผู้รับ (optional) -->
+        <div id="fbRecipientWrap" style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <label style="font-size:12px;font-weight:700;color:var(--slate-m);flex:1;">
+              🔒 ส่งถึงบุคคล (ไม่บังคับ)
+            </label>
+            <button type="button" id="fbRecToggle" onclick="toggleRecipient()"
+              style="background:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:11px;color:var(--slate-l);cursor:pointer;font-family:'Sarabun',sans-serif;">
+              + ระบุผู้รับ
+            </button>
+          </div>
+          <div id="fbRecipientBox" style="display:none;">
+            <select id="fbRecipient"
+              style="width:100%;padding:10px 12px;border:1.5px solid #0d9488;border-radius:12px;
+                     font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate);
+                     background:#f0fdfa;outline:none;margin-bottom:6px;">
+              <option value="">— ไม่ระบุ (ส่งถึงงานที่เลือก) —</option>
+            </select>
+            <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;
+                        padding:7px 10px;font-size:11px;color:#78350f;line-height:1.5;">
+              🔐 ข้อความนี้ถูกเข้ารหัส — เฉพาะอาจารย์ที่เลือกเท่านั้นที่สามารถอ่านได้ แม้แต่ผู้ดูแลระบบก็ไม่สามารถอ่านได้
+            </div>
+          </div>
+        </div>
         <textarea class="fb-textarea" id="fbText" rows="3" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
         <div class="fb-row">
           <input class="fb-name" id="fbName" placeholder="ชื่อ (ไม่บังคับ)" maxlength="50">
@@ -436,6 +460,29 @@ function setFbType(t){
     document.getElementById('fb-type-'+{'suggest':'sug','complain':'com','other':'oth'}[x])?.classList.toggle('sel',x===t);
   });
 }
+// ── Crypto helpers (AES-GCM) ──
+async function deriveKey(teacherCode){
+  const raw=new TextEncoder().encode(teacherCode+'_VetPrivate2025');
+  const hash=await crypto.subtle.digest('SHA-256',raw);
+  return crypto.subtle.importKey('raw',hash,{name:'AES-GCM'},false,['encrypt','decrypt']);
+}
+async function encryptMsg(text,teacherCode){
+  const key=await deriveKey(teacherCode);
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const enc=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(text));
+  const toB64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return JSON.stringify({iv:toB64(iv),data:toB64(enc)});
+}
+async function decryptMsg(payload,teacherCode){
+  try{
+    const {iv,data}=JSON.parse(payload);
+    const fromB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+    const key=await deriveKey(teacherCode);
+    const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB64(iv)},key,fromB64(data));
+    return new TextDecoder().decode(dec);
+  }catch(e){return null;}
+}
+
 async function submitFeedback(){
   const text=document.getElementById('fbText').value.trim();
   const name=document.getElementById('fbName').value.trim()||'ไม่ระบุชื่อ';
@@ -443,14 +490,50 @@ async function submitFeedback(){
   if(!text){st.textContent='⚠️ กรุณาพิมพ์ข้อความก่อนส่ง';st.className='fb-status fb-err';st.style.display='block';return;}
   const typeLabel={suggest:'💡 แนะนำ',complain:'📢 ร้องเรียน',other:'💬 อื่นๆ'};
   const dept=document.getElementById('fbDept')?.value||'ทั่วไป';
-  const{error}=await sb.from('activity_logs').insert({
-    user_role:'feedback',user_name:name,user_code:fbType,
-    action:typeLabel[fbType],details:'[ถึง: '+dept+'] '+text
-  });
+  const recipientName=document.getElementById('fbRecipient')?.value||'';
+  const recipientId=document.getElementById('fbRecipient')?.selectedOptions[0]?.dataset.tid||'';
+
+  let error;
+  if(recipientName){
+    // ── Private encrypted message → separate table ──
+    const encrypted=await encryptMsg(text,recipientId||recipientName);
+    const res=await sb.from('private_messages').insert({
+      recipient_name:recipientName,
+      recipient_id:recipientId||recipientName,
+      sender_name:name,
+      type:fbType,
+      dept:dept,
+      encrypted_content:encrypted,
+      created_at:new Date().toISOString()
+    });
+    error=res.error;
+    if(!error){
+      st.textContent='🔐 ส่งข้อความส่วนตัวสำเร็จ — เฉพาะ '+recipientName+' เท่านั้นที่อ่านได้';
+      st.className='fb-status fb-ok';
+      document.getElementById('fbText').value='';
+      document.getElementById('fbName').value='';
+      document.getElementById('fbRecipient').value='';
+      document.getElementById('fbRecipientBox').style.display='none';
+      document.getElementById('fbRecToggle').textContent='+ ระบุผู้รับ';
+    }
+  } else {
+    // ── Normal public feedback ──
+    const res=await sb.from('activity_logs').insert({
+      user_role:'feedback',user_name:name,user_code:fbType,
+      action:typeLabel[fbType],
+      details:'[หน่วยงาน: '+dept+'] '+text
+    });
+    error=res.error;
+    if(!error){
+      st.textContent='✅ ขอบคุณสำหรับข้อเสนอแนะ! ส่งสำเร็จแล้ว';
+      st.className='fb-status fb-ok';
+      document.getElementById('fbText').value='';
+      document.getElementById('fbName').value='';
+    }
+  }
   if(error){st.textContent='❌ ส่งไม่สำเร็จ: '+error.message;st.className='fb-status fb-err';}
-  else{st.textContent='✅ ขอบคุณสำหรับข้อเสนอแนะ! ส่งสำเร็จแล้ว';st.className='fb-status fb-ok';document.getElementById('fbText').value='';document.getElementById('fbName').value='';}
   st.style.display='block';
-  setTimeout(()=>st.style.display='none',4000);
+  setTimeout(()=>st.style.display='none',5000);
 }
 
 // ── Coming soon ──
@@ -808,6 +891,46 @@ function searchDrugs(q){
     section.style.display = 'block';
   }catch(e){}
 })();
+
+// ── Feedback Recipients ──
+async function loadTeachers(){
+  try{
+    const sel=document.getElementById('fbRecipient');
+    if(!sel||sel.options.length>1)return; // already loaded
+    const{data,error}=await sb.from('teachers')
+      .select('id,name,department')
+      .order('department').order('name');
+    if(error||!data)return;
+    const byDept={};
+    data.forEach(t=>{
+      const d=t.department||'ทั่วไป';
+      if(!byDept[d])byDept[d]=[];
+      byDept[d].push(t);
+    });
+    Object.keys(byDept).sort().forEach(dept=>{
+      const og=document.createElement('optgroup');
+      og.label='📚 '+dept;
+      byDept[dept].forEach(t=>{
+        const o=document.createElement('option');
+        o.value=t.name;
+        o.dataset.tid=t.teacher_code||t.id||t.name;
+        o.textContent='👤 '+t.name;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+  }catch(e){}
+}
+
+function toggleRecipient(){
+  const box=document.getElementById('fbRecipientBox');
+  const btn=document.getElementById('fbRecToggle');
+  const isOpen=box.style.display!=='none';
+  box.style.display=isOpen?'none':'block';
+  btn.textContent=isOpen?'+ ระบุผู้รับ':'✕ ยกเลิก';
+  if(!isOpen) loadTeachers(); // load on first open
+  if(isOpen) document.getElementById('fbRecipient').value=''; // clear on close
+}
 
 // ── Feedback Collapse ──
 function toggleFeedback(){

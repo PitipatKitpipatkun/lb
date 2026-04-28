@@ -209,6 +209,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="nav-item" onclick="switchTab('history')" id="ni-history"><span class="nav-icon">📋</span> ประวัติ</div>
     <div class="nav-item" onclick="switchTab('workload')" id="ni-workload"><span class="nav-icon">📊</span> ภาระงาน</div>
     <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
+      <div style="height:1px;background:var(--border);margin:8px 12px;"></div>
+    <div class="nav-item" onclick="switchTab('inbox')" id="ni-inbox">
+      <span class="nav-icon">🔐</span> ข้อความส่วนตัว
+      <span id="inboxBadge" style="display:none;background:#e11d48;color:white;font-size:10px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">!</span>
+    </div>
   </nav>
   <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
 </aside>
@@ -516,9 +521,29 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       <span class="bn-icon">🚪</span><span class="bn-label">ออก</span><div class="bn-dot" style="opacity:0"></div>
     </div>
   </div>
-</nav>
+    <div style="height:1px;background:var(--border);margin:8px 12px;"></div>
+    <div class="nav-item" onclick="switchTab('inbox')" id="ni-inbox">
+      <span class="nav-icon">🔐</span> ข้อความส่วนตัว
+      <span id="inboxBadge" style="display:none;background:#e11d48;color:white;font-size:10px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">!</span>
+    </div>
+  </nav>
 
 <div id="toast" class="toast"></div>
+
+<!-- ── Private Inbox ── -->
+<div class="tab-view" id="tab-inbox" style="display:none;">
+  <div style="margin-bottom:14px;">
+    <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--teal-d);">🔐 ข้อความส่วนตัว</div>
+    <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ข้อความเข้ารหัส AES — เฉพาะคุณเท่านั้นที่อ่านได้</div>
+  </div>
+  <div id="inboxContent">
+    <div style="text-align:center;padding:24px;color:var(--slate-l);">
+      <div style="font-size:40px;margin-bottom:8px;">🔐</div>
+      <div style="font-size:13px;">กำลังโหลดข้อความ...</div>
+    </div>
+  </div>
+</div>
+
 
 <script>
 const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
@@ -527,12 +552,121 @@ const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
 const DEF_RUBRIC=[{score:1,label:'ทำไม่ได้'},{score:2,label:'ทำได้โดยมีผู้ช่วย'},{score:3,label:'ทำได้โดยมีผู้ดูแล'},{score:4,label:'ทำได้อิสระ'},{score:5,label:'ทำได้และสอนผู้อื่น'}];
 let user=null,students=[],comps=[],selStudent=null,decisions={},currentFilter='all',histMap={};
 
+// ─── PRIVATE INBOX ───────────────────────────────────────
+async function deriveKey(teacherKey){
+  const raw=new TextEncoder().encode(teacherKey+'_VetPrivate2025');
+  const hash=await crypto.subtle.digest('SHA-256',raw);
+  return crypto.subtle.importKey('raw',hash,{name:'AES-GCM'},false,['encrypt','decrypt']);
+}
+async function decryptMsg(payload,teacherKey){
+  try{
+    const{iv,data}=JSON.parse(payload);
+    const fromB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+    const key=await deriveKey(teacherKey);
+    const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB64(iv)},key,fromB64(data));
+    return new TextDecoder().decode(dec);
+  }catch(e){return '🔒 ไม่สามารถถอดรหัสได้ (ส่งถึงคนอื่น)';}
+}
+
+async function loadInbox(){
+  const el=document.getElementById('inboxContent');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:16px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลด...</div>';
+  
+  // Teacher key = teacher_code or username (same as used when encrypting)
+  const myKey=user.teacherCode||user.username||user.id||'';
+  const myName=user.fullName||'';
+  
+  try{
+    const{data,error}=await sb.from('private_messages')
+      .select('*')
+      .or('recipient_id.eq.'+myKey+',recipient_name.eq.'+encodeURIComponent(myName))
+      .order('created_at',{ascending:false})
+      .limit(50);
+    
+    if(error)throw error;
+    if(!data||data.length===0){
+      el.innerHTML=`<div style="text-align:center;padding:32px;color:var(--slate-l);">
+        <div style="font-size:40px;margin-bottom:8px;">📭</div>
+        <div style="font-size:13px;">ไม่มีข้อความส่วนตัว</div>
+      </div>`;
+      return;
+    }
+
+    // Decrypt all messages
+    const typeIcon={suggest:'💡',complain:'📢',other:'💬'};
+    const msgs=await Promise.all(data.map(async m=>{
+      const text=await decryptMsg(m.encrypted_content,myKey);
+      return{...m,text};
+    }));
+
+    const unread=msgs.filter(m=>!m.read_at).length;
+    document.getElementById('inboxBadge').style.display=unread>0?'':'none';
+    if(unread>0) document.getElementById('inboxBadge').textContent=unread;
+
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · '+unread+' ยังไม่อ่านmaps':''}</span>
+        <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">✓ ทำเครื่องหมายอ่านแล้ว</button>
+      </div>
+      ${msgs.map(m=>`
+        <div style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'var(--teal)'};
+             padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.1);'}">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">${typeIcon[m.type]||'💬'}</span>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--slate);">${m.sender_name||'ไม่ระบุชื่อ'}</div>
+                <div style="font-size:11px;color:var(--slate-l);">${m.dept||''} · ${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+              </div>
+            </div>
+            ${m.read_at?'<span style="font-size:10px;color:var(--slate-l);">✓ อ่านแล้ว</span>':'<span style="background:#0d9488;color:white;font-size:10px;padding:2px 7px;border-radius:100px;font-weight:700;">ใหม่</span>'}
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--slate);line-height:1.6;${m.text.startsWith('🔒')?'color:var(--slate-l);font-style:italic;':''}">${escHtml(m.text)}</div>
+        </div>`).join('')}`;
+
+    // Mark as read after viewing
+    const unreadIds=data.filter(m=>!m.read_at).map(m=>m.id);
+    if(unreadIds.length>0){
+      await sb.from('private_messages').update({read_at:new Date().toISOString()}).in('id',unreadIds);
+    }
+
+  }catch(e){
+    el.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:12px;">❌ โหลดไม่ได้: ${e.message}<br><small>อาจต้องสร้าง table "private_messages" ก่อน</small></div>`;
+  }
+}
+
+async function markAllRead(){
+  if(!user)return;
+  await sb.from('private_messages')
+    .update({read_at:new Date().toISOString()})
+    .or('recipient_id.eq.'+(user.teacherCode||'')+'recipient_name.eq.'+(user.fullName||''));
+  loadInbox();
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function checkInboxBadge(){
+  if(!user)return;
+  try{
+    const myKey=user.teacherCode||user.username||'';
+    const myName=user.fullName||'';
+    const{count}=await sb.from('private_messages')
+      .select('*',{count:'exact',head:true})
+      .or('recipient_id.eq.'+myKey+',recipient_name.eq.'+encodeURIComponent(myName))
+      .is('read_at',null);
+    const badge=document.getElementById('inboxBadge');
+    if(badge&&count>0){badge.textContent=count;badge.style.display='';}
+  }catch(e){}
+}
+
 async function init(){
   const s=localStorage.getItem('lb_user');
   if(!s){window.location.href='index.html';return;}
   user=JSON.parse(s);
   if(user.role!=='teacher'){window.location.href='index.html';return;}
   document.getElementById('sbName').textContent=user.fullName;
+  setTimeout(checkInboxBadge,1500);
   document.getElementById('sbCode').textContent=user.teacherCode||user.username||'';
   const[sr,cr]=await Promise.all([
     sb.from('students').select('*,departments(name)').order('full_name'),
@@ -1762,6 +1896,7 @@ function switchTab(tab){
   document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='inbox') loadInbox();
   document.getElementById('ni-'+tab)?.classList.add('active');
   document.getElementById('bn-'+tab)?.classList.add('active');
   if(tab==='history')loadHistory();
@@ -2260,5 +2395,6 @@ window.addEventListener('unhandledrejection',function(e){
 });
 </script>
 <!-- ===== END DEBUG BAR ===== -->
+<script src="livechat.js"></script>
 </body>
 </html>
