@@ -372,6 +372,21 @@ tr:hover td{background:var(--amber-50);}
     <!-- Status bar -->
     <div id="backupStatus" style="display:none;padding:12px 16px;border-radius:12px;margin-bottom:18px;font-size:13px;font-weight:600;"></div>
 
+    <!-- DB Space Info -->
+    <div id="dbSpaceCard" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:40px;height:40px;background:#ede9fe;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🗄️</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;">Supabase Database</div>
+          <div style="font-size:11px;color:var(--slate-l);">Free plan · PostgreSQL</div>
+        </div>
+        <button onclick="loadDbSpace()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">🔄 รีเฟรช</button>
+      </div>
+      <div id="dbSpaceContent">
+        <div style="text-align:center;padding:10px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
     <!-- Import JSON ทั้งหมด -->
     <div style="background:white;border-radius:18px;border:2px solid var(--amber-l);padding:18px;margin-bottom:18px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -1359,5 +1374,71 @@ window.onerror=function(msg,src,line){dbg('⚠️ '+msg+' (line '+line+')','#f87
 window.addEventListener('unhandledrejection',function(e){dbg('⚠️ '+(e.reason?.message||e.reason),'#f87171');});
 </script>
 <!-- ===== END DEBUG BAR ===== -->
+<script src="livechat.js">
+// ── DB Space (Supabase free plan stats) ──
+async function loadDbSpace(){
+  const el=document.getElementById('dbSpaceContent');
+  el.innerHTML='<div style="text-align:center;padding:10px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลด...</div>';
+  try{
+    // Count rows in each table
+    const tables=[
+      {name:'students',label:'👨‍🎓 นักศึกษา',icon:'👨‍🎓'},
+      {name:'teachers',label:'👨‍🏫 อาจารย์',icon:'👨‍🏫'},
+      {name:'competencies',label:'📋 สมรรถนะ',icon:'📋'},
+      {name:'evaluations',label:'✅ การประเมิน',icon:'✅'},
+      {name:'evaluation_history',label:'📜 ประวัติ',icon:'📜'},
+      {name:'qr_tokens',label:'📲 QR Token',icon:'📲'},
+      {name:'qr_queue',label:'🔢 QR Queue',icon:'🔢'},
+      {name:'activity_logs',label:'📝 Activity Logs',icon:'📝'},
+    ];
+    const counts=await Promise.all(tables.map(async t=>{
+      const{count,error}=await sb.from(t.name).select('*',{count:'exact',head:true});
+      return{...t,count:error?'—':count||0};
+    }));
+    const totalRows=counts.reduce((s,t)=>s+(typeof t.count==='number'?t.count:0),0);
+    // Estimate: avg ~500 bytes/row → totalRows * 500 bytes
+    const estimatedBytes=totalRows*500;
+    const FREE_LIMIT=500*1024*1024; // 500 MB
+    const usedPct=Math.min(Math.round(estimatedBytes/FREE_LIMIT*100),100);
+    const usedMB=(estimatedBytes/1024/1024).toFixed(2);
+    const freeMB=((FREE_LIMIT-estimatedBytes)/1024/1024).toFixed(1);
+    const barColor=usedPct>80?'#dc2626':usedPct>60?'#d97706':'#0d9488';
+
+    el.innerHTML=`
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:12px;font-weight:700;color:var(--slate-m);">พื้นที่ใช้งาน (ประมาณ)</span>
+          <span style="font-size:12px;font-weight:700;color:${barColor};">${usedMB} MB / 500 MB</span>
+        </div>
+        <div style="height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;">
+          <div style="height:100%;width:${Math.max(usedPct,1)}%;background:${barColor};border-radius:5px;transition:width .5s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:11px;color:var(--slate-l);">ใช้ไป ${usedPct}%</span>
+          <span style="font-size:11px;color:#16a34a;font-weight:700;">เหลือประมาณ ${freeMB} MB</span>
+        </div>
+        <div style="font-size:10px;color:var(--slate-l);margin-top:3px;">* ประมาณการจากจำนวน rows (avg 500 bytes/row) ค่าจริงอาจต่างจากนี้</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+        ${counts.map(t=>`
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:12px;color:var(--slate-m);">${t.icon} ${t.label.split(' ')[1]||t.label}</span>
+            <span style="font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:var(--teal-d);">${typeof t.count==='number'?t.count.toLocaleString():'—'}</span>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:10px;background:#f0fdf4;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:700;color:#166534;">📊 รวม Rows ทั้งหมด</span>
+        <span style="font-family:'Prompt',sans-serif;font-size:15px;font-weight:800;color:#166534;">${totalRows.toLocaleString()} rows</span>
+      </div>
+      <div style="margin-top:8px;background:#ede9fe;border-radius:8px;padding:8px 10px;font-size:11px;color:#6d28d9;line-height:1.6;">
+        🆓 Supabase Free Plan: Database 500MB · Storage 1GB · 50,000 MAU<br>
+        📈 ตรวจสอบค่าจริงที่ <a href="https://supabase.com/dashboard" target="_blank" style="color:#7c3aed;font-weight:700;">supabase.com/dashboard</a>
+      </div>`;
+  }catch(e){
+    el.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:8px;">❌ โหลดไม่ได้: ${e.message}</div>`;
+  }
+}
+
+</script>
 </body>
 </html>
