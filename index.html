@@ -415,14 +415,31 @@ async function handleLogin(role,btn){
   btn.disabled=true;btn.textContent='กำลังเข้าสู่ระบบ...';
   try{
     if(role==='admin'){
-      const{data,error}=await sb.auth.signInWithPassword({email:username.toLowerCase()+'@lbsys.com',password});
-      if(error){showAlert(alertId,'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err');return;}
-      const{data:p}=await sb.from('admins').select('*').eq('user_id',data.user.id).single();
-      if(!p){showAlert(alertId,'ไม่พบข้อมูล admin','err');await sb.auth.signOut();return;}
-      localStorage.setItem('lb_user',JSON.stringify({role:'admin',fullName:p.full_name,profileId:p.id,username}));
-      logLogin('admin',p.full_name,username);
-      showAlert(alertId,'ยินดีต้อนรับ '+p.full_name,'ok');
-      setTimeout(()=>{window.location.href='admin-dashboard.html';},800);
+      // ── Try Supabase Auth first (original admin account) ──
+      const{data:authData,error:authErr}=await sb.auth.signInWithPassword({email:username.toLowerCase()+'@lbsys.com',password});
+      if(!authErr&&authData?.user){
+        const{data:p}=await sb.from('admins').select('*').eq('user_id',authData.user.id).single();
+        if(!p){showAlert(alertId,'ไม่พบข้อมูล admin','err');await sb.auth.signOut();return;}
+        localStorage.setItem('lb_user',JSON.stringify({role:'admin',fullName:p.full_name,profileId:p.id,username}));
+        logLogin('admin',p.full_name,username);
+        showAlert(alertId,'ยินดีต้อนรับ '+p.full_name,'ok');
+        setTimeout(()=>{window.location.href='admin-dashboard.html';},800);
+        return;
+      }
+      // ── Fallback: Teacher with is_admin=true (phone or teacher_code login) ──
+      let{data:ta,error:taErr}=await sb.from('teachers').select('*').eq('phone',username).eq('password',password).eq('is_admin',true).maybeSingle();
+      if(!ta){
+        const r2=await sb.from('teachers').select('*').eq('teacher_code',username).eq('password',password).eq('is_admin',true).maybeSingle();
+        ta=r2.data; taErr=r2.error;
+      }
+      if(ta){
+        localStorage.setItem('lb_user',JSON.stringify({role:'admin',fullName:ta.full_name,profileId:ta.id,username,isTeacherAdmin:true}));
+        logLogin('admin',ta.full_name,username);
+        showAlert(alertId,'ยินดีต้อนรับ '+ta.full_name+' (ผู้ดูแลระบบ)','ok');
+        setTimeout(()=>{window.location.href='admin-dashboard.html';},800);
+        return;
+      }
+      showAlert(alertId,'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err');
     }else if(role==='student'){
       // Query by phone first, fallback to student_code for backward compat
       let{data,error}=await sb.from('students').select('*,departments(name)').eq('phone',username).eq('password',password).maybeSingle();
