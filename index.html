@@ -130,6 +130,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .app-footer{text-align:center;font-size:11px;color:var(--slate-l);padding:8px 16px 4px;margin-top:4px;}
 
 /* ── Announcements ── */
+@keyframes annBlink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes annPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes annBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes annShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@keyframes annRainbow{0%{color:#e11d48}20%{color:#d97706}40%{color:#16a34a}60%{color:#0284c7}80%{color:#7c3aed}100%{color:#e11d48}}
+@keyframes annGlow{0%,100%{text-shadow:0 0 4px currentColor}50%{text-shadow:0 0 14px currentColor,0 0 24px currentColor}}
+
 .ann-card{background:white;border-radius:14px;border:1.5px solid var(--border);padding:14px 16px;margin-bottom:10px;cursor:default;transition:all .15s;}
 .ann-card:hover{border-color:var(--teal-l);box-shadow:0 2px 12px rgba(13,148,136,.08);}
 .ann-card-pinned{border-color:#f59e0b;border-left:4px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,white);}
@@ -203,21 +210,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
       </div>
       <span style="color:rgba(255,255,255,0.7);font-size:18px;">›</span>
     </div>
-    <!-- Quick shortcuts -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div class="game-card gc-vetquiz" onclick="window.location.href='game.html'" style="border-color:var(--teal-l);background:linear-gradient(135deg,var(--teal-50),white);">
-        <div class="gc-icon">🐾</div>
-        <div class="gc-title">VetQuiz</div>
-        <div class="gc-sub">เล่นคนเดียว</div>
-        <span class="gc-badge gc-live">▶ Solo</span>
-      </div>
-      <div class="game-card" onclick="window.location.href='quiz-live.html'" style="border-color:#ede9fe;background:linear-gradient(135deg,#faf5ff,white);">
-        <div class="gc-icon">⚡</div>
-        <div class="gc-title">VetQuiz Live</div>
-        <div class="gc-sub">แข่ง Real-time</div>
-        <span class="gc-badge" style="background:#ede9fe;color:#7c3aed;">⚡ Live</span>
-      </div>
-    </div>
+
   </div>
 
   <!-- TOOLS -->
@@ -242,9 +235,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 
   <!-- ANNOUNCEMENTS -->
   <div class="section" id="annSection">
-    <div class="section-title">📢 ข่าวประกาศ</div>
-    <div id="annList">
-      <div class="ann-empty">⏳ กำลังโหลด...</div>
+    <div class="section-title" onclick="toggleAnn()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;">
+      <span>📢 ข่าวประกาศ <span id="annBadge" style="display:none;background:#e11d48;color:white;font-size:10px;padding:1px 6px;border-radius:100px;margin-left:4px;"></span></span>
+      <span id="annChevron" style="font-size:11px;color:var(--slate-l);transition:transform 0.3s;display:inline-block;">▼</span>
+    </div>
+    <div id="annCollapse" style="display:none;">
+      <div id="annList">
+        <div class="ann-empty">⏳ กำลังโหลด...</div>
+      </div>
     </div>
   </div>
 
@@ -996,6 +994,14 @@ function toggleFeedback(){
 
 
 // ─── ANNOUNCEMENTS ───────────────────────────────────────
+function toggleAnn(){
+  const box=document.getElementById('annCollapse');
+  const ch=document.getElementById('annChevron');
+  const open=box.style.display!=='none';
+  box.style.display=open?'none':'block';
+  ch.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+
 async function loadAnnouncements(){
   const el=document.getElementById('annList');
   if(!el)return;
@@ -1010,18 +1016,42 @@ async function loadAnnouncements(){
       el.innerHTML='<div class="ann-empty">ไม่มีประกาศในขณะนี้</div>';
       return;
     }
+    // Auto-open if there are announcements
+    const collapse=document.getElementById('annCollapse');
+    const ch=document.getElementById('annChevron');
+    if(collapse){collapse.style.display='block';if(ch)ch.style.transform='rotate(180deg)';}
+    // Show badge with count
+    const badge=document.getElementById('annBadge');
+    if(badge){badge.textContent=data.length;badge.style.display='';}
     const tagMap={info:'ann-tag-info',warn:'ann-tag-warn',urgent:'ann-tag-urgent'};
     const tagLabel={info:'📋 ทั่วไป',warn:'⚠️ สำคัญ',urgent:'🚨 ด่วนมาก'};
-    el.innerHTML=data.map(a=>`
-      <div class="ann-card${a.is_pinned?' ann-card-pinned':''}">
-        <div class="ann-title">${a.is_pinned?'📌 ':''}${escAnn(a.title||'')}</div>
+    const animCSS={
+      blink:'animation:annBlink 1s step-start infinite;',
+      pulse:'animation:annPulse 1.5s ease-in-out infinite;',
+      bounce:'animation:annBounce 1s ease infinite;',
+      shake:'animation:annShake 0.5s ease infinite;',
+      rainbow:'animation:annRainbow 3s linear infinite;',
+      glow:'animation:annGlow 2s ease-in-out infinite;'
+    };
+    el.innerHTML=data.map(a=>{
+      const bg=a.bg_color||'#ffffff';
+      const hdrCol=a.hdr_color||'#1e293b';
+      const icon=a.icon||'📢';
+      const anim=a.anim?animCSS[a.anim]:'';
+      const pinned=a.is_pinned;
+      return `<div class="ann-card${pinned?' ann-card-pinned':''}" style="background:${bg};">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <span style="font-size:22px;">${icon}</span>
+          <div class="ann-title" style="color:${hdrCol};${anim}">${pinned?'📌 ':''}${escAnn(a.title||'')}</div>
+        </div>
         <div class="ann-body">${escAnn(a.body||'')}</div>
         <div class="ann-meta">
           ${a.tag?`<span class="ann-tag ${tagMap[a.tag]||'ann-tag-info'}">${tagLabel[a.tag]||a.tag}</span>`:''}
           <span>โดย ${escAnn(a.author_name||'ผู้ดูแลระบบ')}</span>
           <span>· ${new Date(a.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</span>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }catch(e){
     el.innerHTML='<div class="ann-empty">ไม่สามารถโหลดประกาศได้</div>';
   }
