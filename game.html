@@ -90,6 +90,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .screen{display:none;}
 .screen.active{display:block;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 </head>
 <body>
 
@@ -117,7 +118,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
           <div class="stat-box"><div class="stat-num" id="statGames">0</div><div class="stat-lbl">เล่นไปแล้ว</div></div>
           <div class="stat-box"><div class="stat-num" id="statStreak">0</div><div class="stat-lbl">Streak สูงสุด</div></div>
         </div>
-        <button class="btn-start" onclick="startGame()">🎲 เล่นสุ่มทุกหมวด</button>
+        <button class="btn-start" onclick="startGame()">🎲 สุ่ม 10 ข้อ (ทุกหมวด)</button>
+        <button class="btn-start" style="background:#f0fdfa;color:#0f766e;border:1.5px solid #ccfbf1;" onclick="startGame('all','all')">📚 ทุกข้อทุกหมวด (เตรียมสอบ)</button>
         <button class="btn-outline" onclick="showCats()">📚 เลือกหมวดหมู่</button>
       </div>
     </div>
@@ -1073,7 +1075,7 @@ const VET_QUESTIONS = [
   {"q": "Slit lamp biomicroscopy ใช้ตรวจ?", "a": "รายละเอียดของดวงตา เช่น Anterior segment", "w": ["Blood", "Urine", "Brain"], "animal": "👁️", "lv": "medium", "cat": "คลินิกรวม"},
   {"q": "Indirect ophthalmoscopy ใช้ตรวจ?", "a": "Fundus ส่วน Posterior", "w": ["Anterior segment", "Cornea", "Lens"], "animal": "👁️", "lv": "hard", "cat": "คลินิกรวม"},
   {"q": "Auricoculopalpebral nerve block ใช้ใน?", "a": "ตรวจตาโดยลด Blepharospasm", "w": ["Eye surgery", "Ear surgery", "Dental"], "animal": "👁️", "lv": "hard", "cat": "คลินิกรวม"},
-  {"q": "Optical coherence tomography (OCT) ใช้ตรวจ?", "a": "Retina ชั้น ละเอียด", "w": ["Cornea", "Lens", "Iris"], "animal": "👁️", "lv": "hard", "cat": "คลินิกrวม"},
+  {"q": "Optical coherence tomography (OCT) ใช้ตรวจ?", "a": "Retina ชั้น ละเอียด", "w": ["Cornea", "Lens", "Iris"], "animal": "👁️", "lv": "hard", "cat": "คลินิกรวม"},
   {"q": "Electroretinogram (ERG) ใช้ตรวจ?", "a": "การทำงานของ Retina", "w": ["Cornea", "Optic nerve", "Vitreous"], "animal": "👁️", "lv": "hard", "cat": "คลินิกรวม"},
   {"q": "Uveodermatologic syndrome (VKH-like) ในสุนัขพบมากใน?", "a": "Akita, Chow Chow", "w": ["Labrador", "Poodle", "Chihuahua"], "animal": "🐕", "lv": "hard", "cat": "คลินิกรวม"},
   {"q": "Lens-induced uveitis เกิดจาก?", "a": "Leakage จาก Hypermature cataract", "w": ["Trauma", "Infection", "Glaucoma"], "animal": "👁️", "lv": "hard", "cat": "คลินิกรวม"},
@@ -1227,25 +1229,46 @@ function showCats(){
   qs.forEach(q=>{ cats[q.cat]=(cats[q.cat]||0)+1; });
   const grid = document.getElementById('catGrid');
   grid.innerHTML = Object.entries(cats).sort().map(([cat,n])=>`
-    <button class="cat-btn" onclick="startGame('${cat}')" style="background:${CAT_COLORS[cat]||'#f1f5f9'};">
+    <button class="cat-btn" onclick="openCatNum('${cat}',${n})" style="background:${CAT_COLORS[cat]||'#f1f5f9'};">
       <span style="font-size:20px;">${CAT_EMOJI[cat]||'📚'}</span><br>
       ${cat}<br><span class="cat-count">${n} ข้อ</span>
     </button>`).join('');
   showScreen('cat');
 }
 
+function openCatNum(cat, total){
+  // Show number picker modal
+  const opts = [10,20,30,50,total].filter((v,i,a)=>v<=total&&a.indexOf(v)===i).sort((a,b)=>a-b);
+  let html = `<div id="numModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:20px;padding:20px 18px;width:280px;text-align:center;">
+      <div style="font-family:'Prompt',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;">${CAT_EMOJI[cat]||'📚'} ${cat}</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">เลือกจำนวนคำถาม (มีทั้งหมด ${total} ข้อ)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
+        ${opts.map(n=>`<button onclick="document.getElementById('numModal').remove();startGame('${cat}',${n})" style="padding:10px 6px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">${n===total?n+'<br><span style=font-size:9px;color:#0d9488;>ทั้งหมด</span>':n}</button>`).join('')}
+      </div>
+      <button onclick="document.getElementById('numModal').remove();startGame('${cat}','all')" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #0d9488;background:#f0fdfa;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;color:#0f766e;cursor:pointer;">📚 ทั้งหมด ${total} ข้อ (เตรียมสอบ)</button>
+      <button onclick="document.getElementById('numModal').remove()" style="width:100%;padding:9px;border-radius:10px;border:1.5px solid #e2e8f0;background:white;font-family:'Sarabun',sans-serif;font-size:12px;color:#94a3b8;cursor:pointer;margin-top:8px;">ยกเลิก</button>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
 // ===== Start / Replay =====
-function startGame(cat){
+function startGame(cat, num){
   const qs = typeof VET_QUESTIONS !== 'undefined' ? VET_QUESTIONS : [];
   const pool = cat && cat!=='all' ? qs.filter(q=>q.cat===cat) : qs;
   gLastCat = cat||'all';
-  gQ = [...pool].sort(()=>Math.random()-0.5).slice(0, Math.min(10, pool.length));
+  gLastNum = num||10;
+  const count = num==='all' ? pool.length : Math.min(+(num||10), pool.length);
+  gQ = [...pool].sort(()=>Math.random()-0.5).slice(0, count);
   gScore=0; gIdx=0; gStreak=0; gStreakMax=0; gCorrect=0; gChosen=false;
-  document.getElementById('hdrSub').textContent = cat&&cat!=='all'?'หมวด: '+cat:'สุ่มทุกหมวด — 10 ข้อ';
+  const catLabel = cat&&cat!=='all'?cat:'ทุกหมวด';
+  const numLabel = num==='all'?'ทั้งหมด '+count+' ข้อ':count+' ข้อ';
+  document.getElementById('hdrSub').textContent = catLabel+' — '+numLabel;
   showScreen('quiz');
   renderQ();
 }
-function replayGame(){ startGame(gLastCat==='all'?undefined:gLastCat); }
+function replayGame(){ startGame(gLastCat==='all'?undefined:gLastCat, gLastNum||10); }
 
 // ===== Render question =====
 function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
@@ -1340,5 +1363,6 @@ function endGame(){
 
 init();
 </script>
+<script src="livechat.js"></script>
 </body>
 </html>

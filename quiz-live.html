@@ -51,7 +51,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--sl);min-h
 .setHdr{font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;margin-bottom:10px;}
 .setRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .setLbl{font-size:13px;color:rgba(255,255,255,0.9);}
-.setSel{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;padding:5px 8px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;outline:none;}
+.setSel{background:rgba(20,40,40,0.6);border:1px solid rgba(255,255,255,0.3);color:white;padding:5px 8px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;outline:none;}
+.setSel option{background:#1e3a3a;color:white;}
 .startBtn{width:100%;padding:14px;background:white;color:var(--td);border:none;border-radius:13px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
 .startBtn:disabled{opacity:.4;cursor:default;}
 .waitTxt{text-align:center;font-size:13px;color:rgba(255,255,255,0.5);padding:12px;}
@@ -193,7 +194,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--sl);min-h
     </div>
     <div class="setBox" id="setBox" style="display:none;">
       <div class="setHdr">⚙️ ตั้งค่า</div>
-      <div class="setRow"><span class="setLbl">จำนวนคำถาม</span><select class="setSel" id="setQ"><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option></select></div>
+      <div class="setRow"><span class="setLbl">จำนวนคำถาม</span><select class="setSel" id="setQ"><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option><option value="all">ทั้งหมด</option></select></div>
       <div class="setRow"><span class="setLbl">เวลา/ข้อ</span><select class="setSel" id="setT"><option value="10">10 วิ</option><option value="15" selected>15 วิ</option><option value="20">20 วิ</option><option value="30">30 วิ</option></select></div>
       <div class="setRow"><span class="setLbl">หมวด</span><select class="setSel" id="setCat"><option value="all">ทุกหมวด</option><option value="กายวิภาค">กายวิภาค</option><option value="สรีรวิทยา">สรีรวิทยา</option><option value="เภสัชวิทยา">เภสัชวิทยา</option><option value="จุลชีววิทยา">จุลชีววิทยา</option><option value="ปรสิตวิทยา">ปรสิตวิทยา</option><option value="พยาธิวิทยา">พยาธิวิทยา</option><option value="อายุรกรรม">อายุรกรรม</option><option value="ศัลยกรรม">ศัลยกรรม</option><option value="สัตว์ใหญ่">สัตว์ใหญ่</option><option value="Exotic">Exotic</option><option value="คลินิกรวม">คลินิกรวม</option></select></div>
     </div>
@@ -399,13 +400,14 @@ async function bcast(data){
 
 // ── HOST START ──
 async function hostStart(){
-  const totalQ=+document.getElementById('setQ').value||10;
+  const rawQ=document.getElementById('setQ').value; const totalQ=rawQ==='all'?'all':(+rawQ||10);
   const timePerQ=+document.getElementById('setT').value||15;
   const cat=document.getElementById('setCat').value||'all';
-  settings={totalQ,timePerQ,cat};
+  settings={totalQ,timePerQ,cat,qLabel:(totalQ==='all'?'ทั้งหมด':totalQ)+' ข้อ'};
   let pool=cat==='all'?RAW_Q:RAW_Q.filter(q=>q.cat===cat);
   if(!pool.length)pool=RAW_Q;
-  gameQ=shuffle(pool).slice(0,Math.min(totalQ,pool.length));
+  const qCnt=totalQ==='all'?pool.length:Math.min(+(totalQ||10),pool.length);
+  gameQ=shuffle(pool).slice(0,qCnt);
   curIdx=0;myScore=0;myCorrect=0;myStreak=0;
   prevScores={};scoreMap={};
   const btn=document.getElementById('startBtn');
