@@ -189,6 +189,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .wl-level-btn.sel{background:var(--rose);border-color:var(--rose);color:white;}
 .wl-score-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;background:var(--teal-50);border-radius:8px;font-size:12px;}
 .wl-evidence{font-size:11px;color:var(--slate-l);margin-top:4px;font-style:italic;}
+
+/* ── Message Status & Urgency Tags ── */
+.msg-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.tag-select{border:none;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:20px;transition:all .2s;}
+.ts-status-0{background:#f1f5f9;color:#64748b;}
+.ts-status-1{background:#fef3c7;color:#92400e;}
+.ts-status-2{background:#dbeafe;color:#1e40af;}
+.ts-status-3{background:#ede9fe;color:#5b21b6;}
+.ts-status-4{background:#d1fae5;color:#065f46;}
+.ts-urgent-0{background:#f1f5f9;color:#64748b;}
+.ts-urgent-1{background:#dcfce7;color:#166534;}
+.ts-urgent-2{background:#fef9c3;color:#854d0e;}
+.ts-urgent-3{background:#fee2e2;color:#991b1b;}
+
 </style>
 </head>
 <body>
@@ -625,7 +639,7 @@ async function loadInbox(){
       </div>
       <div style="padding-bottom:8px;"></div>
       ${msgs.map(m=>`
-        <div class="pmsg-item" data-type="${m.type||''}" data-sender="${(m.sender_name||'').replace(/"/g,'')}" data-dept="${(m.dept||'').replace(/"/g,'')}" data-date="${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}" data-text="${m.text.startsWith('🔒')?'(ถอดรหัสไม่ได้)':m.text.replace(/"/g,'').replace(/\n/g,' ')}" style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'#0d9488'};padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.12);'}">
+        <div class="pmsg-item" data-type="${m.type||''}" data-sender="${(m.sender_name||'').replace(/"/g,'')}" data-dept="${(m.dept||'').replace(/"/g,'')}" data-date="${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}" data-id="${m.id}" data-text="${m.text.startsWith('🔒')?'(ถอดรหัสไม่ได้)':m.text.replace(/"/g,'').replace(/\n/g,' ')}" style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'#0d9488'};padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.12);'}">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:20px;">${typeIcon[m.type]||'💬'}</span>
@@ -639,6 +653,19 @@ async function loadInbox(){
               :'<span style="background:#0d9488;color:white;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;">ใหม่</span>'}
           </div>
           <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;color:${m.text.startsWith('🔒')?'#94a3b8':'var(--slate)'};line-height:1.7;font-style:${m.text.startsWith('🔒')?'italic':'normal'};">${escHtml(m.text)}</div>
+          <div class="msg-tags" style="margin-top:10px;">
+            <select class="tag-select ts-status-${m.msg_status||0}" id="mst_${m.id}" onchange="updateMsgTag('${m.id}','status',this.value,this)" title="สถานะการดำเนินการ">
+              <option value="0" ${(m.msg_status||0)==0?'selected':''}>📋 รอแจ้งผู้รับผิดชอบ</option>
+              <option value="1" ${m.msg_status==1?'selected':''}>📣 แจ้งหัวหน้าหน่วยงานรับทราบแล้ว</option>
+              <option value="2" ${m.msg_status==2?'selected':''}>⚙️ กำลังดำเนินการแก้ไข</option>
+              <option value="3" ${m.msg_status==3?'selected':''}>✅ แก้ไขเรียบร้อยแล้ว</option>
+            </select>
+            <select class="tag-select ts-urgent-${m.urgency||0}" id="mug_${m.id}" onchange="updateMsgTag('${m.id}','urgency',this.value,this)" title="ความเร่งด่วน">
+              <option value="0" ${(m.urgency||0)==0?'selected':''}>🔵 ไม่ด่วน</option>
+              <option value="1" ${m.urgency==1?'selected':''}>🟡 ด่วน</option>
+              <option value="2" ${m.urgency==2?'selected':''}>🔴 ด่วนที่สุด</option>
+            </select>
+          </div>
           <div style="display:flex;justify-content:flex-end;margin-top:8px;">
             <button onclick="deleteMsg('${m.id}')" style="background:none;border:1px solid #fecdd3;color:#dc2626;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">🗑️ ลบ</button>
           </div>
@@ -673,6 +700,22 @@ async function loadInbox(){
 }
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+const STATUS_CSS=['ts-status-0','ts-status-1','ts-status-2','ts-status-3'];
+const URGENT_CSS=['ts-urgent-0','ts-urgent-1','ts-urgent-2'];
+
+async function updateMsgTag(id, field, val, selectEl){
+  const numVal=parseInt(val);
+  // Update CSS class on the select
+  const cssList=field==='status'?STATUS_CSS:URGENT_CSS;
+  cssList.forEach(cls=>selectEl.classList.remove(cls));
+  selectEl.classList.add(field==='status'?`ts-status-${numVal}`:`ts-urgent-${numVal}`);
+  // Save to Supabase
+  const payload={};
+  payload[field==='status'?'msg_status':'urgency']=numVal;
+  const{error}=await sb.from('private_messages').update(payload).eq('id',id);
+  if(error) console.error('updateMsgTag error:',error.message);
+}
+
 async function deleteMsg(id){
   if(!confirm('ลบข้อความนี้?'))return;
   const{error}=await sb.from('private_messages').delete().eq('id',id);
@@ -694,13 +737,20 @@ function printInbox(){
     const dept=m.dataset.dept||'';
     const date=m.dataset.date||'';
     const text=m.dataset.text||'';
+    const statusSel=document.getElementById('mst_'+m.dataset.id);
+    const urgentSel=document.getElementById('mug_'+m.dataset.id);
+    const statusTxt=statusSel?statusSel.options[statusSel.selectedIndex].text:'—';
+    const urgentTxt=urgentSel?urgentSel.options[urgentSel.selectedIndex].text:'—';
     const typeLabel={suggest:'💡 แนะนำ',complain:'📢 ร้องเรียน',other:'💬 อื่นๆ'}[type]||type;
-    return `<tr>
+    const urgentColor=urgentSel?.value=='2'?'#fef2f2':urgentSel?.value=='1'?'#fefce8':'';
+    return `<tr style="background:${urgentColor}">
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${typeLabel}</td>
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${sender}</td>
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${dept}</td>
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${date}</td>
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;line-height:1.5;">${text}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:11px;">${statusTxt}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:11px;">${urgentTxt}</td>
     </tr>`;
   }).join('');
 
@@ -721,11 +771,13 @@ function printInbox(){
     <div class="sub">พิมพ์เมื่อ: ${now} · ทั้งหมด ${msgs.length} ข้อความ</div>
     <table>
       <thead><tr>
-        <th style="width:10%">ประเภท</th>
-        <th style="width:15%">ผู้ส่ง</th>
-        <th style="width:15%">ถึง</th>
-        <th style="width:13%">วันที่</th>
-        <th style="width:47%">ข้อความ</th>
+        <th style="width:9%">ประเภท</th>
+        <th style="width:13%">ผู้ส่ง</th>
+        <th style="width:13%">ถึง</th>
+        <th style="width:11%">วันที่</th>
+        <th style="width:35%">ข้อความ</th>
+        <th style="width:12%">สถานะ</th>
+        <th style="width:7%">ความด่วน</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
