@@ -531,7 +531,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 <div id="toast" class="toast"></div>
 
 <!-- ── Private Inbox ── -->
-<div class="tab-view" id="tab-inbox" style="display:none;">
+<div class="tab-view" id="tab-inbox">
   <div style="margin-bottom:14px;">
     <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--teal-d);">🔐 ข้อความส่วนตัว</div>
     <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ข้อความเข้ารหัส AES — เฉพาะคุณเท่านั้นที่อ่านได้</div>
@@ -572,75 +572,81 @@ async function loadInbox(){
   const el=document.getElementById('inboxContent');
   if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:16px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลด...</div>';
-  
-  // Teacher key = teacher_code or username (same as used when encrypting)
-  const myKey=user.teacherCode||user.username||user.id||'';
-  const myName=user.fullName||'';
-  
+
+  const myKey=(user.teacherCode||user.username||'').trim();
+  const myName=(user.fullName||'').trim();
+
   try{
+    // Query by recipient_id OR recipient_name
     const{data,error}=await sb.from('private_messages')
       .select('*')
-      .or('recipient_id.eq.'+myKey+',recipient_name.eq.'+encodeURIComponent(myName))
+      .or(`recipient_id.eq.${myKey},recipient_name.eq.${myName}`)
       .order('created_at',{ascending:false})
       .limit(50);
-    
+
     if(error)throw error;
     if(!data||data.length===0){
       el.innerHTML=`<div style="text-align:center;padding:32px;color:var(--slate-l);">
         <div style="font-size:40px;margin-bottom:8px;">📭</div>
         <div style="font-size:13px;">ไม่มีข้อความส่วนตัว</div>
+        <div style="font-size:11px;margin-top:6px;">myKey="${myKey}" · myName="${myName}"</div>
       </div>`;
       return;
     }
 
-    // Decrypt all messages
+    // Decrypt
     const typeIcon={suggest:'💡',complain:'📢',other:'💬'};
     const msgs=await Promise.all(data.map(async m=>{
-      const text=await decryptMsg(m.encrypted_content,myKey);
+      let text='';
+      try{ text=await decryptMsg(m.encrypted_content,myKey)||'🔒 ถอดรหัสไม่ได้'; }
+      catch(e){ text='🔒 ถอดรหัสไม่ได้'; }
       return{...m,text};
     }));
 
     const unread=msgs.filter(m=>!m.read_at).length;
-    document.getElementById('inboxBadge').style.display=unread>0?'':'none';
-    if(unread>0) document.getElementById('inboxBadge').textContent=unread;
+    const badge=document.getElementById('inboxBadge');
+    if(badge){ badge.style.display=unread>0?'':'none'; if(unread>0)badge.textContent=unread; }
 
     el.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · '+unread+' ยังไม่อ่านmaps':''}</span>
-        <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">✓ ทำเครื่องหมายอ่านแล้ว</button>
+        <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · '+unread+' ยังไม่ได้อ่าน':''}</span>
+        <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">✓ อ่านทั้งหมด</button>
       </div>
       ${msgs.map(m=>`
-        <div style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'var(--teal)'};
-             padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.1);'}">
+        <div style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'#0d9488'};padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.12);'}">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:18px;">${typeIcon[m.type]||'💬'}</span>
+              <span style="font-size:20px;">${typeIcon[m.type]||'💬'}</span>
               <div>
                 <div style="font-size:13px;font-weight:700;color:var(--slate);">${m.sender_name||'ไม่ระบุชื่อ'}</div>
                 <div style="font-size:11px;color:var(--slate-l);">${m.dept||''} · ${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
               </div>
             </div>
-            ${m.read_at?'<span style="font-size:10px;color:var(--slate-l);">✓ อ่านแล้ว</span>':'<span style="background:#0d9488;color:white;font-size:10px;padding:2px 7px;border-radius:100px;font-weight:700;">ใหม่</span>'}
+            ${m.read_at
+              ?'<span style="font-size:10px;color:var(--slate-l);">✓ อ่านแล้ว</span>'
+              :'<span style="background:#0d9488;color:white;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;">ใหม่</span>'}
           </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--slate);line-height:1.6;${m.text.startsWith('🔒')?'color:var(--slate-l);font-style:italic;':''}">${escHtml(m.text)}</div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;color:${m.text.startsWith('🔒')?'var(--slate-l)':'var(--slate)'};line-height:1.7;font-style:${m.text.startsWith('🔒')?'italic':'normal'};">${escHtml(m.text)}</div>
         </div>`).join('')}`;
 
-    // Mark as read after viewing
+    // Mark as read
     const unreadIds=data.filter(m=>!m.read_at).map(m=>m.id);
     if(unreadIds.length>0){
       await sb.from('private_messages').update({read_at:new Date().toISOString()}).in('id',unreadIds);
     }
 
   }catch(e){
-    el.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:12px;">❌ โหลดไม่ได้: ${e.message}<br><small>อาจต้องสร้าง table "private_messages" ก่อน</small></div>`;
+    el.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:12px;background:#fff1f2;border-radius:10px;">
+      ❌ โหลดไม่ได้: ${e.message}
+      <br><small style="color:#64748b;">ตรวจสอบว่าสร้าง table "private_messages" ใน Supabase แล้ว</small>
+    </div>`;
   }
 }
-
 async function markAllRead(){
   if(!user)return;
   await sb.from('private_messages')
     .update({read_at:new Date().toISOString()})
-    .or('recipient_id.eq.'+(user.teacherCode||'')+'recipient_name.eq.'+(user.fullName||''));
+    .or(`recipient_id.eq.${user.teacherCode||''},recipient_name.eq.${user.fullName||''}`);
   loadInbox();
 }
 
@@ -653,7 +659,7 @@ async function checkInboxBadge(){
     const myName=user.fullName||'';
     const{count}=await sb.from('private_messages')
       .select('*',{count:'exact',head:true})
-      .or('recipient_id.eq.'+myKey+',recipient_name.eq.'+encodeURIComponent(myName))
+      .or(`recipient_id.eq.${myKey},recipient_name.eq.${myName}`)
       .is('read_at',null);
     const badge=document.getElementById('inboxBadge');
     if(badge&&count>0){badge.textContent=count;badge.style.display='';}
