@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>💊 Drug Dose Quiz</title>
+<title>💊 Drug Dose Challenge</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@700;800&display=swap" rel="stylesheet">
 <style>
 :root{--t:#0d9488;--td:#0f766e;--tl:#ccfbf1;--t50:#f0fdfa;
@@ -13,125 +13,179 @@
 body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--sl);min-height:100vh;}
 
 /* HEADER */
-.hdr{background:linear-gradient(135deg,#0d9488,#0f766e);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
-.hdr-back{background:rgba(255,255,255,.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0;}
+.hdr{background:linear-gradient(135deg,#0d9488,#0f766e);padding:12px 16px;
+  display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
+.hdr-back{background:rgba(255,255,255,.15);border:none;color:white;
+  width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0;}
 .hdr-title{font-family:'Prompt',sans-serif;font-size:15px;font-weight:800;color:white;flex:1;}
-.hdr-info{display:flex;gap:6px;align-items:center;}
-.hdr-badge{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;background:rgba(255,255,255,.2);color:white;}
-.hdr-timer{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;color:white;}
+.hdr-info{display:flex;gap:6px;}
+.hbadge{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;
+  background:rgba(255,255,255,.2);color:white;}
+.htimer{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;color:white;}
 .ht-ok{background:rgba(255,255,255,.2);}
 .ht-warn{background:rgba(220,38,38,.6);}
 
 /* SCREENS */
-.scr{display:none;padding-bottom:32px;}
-.scr.on{display:block;}
+.scr{display:none;} .scr.on{display:block;}
 
 /* HOME */
-#sHome{padding:20px 16px;text-align:center;}
-.h-icon{font-size:60px;margin:16px 0 8px;}
-.h-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--t);margin-bottom:8px;}
-.h-desc{font-size:14px;color:var(--sm);line-height:1.75;margin-bottom:20px;}
-.mode-grid{display:flex;flex-direction:column;gap:10px;}
-.mode-card{border-radius:14px;border:2px solid;padding:15px 16px;cursor:pointer;text-align:left;transition:all .15s;background:white;}
-.mode-card:active{transform:scale(.97);}
-.mc-t{font-size:15px;font-weight:700;margin-bottom:3px;}
-.mc-s{font-size:12px;color:var(--s2);line-height:1.4;}
+#sHome{padding:20px 16px;}
+.home-hero{text-align:center;padding:20px 0 16px;}
+.hero-icon{font-size:52px;margin-bottom:8px;}
+.hero-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--t);margin-bottom:8px;}
+.hero-desc{font-size:13px;color:var(--sm);line-height:1.75;margin-bottom:4px;}
+.hero-highlight{display:inline-block;background:var(--t50);border:1px solid var(--tl);
+  border-radius:10px;padding:8px 14px;font-size:12px;color:var(--td);font-weight:600;
+  margin-top:10px;line-height:1.6;}
+.mode-list{display:flex;flex-direction:column;gap:10px;margin-top:18px;}
+.mode-btn{background:white;border-radius:16px;border:2px solid;padding:15px 16px;
+  cursor:pointer;text-align:left;transition:all .15s;}
+.mode-btn:active{transform:scale(.97);}
+.mb-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.mb-icon{font-size:24px;}
+.mb-title{font-size:15px;font-weight:700;}
+.mb-sub{font-size:12px;color:var(--s2);line-height:1.4;padding-left:34px;}
 
 /* QUESTION SCREEN */
-#sQ{padding:14px 16px;}
+#sQ{padding:12px 14px 32px;}
 .prog-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .pbar{flex:1;height:7px;background:var(--bd);border-radius:4px;overflow:hidden;}
-.pfill{height:100%;background:linear-gradient(90deg,#0d9488,#7c3aed);border-radius:4px;transition:width .4s;}
+.pfill{height:100%;background:linear-gradient(90deg,#0d9488,#7c3aed);
+  border-radius:4px;transition:width .4s;}
 .ptxt{font-size:11px;color:var(--s2);font-weight:700;white-space:nowrap;}
-.streak-pill{padding:3px 10px;background:#fff7ed;color:#c2410c;border-radius:100px;font-size:11px;font-weight:700;}
+.streak{padding:3px 9px;background:#fff7ed;color:#c2410c;
+  border-radius:100px;font-size:11px;font-weight:700;}
 
-/* Case card */
-.case-card{background:white;border-radius:16px;border:1.5px solid var(--bd);padding:14px;margin-bottom:12px;position:relative;}
-.case-tag{display:inline-block;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;margin-bottom:8px;}
-.ct-e{background:#dcfce7;color:#166534;}
-.ct-m{background:#fef9c3;color:#92400e;}
-.ct-h{background:#fee2e2;color:#991b1b;}
-.patient-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.patient-icon{font-size:28px;}
-.patient-info{flex:1;}
-.patient-name{font-size:13px;font-weight:700;color:var(--sl);}
-.patient-detail{font-size:12px;color:var(--sm);margin-top:2px;}
-.bw-badge{background:var(--t50);border:1px solid var(--tl);border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.bw-lbl{font-size:12px;color:var(--td);font-weight:600;}
-.bw-val{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:var(--td);}
-.q-drug-box{background:linear-gradient(135deg,#1e293b,#334155);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
-.q-drug-name{font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:white;margin-bottom:3px;}
-.q-drug-dose{font-size:12px;color:rgba(255,255,255,.7);}
-.q-drug-conc{font-size:12px;color:rgba(255,255,255,.55);margin-top:2px;}
-.q-ask{font-size:14px;font-weight:700;color:var(--sl);margin-bottom:10px;}
+/* Clinical case card */
+.case-card{background:white;border-radius:18px;border:1.5px solid var(--bd);
+  overflow:hidden;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.cc-top{padding:12px 14px;border-bottom:1px solid var(--bd);}
+.cc-patient{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.cc-species{font-size:32px;}
+.cc-info{flex:1;}
+.cc-name{font-size:14px;font-weight:700;}
+.cc-detail{font-size:12px;color:var(--sm);margin-top:2px;}
+.cc-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.cc-tag{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;}
+.tag-dx{background:#fee2e2;color:#991b1b;}
+.tag-cat{background:#ede9fe;color:#6d28d9;}
+.tag-diff{padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;}
+.td-e{background:#dcfce7;color:#166534;}
+.td-m{background:#fef9c3;color:#92400e;}
+.td-h{background:#fee2e2;color:#991b1b;}
+/* Clinical info */
+.cc-body{padding:12px 14px;}
+.cc-history{font-size:13px;color:var(--sm);line-height:1.7;margin-bottom:10px;}
+.cc-labs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.lab-pill{background:var(--bg);border:1px solid var(--bd);border-radius:8px;
+  padding:4px 8px;font-size:11px;font-weight:600;color:var(--sl);}
+.lab-pill.abnormal{background:#fff1f2;border-color:#fecdd3;color:#9f1239;}
+.lab-pill.normal{background:#f0fdf4;border-color:#bbf7d0;color:#14532d;}
+/* Drug prescribed */
+.rx-box{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:12px;
+  padding:12px 14px;margin-bottom:10px;}
+.rx-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.rx-icon{font-size:20px;}
+.rx-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);
+  text-transform:uppercase;letter-spacing:.5px;}
+.rx-drug{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:white;}
+.rx-group{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;}
+/* Question */
+.q-ask{font-size:14px;font-weight:700;color:var(--sl);
+  background:var(--t50);border-radius:10px;padding:10px 12px;
+  border-left:3px solid var(--t);}
 
 /* Choices */
-.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.ch{padding:13px 10px;border:2px solid var(--bd);border-radius:12px;background:white;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;text-align:center;cursor:pointer;transition:all .15s;}
-.ch:active{transform:scale(.96);}
-.ch.correct{border-color:#16a34a;background:#dcfce7;color:#166534;}
-.ch.wrong{border-color:#dc2626;background:#fee2e2;color:#991b1b;}
-.ch.show-c{border-color:#16a34a;background:#dcfce7;color:#166534;}
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.ch{background:white;border:2px solid var(--bd);border-radius:14px;
+  padding:13px 14px;cursor:pointer;text-align:left;transition:all .15s;
+  font-family:'Sarabun',sans-serif;}
+.ch:active{transform:scale(.98);}
+.ch-top{display:flex;align-items:flex-start;gap:10px;}
+.ch-letter{width:26px;height:26px;border-radius:50%;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:var(--sm);flex-shrink:0;}
+.ch-main{flex:1;}
+.ch-dose{font-size:15px;font-weight:700;color:var(--sl);}
+.ch-sub{font-size:11px;color:var(--s2);margin-top:2px;line-height:1.4;}
+.ch.selected-ok{border-color:#16a34a;background:#f0fdf4;}
+.ch.selected-ok .ch-letter{background:#16a34a;color:white;}
+.ch.selected-ok .ch-dose{color:#166534;}
+.ch.selected-ng{border-color:#dc2626;background:#fff1f2;}
+.ch.selected-ng .ch-letter{background:#dc2626;color:white;}
+.ch.selected-ng .ch-dose{color:#991b1b;}
+.ch.reveal-ok{border-color:#16a34a;background:#f0fdf4;}
+.ch.reveal-ok .ch-letter{background:#16a34a;color:white;}
 .ch:disabled{cursor:default;}
 
 /* Explanation */
-.expl{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px;margin-top:10px;display:none;}
-.expl-title{font-size:12px;font-weight:700;color:#166534;margin-bottom:4px;}
-.expl-body{font-size:12px;color:var(--sm);line-height:1.7;}
-.expl-calc{background:#fff;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:12px;color:var(--td);font-weight:600;border:1px solid var(--tl);}
-
-.next-btn{width:100%;padding:12px;background:linear-gradient(135deg,#0d9488,#0f766e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;display:none;}
+.expl{background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;
+  padding:14px;margin-top:12px;display:none;}
+.expl-title{font-size:12px;font-weight:700;color:#166534;margin-bottom:6px;}
+.expl-body{font-size:13px;color:var(--sm);line-height:1.75;}
+.expl-warning{background:#fff7ed;border-radius:8px;padding:8px 10px;
+  font-size:11px;color:#92400e;margin-top:8px;line-height:1.5;}
+.next-btn{width:100%;padding:13px;background:linear-gradient(135deg,#0d9488,#0f766e);
+  color:white;border:none;border-radius:13px;font-family:'Sarabun',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;display:none;}
 
 /* RESULT */
 #sResult{padding:20px 16px;text-align:center;}
-.res-emoji{font-size:56px;margin:16px 0 8px;}
-.res-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
-.res-sub{font-size:13px;color:var(--sm);margin-bottom:14px;}
-.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
-.rb{background:white;border-radius:12px;border:1px solid var(--bd);padding:12px 6px;}
-.rb-n{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--t);}
-.rb-l{font-size:10px;color:var(--s2);font-weight:700;text-transform:uppercase;margin-top:2px;}
-.res-btn{width:100%;padding:12px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;}
-.rb-m{background:linear-gradient(135deg,#0d9488,#0f766e);color:white;}
+.res-hero{font-size:60px;margin:20px 0 10px;}
+.res-title{font-family:'Prompt',sans-serif;font-size:24px;font-weight:800;margin-bottom:6px;}
+.res-sub{font-size:13px;color:var(--sm);margin-bottom:18px;}
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+.rg-box{background:white;border-radius:14px;border:1px solid var(--bd);padding:14px 8px;}
+.rg-n{font-family:'Prompt',sans-serif;font-size:24px;font-weight:800;color:var(--t);}
+.rg-l{font-size:10px;color:var(--s2);font-weight:700;text-transform:uppercase;margin-top:2px;}
+.res-btn{width:100%;padding:13px;border:none;border-radius:13px;
+  font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;margin-bottom:8px;}
+.rb-p{background:linear-gradient(135deg,#0d9488,#0f766e);color:white;}
 .rb-s{background:var(--bg);color:var(--sm);border:1.5px solid var(--bd);}
 
-/* Tip box */
-.tip-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px 12px;margin:14px 0;font-size:12px;color:#92400e;line-height:1.6;}
+/* Score popup */
+@keyframes scorePop{0%{opacity:0;transform:translateY(0) scale(.5)}40%{opacity:1;transform:translateY(-30px) scale(1.2)}100%{opacity:0;transform:translateY(-60px) scale(1)}}
+.score-popup{position:fixed;pointer-events:none;font-family:'Prompt',sans-serif;
+  font-size:22px;font-weight:800;z-index:200;animation:scorePop .9s ease forwards;}
 </style>
 </head>
 <body>
 
 <div class="hdr">
   <button class="hdr-back" onclick="location.href='games.html'">←</button>
-  <div class="hdr-title">💊 Drug Dose Quiz</div>
+  <div class="hdr-title">💊 Drug Dose Challenge</div>
   <div class="hdr-info">
-    <span class="hdr-badge" id="hScore">0 pt</span>
-    <span class="hdr-timer ht-ok" id="hTimer"></span>
+    <span class="hbadge" id="hScore">0 pt</span>
+    <span class="htimer ht-ok" id="hTimer"></span>
   </div>
 </div>
 
 <!-- HOME -->
 <div id="sHome" class="scr on">
-  <div class="h-icon">💊</div>
-  <div class="h-title">Drug Dose Quiz</div>
-  <div class="h-desc">คำนวณขนาดยาจาก Body Weight<br>💉 คิดเร็ว ตอบแม่น เหมือนใช้จริงในคลินิก<br>🔥 100 โจทย์ครอบคลุมยาทุกกลุ่ม</div>
-  <div class="mode-grid">
-    <div class="mode-card" style="border-color:#16a34a;" onclick="startGame('easy')">
-      <div class="mc-t" style="color:#166534;">🟢 ง่าย — ไม่จับเวลา</div>
-      <div class="mc-s">20 ข้อ · คำนวณ mL ที่ต้องดูด · ตัวเลือก 4 ข้อ · เหมาะสำหรับเริ่มต้น</div>
-    </div>
-    <div class="mode-card" style="border-color:#d97706;" onclick="startGame('medium')">
-      <div class="mc-t" style="color:#92400e;">🟡 กลาง — 30 วิ/ข้อ</div>
-      <div class="mc-s">30 ข้อ · คำนวณ mg + mL · ตัวเลือกใกล้เคียงกัน · เหมาะสำหรับฝึกฝน</div>
-    </div>
-    <div class="mode-card" style="border-color:#dc2626;" onclick="startGame('hard')">
-      <div class="mc-t" style="color:#991b1b;">🔴 ยาก (คลินิก) — 20 วิ/ข้อ</div>
-      <div class="mc-s">50 ข้อ · โจทย์ซับซ้อน dose range · CRI · ตัวเลือกเลวร้าย · เหมือนสอบจริง</div>
+  <div class="home-hero">
+    <div class="hero-icon">💊🩺</div>
+    <div class="hero-title">Drug Dose Challenge</div>
+    <div class="hero-desc">เลือก dose ที่ถูกต้องสำหรับโรคและสถานการณ์คลินิก<br>ยาชนิดเดียวกัน ใช้ dose ต่างกันได้ตาม indication!</div>
+    <div class="hero-highlight">
+      🎯 Prednisolone anti-inflam ≠ immunosuppressive dose<br>
+      ⚡ Furosemide maintenance ≠ acute pulmonary edema dose<br>
+      🚨 Atropine premed ≠ CPR dose
     </div>
   </div>
-  <div class="tip-box" style="margin-top:20px;">
-    💡 <strong>สูตรพื้นฐาน:</strong> Dose (mg/kg) × BW (kg) = Total mg<br>
-    Total mg ÷ Concentration (mg/mL) = Volume (mL)
+  <div class="mode-list">
+    <div class="mode-btn" style="border-color:#16a34a;" onclick="startGame('easy')">
+      <div class="mb-head"><div class="mb-icon">🟢</div><div class="mb-title" style="color:#166534;">เริ่มต้น — 15 ข้อ</div></div>
+      <div class="mb-sub">โรคง่ายๆ drug ที่คุ้นเคย · ตัวเลือกต่างกันชัดเจน</div>
+    </div>
+    <div class="mode-btn" style="border-color:#d97706;" onclick="startGame('medium')">
+      <div class="mb-head"><div class="mb-icon">🟡</div><div class="mb-title" style="color:#92400e;">ฝึกฝน — 30 ข้อ</div></div>
+      <div class="mb-sub">Drug หลายกลุ่ม · ตัวเลือกใกล้เคียง · ต้องรู้ indication</div>
+    </div>
+    <div class="mode-btn" style="border-color:#dc2626;" onclick="startGame('hard')">
+      <div class="mb-head"><div class="mb-icon">🔴</div><div class="mb-title" style="color:#991b1b;">สอบจริง — 50 ข้อ ⏱ 25 วิ</div></div>
+      <div class="mb-sub">ทุกกลุ่มยา · Emergency dose · ตัวเลือกกับดัก · ระยะเวลาจำกัด</div>
+    </div>
   </div>
 </div>
 
@@ -139,300 +193,395 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--sl);min-h
 <div id="sQ" class="scr">
   <div class="prog-row">
     <div class="pbar"><div class="pfill" id="pfill"></div></div>
-    <div class="ptxt" id="ptxt">0/20</div>
-    <div class="streak-pill" id="streakPill" style="display:none;">🔥1</div>
+    <div class="ptxt" id="ptxt">1/15</div>
+    <div class="streak" id="streakEl" style="display:none">🔥1</div>
   </div>
   <div class="case-card">
-    <span class="case-tag" id="ctag">ง่าย</span>
-    <div class="patient-row">
-      <div class="patient-icon" id="pIcon">🐕</div>
-      <div class="patient-info">
-        <div class="patient-name" id="pName">สุนัข พันธุ์ผสม</div>
-        <div class="patient-detail" id="pDetail">เพศผู้ 3 ปี</div>
+    <div class="cc-top">
+      <div class="cc-patient">
+        <div class="cc-species" id="qSpecies">🐕</div>
+        <div class="cc-info">
+          <div class="cc-name" id="qPatient">สุนัข Golden Retriever</div>
+          <div class="cc-detail" id="qDetail">เพศผู้ 5 ปี</div>
+        </div>
+      </div>
+      <div class="cc-tags">
+        <span class="cc-tag tag-dx" id="qDx">CHF</span>
+        <span class="cc-tag tag-cat" id="qCat">Cardiovascular</span>
+        <span class="tag-diff td-m" id="qDiff">กลาง</span>
       </div>
     </div>
-    <div class="bw-badge">
-      <span class="bw-lbl">⚖️ Body Weight</span>
-      <span class="bw-val" id="bwVal">10 kg</span>
+    <div class="cc-body">
+      <div class="cc-history" id="qHistory"></div>
+      <div class="cc-labs" id="qLabs"></div>
+      <div class="rx-box">
+        <div class="rx-header">
+          <span class="rx-icon">💉</span>
+          <span class="rx-label">Rx — ยาที่สั่ง</span>
+        </div>
+        <div class="rx-drug" id="qDrug">Furosemide</div>
+        <div class="rx-group" id="qGroup">Loop Diuretic</div>
+      </div>
+      <div class="q-ask" id="qAsk">Dose ที่เหมาะสมสำหรับกรณีนี้?</div>
     </div>
-    <div class="q-drug-box">
-      <div class="q-drug-name" id="drugName">Amoxicillin</div>
-      <div class="q-drug-dose" id="drugDose">Dose: 10 mg/kg PO BID</div>
-      <div class="q-drug-conc" id="drugConc">Concentration: 250 mg/5 mL</div>
-    </div>
-    <div class="q-ask" id="qAsk">ควรให้ยาครั้งละกี่ mL?</div>
   </div>
   <div class="choices" id="choices"></div>
   <div class="expl" id="expl">
-    <div class="expl-title">💡 วิธีคิด:</div>
+    <div class="expl-title">✅ คำอธิบาย</div>
     <div class="expl-body" id="explBody"></div>
-    <div class="expl-calc" id="explCalc"></div>
+    <div class="expl-warning" id="explWarn" style="display:none;"></div>
   </div>
   <button class="next-btn" id="nextBtn" onclick="nextQ()">ถัดไป →</button>
 </div>
 
 <!-- RESULT -->
 <div id="sResult" class="scr">
-  <div class="res-emoji" id="rEmoji">🏆</div>
+  <div class="res-hero" id="rEmoji">🏆</div>
   <div class="res-title" id="rTitle">เก่งมาก!</div>
   <div class="res-sub" id="rSub"></div>
   <div class="res-grid">
-    <div class="rb"><div class="rb-n" id="rPt">0</div><div class="rb-l">คะแนน</div></div>
-    <div class="rb"><div class="rb-n" id="rOk">0</div><div class="rb-l">ถูก</div></div>
-    <div class="rb"><div class="rb-n" id="rAcc">0%</div><div class="rb-l">แม่นยำ</div></div>
+    <div class="rg-box"><div class="rg-n" id="rPt">0</div><div class="rg-l">คะแนน</div></div>
+    <div class="rg-box"><div class="rg-n" id="rOk">0</div><div class="rg-l">ถูก</div></div>
+    <div class="rg-box"><div class="rg-n" id="rAcc">0%</div><div class="rg-l">แม่นยำ</div></div>
   </div>
-  <button class="res-btn rb-m" onclick="startGame(gMode)">🔄 เล่นใหม่</button>
+  <button class="res-btn rb-p" onclick="startGame(gMode)">🔄 เล่นใหม่</button>
   <button class="res-btn rb-s" onclick="showScr('sHome')">เปลี่ยนโหมด</button>
 </div>
 
 <script>
-// ══════════════════════════════
-//  100 DRUG DOSE QUESTIONS
-// ══════════════════════════════
-// Each Q: { animal, icon, breed, sex, age, bw, drug, doseRate, unit, conc, concUnit, ask, calcFn, expl, diff }
-// calcFn(bw) → correct answer (string with unit)
-// distractors generated from correct ±
+// ══════════════════════════════════════════════
+//  QUESTION BANK: Clinical Dose Selection
+//  Each Q has: clinical scenario + drug + correct dose + wrong doses (traps)
+// ══════════════════════════════════════════════
+const QS=[
+// ── FUROSEMIDE ──
+{sp:'🐕',pt:'สุนัข CKCS',dt:'เพศผู้ 8 ปี',dx:'CHF Stage C (Pulmonary edema)',cat:'❤️ Cardiovascular',diff:'easy',
+ hist:'ไอมาก หายใจหอบ นอนไม่ได้ Crackles ทั้งสองปอด X-ray: Severe interstitial-alveolar infiltrate',
+ labs:['SpO₂ 82%↓','HR 160 bpm↑','Grade 5/6 murmur','LA:Ao 2.2↑'],
+ drug:'Furosemide',grp:'Loop Diuretic',ask:'ควรเลือก dose ใดสำหรับ Acute pulmonary edema?',
+ ans:'4 mg/kg IV stat (high dose)',
+ opts:['1 mg/kg PO SID (maintenance)','2 mg/kg PO BID (mild)','4 mg/kg IV stat (high dose)','0.5 mg/kg PO PRN'],
+ expl:'Acute pulmonary edema ต้องการ Furosemide dose สูง 4 mg/kg IV ทันที เพื่อขับน้ำออกจากปอดเร็วที่สุด การให้ PO หรือ dose ต่ำจะออกฤทธิ์ช้าเกินไปในภาวะฉุกเฉิน',
+ warn:'⚠️ ตรวจสอบ Electrolytes โดยเฉพาะ K⁺ หลังให้ Furosemide dose สูง'},
 
-const DRUGS = [
-// ── Antibiotics ──
-{drug:'Amoxicillin',doseRate:10,unit:'mg/kg PO BID',conc:50,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c)}mL`,cat:'Antibiotic',diff:'easy'},
-{drug:'Amoxicillin-Clavulanate',doseRate:12.5,unit:'mg/kg PO BID',conc:62.5,concUnit:'mg/mL (Suspension)',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c)}mL`,cat:'Antibiotic',diff:'easy'},
-{drug:'Enrofloxacin',doseRate:5,unit:'mg/kg SID',conc:50,concUnit:'mg/mL (injection)',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c)}mL`,cat:'Antibiotic',diff:'easy'},
-{drug:'Metronidazole',doseRate:15,unit:'mg/kg PO BID',conc:250,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c,2)} เม็ด → ปัดเป็น ${roundTab(bw*r/c)}`,cat:'Antibiotic',diff:'easy'},
-{drug:'Doxycycline',doseRate:5,unit:'mg/kg PO BID',conc:100,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c,2)} เม็ด`,cat:'Antibiotic',diff:'easy'},
-{drug:'Marbofloxacin',doseRate:2,unit:'mg/kg SID',conc:20,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c,2)} เม็ด`,cat:'Antibiotic',diff:'medium'},
-{drug:'Trimethoprim-Sulfa',doseRate:15,unit:'mg/kg PO BID',conc:480,concUnit:'mg/tab (80/400mg)',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c,2)} เม็ด`,cat:'Antibiotic',diff:'medium'},
-{drug:'Clindamycin',doseRate:5.5,unit:'mg/kg PO TID',conc:25,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c)}mL`,cat:'Antibiotic',diff:'medium'},
-// ── NSAID ──
-{drug:'Meloxicam',doseRate:0.1,unit:'mg/kg SID (สุนัข)',conc:5,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'NSAID',diff:'medium'},
-{drug:'Carprofen',doseRate:2.2,unit:'mg/kg PO BID',conc:50,concUnit:'mg/tab',ask:'ควรให้กี่ mg ต่อครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,1)}mg`,cat:'NSAID',diff:'easy'},
-{drug:'Robenacoxib',doseRate:2,unit:'mg/kg SID',conc:10,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c,1)} เม็ด`,cat:'NSAID',diff:'medium'},
-{drug:'Grapiprant',doseRate:2,unit:'mg/kg SID',conc:20,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c,1)} เม็ด`,cat:'NSAID',diff:'hard'},
-// ── Opioids / Analgesics ──
-{drug:'Tramadol',doseRate:3,unit:'mg/kg PO TID',conc:50,concUnit:'mg/tab',ask:'ควรให้กี่ mg ต่อครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg`,cat:'Analgesic',diff:'easy'},
-{drug:'Buprenorphine',doseRate:0.01,unit:'mg/kg IM/IV q6h',conc:0.3,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,3)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Analgesic',diff:'hard'},
-{drug:'Butorphanol',doseRate:0.2,unit:'mg/kg IM',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Analgesic',diff:'medium'},
-{drug:'Morphine',doseRate:0.3,unit:'mg/kg IM q4h',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Analgesic',diff:'hard'},
-// ── Steroids ──
-{drug:'Prednisolone',doseRate:1,unit:'mg/kg PO SID (anti-inflam)',conc:5,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c)} เม็ด`,cat:'Steroid',diff:'easy'},
-{drug:'Prednisolone',doseRate:2,unit:'mg/kg PO SID (immunosuppressive)',conc:5,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c)} เม็ด`,cat:'Steroid',diff:'medium'},
-{drug:'Dexamethasone',doseRate:0.2,unit:'mg/kg IV (anti-shock)',conc:2,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Steroid',diff:'medium'},
-{drug:'Dexamethasone',doseRate:0.5,unit:'mg/kg IV (CNS edema)',conc:2,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Steroid',diff:'hard'},
-// ── Diuretics / CV ──
-{drug:'Furosemide',doseRate:2,unit:'mg/kg IV/IM',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c)}mL`,cat:'Cardiovascular',diff:'easy'},
-{drug:'Furosemide',doseRate:4,unit:'mg/kg IV (pulm edema)',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c)}mL`,cat:'Cardiovascular',diff:'medium'},
-{drug:'Enalapril',doseRate:0.5,unit:'mg/kg PO BID',conc:5,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/tab = ${round(bw*r/c,2)} เม็ด`,cat:'Cardiovascular',diff:'medium'},
-{drug:'Pimobendan',doseRate:0.25,unit:'mg/kg PO BID',conc:2.5,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/tab = ${round(bw*r/c,1)} เม็ด`,cat:'Cardiovascular',diff:'hard'},
-{drug:'Amlodipine (แมว)',doseRate:0.625/4,unit:'mg/kg SID (≈0.625mg/แมว)',conc:5,concUnit:'mg/tab',ask:'แมว BW 4 kg ควรให้กี่ mg?',
- explFn:(bw,r,c)=>`Amlodipine ในแมว: 0.625 mg fixed dose (ไม่คำนวณตาม BW สูตร per kg)`,cat:'Cardiovascular',diff:'hard'},
-// ── Antiparasitic ──
-{drug:'Ivermectin',doseRate:0.2,unit:'mg/kg SC (Heartworm prevention)',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Antiparasitic',diff:'medium'},
-{drug:'Milbemycin oxime',doseRate:0.5,unit:'mg/kg PO q month',conc:25,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/tab = ${round(bw*r/c,2)} เม็ด`,cat:'Antiparasitic',diff:'hard'},
-{drug:'Fenbendazole',doseRate:50,unit:'mg/kg PO SID × 3d',conc:150,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,1)}mL`,cat:'Antiparasitic',diff:'easy'},
-{drug:'Pyrantel pamoate',doseRate:5,unit:'mg/kg PO q2w',conc:50,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,1)}mL`,cat:'Antiparasitic',diff:'easy'},
-// ── Anticonvulsants ──
-{drug:'Phenobarbital',doseRate:2.5,unit:'mg/kg PO BID',conc:32.4,concUnit:'mg/tab',ask:'ควรให้กี่ mg ต่อวัน (BID)?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg × 2 = ${round(bw*r*2,1)}mg/day (BID)`,cat:'Anticonvulsant',diff:'hard'},
-{drug:'Levetiracetam',doseRate:20,unit:'mg/kg PO TID',conc:500,concUnit:'mg/tab',ask:'ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/tab = ${round(bw*r/c,2)} เม็ด`,cat:'Anticonvulsant',diff:'hard'},
-{drug:'Diazepam',doseRate:0.5,unit:'mg/kg IV (seizure)',conc:5,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Anticonvulsant',diff:'medium'},
-// ── Anesthesia/Sedation ──
-{drug:'Acepromazine',doseRate:0.03,unit:'mg/kg IM (premedication)',conc:2,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,3)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Anesthesia',diff:'hard'},
-{drug:'Medetomidine',doseRate:0.02,unit:'mg/kg IM (sedation)',conc:1,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,3)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Anesthesia',diff:'hard'},
-{drug:'Ketamine',doseRate:5,unit:'mg/kg IM (induction)',conc:100,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Anesthesia',diff:'medium'},
-{drug:'Propofol',doseRate:5,unit:'mg/kg IV slow (induction)',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,1)}mL`,cat:'Anesthesia',diff:'medium'},
-{drug:'Atipamezole',doseRate:0.1,unit:'mg/kg IM (reversal α2)',conc:5,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Anesthesia',diff:'hard'},
-// ── Antiemetics / GI ──
-{drug:'Maropitant',doseRate:1,unit:'mg/kg SC SID',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,1)}mL`,cat:'GI',diff:'easy'},
-{drug:'Ondansetron',doseRate:0.2,unit:'mg/kg IV q8h',conc:2,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'GI',diff:'medium'},
-{drug:'Metoclopramide',doseRate:0.3,unit:'mg/kg PO/SC TID',conc:5,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'GI',diff:'medium'},
-{drug:'Sucralfate',doseRate:0.5,unit:'g/kg PO TID (แมว)',conc:200,concUnit:'mg/mL (suspension)',ask:'แมว BW 4 kg ควรให้กี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × 0.5g/kg = ${round(bw*0.5*1000)}mg ÷ ${c}mg/mL = ${round(bw*0.5*1000/c)}mL`,cat:'GI',diff:'hard'},
-// ── Cardiac Emergency ──
-{drug:'Epinephrine (CPR)',doseRate:0.01,unit:'mg/kg IV',conc:1,concUnit:'mg/mL (1:1000)',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Emergency',diff:'hard'},
-{drug:'Atropine (bradycardia)',doseRate:0.02,unit:'mg/kg IV',conc:0.6,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,3)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Emergency',diff:'hard'},
-{drug:'Lidocaine (VT)',doseRate:2,unit:'mg/kg IV slow bolus',conc:20,concUnit:'mg/mL (2%)',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,1)}mL`,cat:'Emergency',diff:'hard'},
-{drug:'Mannitol 20% (ICP)',doseRate:0.5,unit:'g/kg IV over 20min',conc:200,concUnit:'mg/mL (200mg/mL)',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}g/kg × 1000 = ${round(bw*r*1000)}mg ÷ ${c}mg/mL = ${round(bw*r*1000/c,1)}mL`,cat:'Emergency',diff:'hard'},
-{drug:'Calcium gluconate 10%',doseRate:0.1,unit:'g/kg IV slow (hypocalcemia)',conc:100,concUnit:'mg/mL (10%)',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}g/kg × 1000 = ${round(bw*r*1000)}mg ÷ ${c}mg/mL = ${round(bw*r*1000/c,1)}mL`,cat:'Emergency',diff:'hard'},
-// ── Fluid/Other ──
-{drug:'Vitamin K1 (anticoag)',doseRate:2.5,unit:'mg/kg SC q12h',conc:10,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r,2)}mg ÷ ${c}mg/mL = ${round(bw*r/c,2)}mL`,cat:'Emergency',diff:'medium'},
-{drug:'N-Acetylcysteine',doseRate:70,unit:'mg/kg IV loading',conc:200,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,1)}mL`,cat:'Emergency',diff:'hard'},
-{drug:'Insulin (Regular)',doseRate:0.25,unit:'IU/kg SC (DM crisis)',conc:100,concUnit:'IU/mL',ask:'ควรให้กี่ IU/ครั้ง?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}IU/kg = ${round(bw*r,2)} IU`,cat:'Endocrine',diff:'hard'},
-{drug:'Methimazole (แมว)',doseRate:2.5/4,unit:'mg fixed BID (≈2.5mg/แมว)',conc:5,concUnit:'mg/tab',ask:'แมว BW 4 kg ควรให้กี่เม็ด/ครั้ง?',
- explFn:(bw,r,c)=>`Methimazole แมว: 2.5mg BID → ½ เม็ด (5mg/tab)`,cat:'Endocrine',diff:'hard'},
-{drug:'Cyclosporine (atopy)',doseRate:5,unit:'mg/kg PO SID',conc:50,concUnit:'mg/mL',ask:'ควรให้ยาครั้งละกี่ mL?',
- explFn:(bw,r,c)=>`${bw}kg × ${r}mg/kg = ${round(bw*r)}mg ÷ ${c}mg/mL = ${round(bw*r/c,1)}mL`,cat:'Dermatology',diff:'hard'},
+{sp:'🐕',pt:'สุนัข Cavalier King Charles',dt:'เพศเมีย 10 ปี',dx:'CHF Stage B2 (ควบคุมได้)',cat:'❤️ Cardiovascular',diff:'easy',
+ hist:'ไอเล็กน้อย หายใจปกติ กำลังอยู่บนยาบำรุงหัวใจ Chest X-ray: Mild cardiomegaly ไม่มี edema',
+ labs:['SpO₂ 97%','BUN 25 mg/dL','Creat 0.8 mg/dL','K⁺ 4.1 mEq/L'],
+ drug:'Furosemide',grp:'Loop Diuretic',ask:'Maintenance dose ที่เหมาะสม?',
+ ans:'1–2 mg/kg PO BID (chronic)',
+ opts:['0.25 mg/kg PO SID (too low)','1–2 mg/kg PO BID (chronic)','4 mg/kg IV q4h','6 mg/kg PO TID (too high)'],
+ expl:'CHF ที่คุมได้แล้วใช้ Furosemide dose ต่ำ 1–2 mg/kg PO BID เพื่อ maintain dry weight และลด preload โดยไม่ทำให้เกิด dehydration หรือ electrolyte imbalance',
+ warn:''},
+
+// ── PREDNISOLONE ──
+{sp:'🐕',pt:'สุนัข Cocker Spaniel',dt:'เพศเมีย 4 ปี',dx:'IMHA (Immune-mediated Hemolytic Anemia)',cat:'🩸 Immunology',diff:'medium',
+ hist:'ซีดมาก Icterus PCV 12% Spherocytes ใน blood smear Positive Coombs test Regenerative anemia',
+ labs:['PCV 12%↓↓','Spherocytes +++','Coombs +','Bilirubin 4.2↑','Reticulocytes 8%↑'],
+ drug:'Prednisolone',grp:'Corticosteroid (Immunosuppressive)',ask:'Dose ที่ถูกต้องสำหรับ IMHA?',
+ ans:'2 mg/kg PO SID (immunosuppressive)',
+ opts:['0.5 mg/kg PO SID (anti-inflammatory only)','2 mg/kg PO SID (immunosuppressive)','0.1 mg/kg PO SID (too low)','5 mg/kg PO BID (toxic range)'],
+ expl:'IMHA ต้องการ Immunosuppressive dose = 2 mg/kg/day เพื่อยับยั้ง immune-mediated destruction ของ RBC Anti-inflammatory dose (0.5 mg/kg) ไม่เพียงพอสำหรับ autoimmune disease',
+ warn:'⚠️ Monitor glucose, blood pressure, GI signs และ infection risk ขณะใช้ dose สูง'},
+
+{sp:'🐕',pt:'สุนัข German Shepherd',dt:'เพศผู้ 6 ปี',dx:'Atopic Dermatitis (acute flare)',cat:'🐾 Dermatology',diff:'easy',
+ hist:'คันรุนแรงทันที หลังสัมผัส allergen ใหม่ ผิวหนัง erythematous papules รักแร้ ขาหนีบ ต้องการ short-term relief',
+ labs:['Pruritic score 8/10','IgE elevated','No secondary infection'],
+ drug:'Prednisolone',grp:'Corticosteroid (Anti-inflammatory)',ask:'Dose ระยะสั้นสำหรับ Acute allergic flare?',
+ ans:'0.5–1 mg/kg PO SID × 5–7 วัน',
+ opts:['0.1 mg/kg PO SID (sub-therapeutic)','0.5–1 mg/kg PO SID × 5–7 วัน','2 mg/kg PO SID (immunosuppressive — เกินจำเป็น)','4 mg/kg PO BID (dangerous)'],
+ expl:'Atopic flare ใช้ Anti-inflammatory dose 0.5–1 mg/kg SID ระยะสั้น จากนั้นหยุดหรือเปลี่ยนเป็น Allergen-specific immunotherapy การใช้ immunosuppressive dose จะเพิ่ม side effects โดยไม่จำเป็น',
+ warn:''},
+
+// ── DEXAMETHASONE ──
+{sp:'🐕',pt:'สุนัข Labrador',dt:'เพศผู้ 5 ปี',dx:'Anaphylaxis หลังฉีดยา',cat:'🚨 Emergency',diff:'medium',
+ hist:'ฉีดยา antibiotic แล้วเกิด urticaria, facial edema, hypotension, vomiting ฉับพลัน BP 65/40 mmHg HR 180 bpm',
+ labs:['BP 65/40↓↓','HR 180↑','SpO₂ 92%↓','Pale mucous membrane'],
+ drug:'Dexamethasone',grp:'Corticosteroid (Emergency)',ask:'Dose สำหรับ Anaphylactic shock?',
+ ans:'0.5–1 mg/kg IV stat',
+ opts:['0.01 mg/kg PO (too low, wrong route)','0.2 mg/kg IV (anti-inflammatory dose)','0.5–1 mg/kg IV stat','0.05 mg/kg SC (too slow)'],
+ expl:'Anaphylaxis ต้องการ Dexamethasone 0.5–1 mg/kg IV ทันที เพื่อ reduce vascular permeability และ block late-phase allergic response ร่วมกับ Epinephrine และ IV fluids',
+ warn:'⚠️ Epinephrine คือ First-line! Corticosteroid เป็น Adjunct therapy'},
+
+{sp:'🐕',pt:'สุนัข Dachshund',dt:'เพศเมีย 6 ปี',dx:'IVDD Hansen Type I with spinal cord edema',cat:'🧠 Neurology',diff:'hard',
+ hist:'ขาหลังอ่อนแรงเฉียบพลัน MRI: Disc herniation T13-L2 Cord compression + edema Grade III paresis',
+ labs:['Deep pain intact','Bladder: UMN signs','MRI: cord hyperintensity'],
+ drug:'Dexamethasone',grp:'Corticosteroid (Neuroprotective)',ask:'Dose สำหรับ Spinal cord edema (ถ้าเลือกใช้)?',
+ ans:'0.25 mg/kg IV q6–8h (spinal)',
+ opts:['0.1 mg/kg PO SID (anti-inflam)','0.5 mg/kg IV SID (anti-shock)','0.25 mg/kg IV q6–8h (spinal)','2 mg/kg IV BID (inappropriate)'],
+ expl:'Dexamethasone ใน Spinal cord edema ใช้ 0.25 mg/kg IV q6–8h เพื่อ reduce edema อย่างไรก็ตาม evidence สนับสนุน glucocorticoids ใน IVDD ยังเป็นที่ถกเถียง Surgical decompression คือ treatment หลัก',
+ warn:'⚠️ ปัจจุบัน Dexamethasone ไม่ใช่ standard treatment สำหรับ IVDD — พิจารณา surgical decompression'},
+
+// ── ATROPINE ──
+{sp:'🐕',pt:'สุนัข Boxer',dt:'เพศผู้ 3 ปี',dx:'Pre-anesthetic medication',cat:'💉 Anesthesia',diff:'easy',
+ hist:'นำมาผ่าตัด elective splenectomy ASA I ต้องการ premedication เพื่อป้องกัน vagal bradycardia',
+ labs:['HR 75 bpm (baseline)','BP 120/80','SpO₂ 99%','CBC: normal'],
+ drug:'Atropine',grp:'Anticholinergic',ask:'Dose สำหรับ Premedication?',
+ ans:'0.02–0.04 mg/kg IM/SC',
+ opts:['0.02–0.04 mg/kg IM/SC','0.1 mg/kg IV bolus (CPR dose)','0.5 mg/kg IM (too high)','0.002 mg/kg SC (sub-therapeutic)'],
+ expl:'Atropine premed ใช้ 0.02–0.04 mg/kg IM/SC เพื่อ prevent vagally-induced bradycardia ระหว่างการระงับความรู้สึก CPR dose (0.1 mg/kg) สูงเกินไปสำหรับ routine premedication',
+ warn:''},
+
+{sp:'🐕',pt:'สุนัข Poodle',dt:'เพศผู้ 5 ปี',dx:'Cardiac arrest during surgery (CPR)',cat:'🚨 Emergency',diff:'hard',
+ hist:'หัวใจหยุดขณะผ่าตัด HR=0 ECG: asystole CPR กำลังดำเนินอยู่ ต้องการยาทันที',
+ labs:['HR: 0 (asystole)','No pulse','Pupils fixed dilated','CPR ongoing'],
+ drug:'Atropine',grp:'Anticholinergic (CPR)',ask:'Dose สำหรับ Asystole ระหว่าง CPR?',
+ ans:'0.04 mg/kg IV bolus (q3–5 min)',
+ opts:['0.02 mg/kg IM (premed dose — ไม่ทัน)','0.04 mg/kg IV bolus (q3–5 min)','0.5 mg/kg IV (too high)','0.01 mg/kg SC (sub-therapeutic)'],
+ expl:'CPR dose ของ Atropine = 0.04 mg/kg IV bolus ให้ทาง IV direct เนื่องจาก IM จะช้าเกินไประหว่าง cardiac arrest สามารถให้ซ้ำได้ทุก 3–5 นาที',
+ warn:'⚠️ ต้อง IV หรือ IT (intra-tracheal) เท่านั้นในช่วง CPR ห้าม IM'},
+
+// ── METRONIDAZOLE ──
+{sp:'🐕',pt:'สุนัข Labrador',dt:'เพศผู้ 2 ปี',dx:'Giardiasis',cat:'🐛 Parasitology',diff:'easy',
+ hist:'ท้องเสียเรื้อรัง มีมูก Fecal float: Giardia cysts Fecal antigen test positive',
+ labs:['Giardia antigen +','Moderate diarrhea','No blood in stool','BCS 4/9↓'],
+ drug:'Metronidazole',grp:'Antiprotozoal / Antianaerobic',ask:'Dose สำหรับ Giardiasis?',
+ ans:'25–50 mg/kg PO BID × 5–7 วัน',
+ opts:['5 mg/kg PO SID (too low for protozoa)','25–50 mg/kg PO BID × 5–7 วัน','100 mg/kg PO SID (neurotoxic!)','10 mg/kg IV SID (IV not needed)'],
+ expl:'Giardiasis ต้องใช้ Metronidazole 25–50 mg/kg PO BID × 5–7 วัน เพื่อ kill Giardia trophozoites การใช้ dose ต่ำ (5 mg/kg) ใช้สำหรับ anaerobic infection เท่านั้น ไม่เพียงพอสำหรับ protozoa',
+ warn:'⚠️ ≥60 mg/kg อาจเกิด Metronidazole neurotoxicity (ataxia, seizure)'},
+
+{sp:'🐕',pt:'สุนัข Bulldog',dt:'เพศเมีย 4 ปี',dx:'Anaerobic abdominal infection post-surgery',cat:'💊 Antibiotic',diff:'medium',
+ hist:'หลังผ่าตัดลำไส้ 3 วัน ไข้สูง WBC 28,000 ท้องแข็ง อาเจียน Culture: Bacteroides fragilis',
+ labs:['WBC 28,000↑','Bands 25%↑','Temp 40.5°C↑','Lactate 4.2↑'],
+ drug:'Metronidazole',grp:'Antianaerobic',ask:'Dose สำหรับ Systemic anaerobic infection?',
+ ans:'15 mg/kg IV q8h (systemic)',
+ opts:['25 mg/kg PO BID (Giardia dose)','15 mg/kg IV q8h (systemic)','5 mg/kg PO SID (maintenance)','50 mg/kg PO BID (too high)'],
+ expl:'Systemic anaerobic infection ต้องการ IV administration: Metronidazole 15 mg/kg IV q8h เพื่อ achieve adequate tissue levels PO dosing ไม่เหมาะสมในภาวะ sepsis เนื่องจาก GI absorption อาจไม่สม่ำเสมอ',
+ warn:''},
+
+// ── KETAMINE ──
+{sp:'🐕',pt:'สุนัข German Shepherd',dt:'เพศผู้ 4 ปี',dx:'Induction anesthesia (Balanced)',cat:'💉 Anesthesia',diff:'medium',
+ hist:'ผ่าตัด fracture repair ASA II ให้ premedication แล้ว (Acepromazine + Butorphanol) ต้องการ IV induction',
+ labs:['HR 80 bpm','BP 115/75','SpO₂ 99%','Hb 12.5 g/dL'],
+ drug:'Ketamine',grp:'Dissociative Anesthetic',ask:'Dose Induction ที่เหมาะสม (หลัง premedication)?',
+ ans:'2–5 mg/kg IV (reduced, already premedicated)',
+ opts:['10–15 mg/kg IM (IM induction, no premedication)','2–5 mg/kg IV (reduced, already premedicated)','0.5 mg/kg IV (sub-anesthetic)','20 mg/kg IV (dangerous overdose)'],
+ expl:'หลัง premedication ต้องใช้ Ketamine dose ลดลงเหลือ 2–5 mg/kg IV เนื่องจากยา premedication ลด requirements ลง Dose 10–15 mg/kg ใช้สำหรับ IM induction โดยไม่มี premedication เท่านั้น',
+ warn:'⚠️ Ketamine เพิ่ม HR, BP, IOP — ระวังในผู้ป่วย hypertension, glaucoma, hyperthyroid'},
+
+{sp:'🐈',name:'แมว Siamese',dt:'เพศเมีย 3 ปี',dx:'Feral cat — field sedation',cat:'💉 Sedation',diff:'hard',
+ hist:'แมวดุ ต้องการ chemical restraint เพื่อ examination และ vaccination ไม่มี IV access ใช้ dart gun / IM injection',
+ labs:['BCS 4/9','Weight ≈ 3.5 kg','Unhandleable','Outdoor'],
+ drug:'Ketamine',grp:'Dissociative Anesthetic (IM sedation)',ask:'Dose สำหรับ IM sedation โดยไม่มี premedication?',
+ ans:'10–15 mg/kg IM + Xylazine 1 mg/kg IM',
+ opts:['2 mg/kg IV (need IV access)','10–15 mg/kg IM + Xylazine 1 mg/kg IM','5 mg/kg IM (insufficient)','20 mg/kg IM (overdose risk)'],
+ expl:'Field sedation แมว: Ketamine 10–15 mg/kg IM ร่วมกับ Xylazine 1 mg/kg IM จะให้ good sedation ใน 3–5 นาที การใช้ Ketamine เดี่ยวจะทำให้กล้ามเนื้อ rigid มาก ควรใช้ alpha-2 agonist ร่วมเสมอ',
+ warn:'⚠️ เตรียม Atipamezole (reversal) ไว้เสมอเมื่อใช้ alpha-2 agonist'},
+
+// ── PHENOBARBITAL ──
+{sp:'🐕',pt:'สุนัข Labrador',dt:'เพศผู้ 4 ปี',dx:'Status Epilepticus (ชักต่อเนื่อง >5 นาที)',cat:'🧠 Neurology',diff:'hard',
+ hist:'ชัก Grand mal ต่อเนื่อง 7 นาที กำลังชักอยู่ ไม่หยุด Glucose 95 mg/dL ปกติ',
+ labs:['Seizing actively','Temp 40.8°C↑','Glucose 95 mg/dL (ok)','BP 145/90↑'],
+ drug:'Phenobarbital',grp:'Anticonvulsant (Acute)',ask:'Loading dose IV สำหรับ Status epilepticus?',
+ ans:'15–20 mg/kg IV slow (loading)',
+ opts:['2 mg/kg PO BID (maintenance — ช้าเกินไป)','5 mg/kg IV (sub-therapeutic loading)','15–20 mg/kg IV slow (loading)','50 mg/kg IV (cardiac depression risk)'],
+ expl:'Status epilepticus ต้องการ IV loading dose 15–20 mg/kg เพื่อหยุดการชักเร็วๆ Maintenance dose (2 mg/kg PO BID) ใช้หลังจากชักหยุดแล้ว ห้ามให้ IV เร็วเกินไปเสี่ยง respiratory depression',
+ warn:'⚠️ IV Phenobarbital อาจทำให้ hypotension และ respiratory depression — monitor closely'},
+
+{sp:'🐕',pt:'สุนัข Beagle',dt:'เพศผู้ 6 ปี',dx:'Epilepsy (chronic, well-controlled)',cat:'🧠 Neurology',diff:'easy',
+ hist:'Idiopathic epilepsy ควบคุมได้ดีด้วยยา ชักครั้งสุดท้าย 2 เดือนก่อน ตรวจ phenobarbital level: 25 µg/mL (therapeutic)',
+ labs:['Phenobarbital 25 µg/mL (therapeutic)','ALT 55 (mildly elevated)','Seizure-free 2 months'],
+ drug:'Phenobarbital',grp:'Anticonvulsant (Chronic)',ask:'Maintenance dose ที่เหมาะสม?',
+ ans:'2–3 mg/kg PO BID',
+ opts:['0.5 mg/kg PO SID (too low)','2–3 mg/kg PO BID','15 mg/kg PO BID (loading dose repeated)','5 mg/kg PO TID (hepatotoxic)'],
+ expl:'Chronic epilepsy ที่ควบคุมได้ใช้ Phenobarbital 2–3 mg/kg PO BID เพื่อ maintain therapeutic levels (20–40 µg/mL) ปรับ dose ตาม blood levels ไม่ใช่ตาม response เพียงอย่างเดียว',
+ warn:'⚠️ Monitor hepatic function q6 เดือน เนื่องจาก Phenobarbital เป็น hepatic enzyme inducer'},
+
+// ── INSULIN ──
+{sp:'🐈',pt:'แมว DSH',dt:'เพศผู้ตอน 9 ปี',dx:'Diabetic Ketoacidosis (DKA)',cat:'🍬 Endocrine',diff:'hard',
+ hist:'ซึม ไม่กิน อาเจียน หายใจลึก Blood glucose 520 mg/dL Urine ketones +++ pH 7.15',
+ labs:['Glucose 520↑↑','pH 7.15↓↓','Bicarbonate 8 mEq/L↓','K⁺ 5.8 mEq/L↑ (shift)','Ketones +++'],
+ drug:'Regular Insulin',grp:'Short-acting Insulin (DKA protocol)',ask:'Insulin ที่เหมาะสมสำหรับ DKA แมว?',
+ ans:'0.1 IU/kg/hr CRI IV (ค่อยๆ ลด glucose)',
+ opts:['1 IU/kg SC BID (ลดน้ำตาลเร็วเกินไป)','0.1 IU/kg/hr CRI IV (ค่อยๆ ลด glucose)','5 IU/cat SC SID (too high)','0.5 IU/kg IM bolus (too rapid drop)'],
+ expl:'DKA Protocol: Regular insulin CRI 0.1 IU/kg/hr เพื่อลด glucose อย่างช้าๆ (ไม่เกิน 50–75 mg/dL/hr) การลดน้ำตาลเร็วเกินไปทำให้เกิด Cerebral edema ที่อันตราย แก้ K⁺ และ Fluid ก่อนเริ่ม insulin',
+ warn:'⚠️ ตรวจ glucose q1h, K⁺ q4h — Hypokalemia พบบ่อยมากระหว่าง DKA treatment'},
+
+{sp:'🐈',pt:'แมว Persian',dt:'เพศเมีย 11 ปี',dx:'Diabetes mellitus (uncomplicated)',cat:'🍬 Endocrine',diff:'medium',
+ hist:'Polyuria Polydipsia Polyphagia น้ำหนักลด Blood glucose 380 mg/dL ไม่มี ketones ไม่มี systemic illness',
+ labs:['Glucose 380↑','Fructosamine 540 µmol/L↑','No ketones','BCS 4/9↓'],
+ drug:'Glargine (Lantus)',grp:'Long-acting Insulin (Feline DM)',ask:'Starting dose สำหรับ Uncomplicated feline DM?',
+ ans:'1–2 IU/cat SC BID (starting)',
+ opts:['0.1–0.2 IU/kg SC SID (canine protocol)','1–2 IU/cat SC BID (starting)','5 IU/cat SC BID (too high start)','0.5 IU/cat SC SID (too infrequent)'],
+ expl:'Feline DM ใช้ Glargine (Lantus) 1–2 IU/cat SC BID เป็น starting dose โดยไม่คำนวณตาม BW เนื่องจากแมวมี unique insulin pharmacokinetics ปรับ dose ตาม glucose curve ทุก 2 สัปดาห์',
+ warn:'⚠️ ใช้ U-100 insulin syringe เสมอ ผิด syringe = overdose 10 เท่า'},
+
+// ── EPINEPHRINE ──
+{sp:'🐕',pt:'สุนัข Labrador',dt:'เพศผู้ 6 ปี',dx:'Ventricular fibrillation (CPR)',cat:'🚨 Emergency',diff:'hard',
+ hist:'หัวใจหยุดระหว่างผ่าตัด ECG: Ventricular fibrillation / Pulseless VT CPR กำลังดำเนินอยู่ 2 นาทีแล้ว',
+ labs:['ECG: VF','No pulse','CPR quality: good','Last defib: 2 min ago'],
+ drug:'Epinephrine',grp:'Vasopressor / CPR',ask:'Dose สำหรับ Pulseless VT/VF ระหว่าง CPR?',
+ ans:'0.01 mg/kg IV q3–5 min',
+ opts:['0.1 mg/kg IV (10× too high!)','0.01 mg/kg IV q3–5 min','0.001 mg/kg IV (sub-therapeutic)','0.05 mg/kg SC (wrong route + dose)'],
+ expl:'CPR: Epinephrine 0.01 mg/kg IV q3–5 นาที เพื่อเพิ่ม coronary perfusion pressure ระหว่าง cardiac arrest การให้ 10× dose (0.1 mg/kg) เป็น vasopressin-equivalent dose ที่ใช้เฉพาะ refractory cases',
+ warn:'⚠️ 0.1 mg/kg คือ high-dose epinephrine = 10× standard dose ใช้เฉพาะ refractory cardiac arrest'},
+
+// ── METHIMAZOLE ──
+{sp:'🐈',pt:'แมว DSH',dt:'เพศเมีย 13 ปี',dx:'Hyperthyroidism (Moderate)',cat:'🦋 Endocrine',diff:'medium',
+ hist:'น้ำหนักลด Polyphagia HR 240 bpm BP 195 mmHg T4 total 9.8 µg/dL (ref 1–4) thyroid nodule คลำได้',
+ labs:['T4 9.8↑↑','HR 240↑','BP 195↑','Weight 3.1 kg (↓ from 5 kg)'],
+ drug:'Methimazole',grp:'Antithyroid',ask:'Starting dose ที่เหมาะสม?',
+ ans:'2.5 mg PO BID (starting low)',
+ opts:['10 mg PO SID (too high — risk agranulocytosis)','2.5 mg PO BID (starting low)','5 mg PO TID (maintenance)','1 mg PO SID (sub-therapeutic)'],
+ expl:'Methimazole เริ่มต้น 2.5 mg PO BID ในแมว เริ่ม low เพื่อลด side effects (facial pruritus, agranulocytosis, hepatotoxicity) ปรับ dose หลังตรวจ T4 ซ้ำ 2–4 สัปดาห์',
+ warn:'⚠️ ตรวจ CBC และ biochemistry ก่อนเริ่มและ q2–4 สัปดาห์แรก เฝ้าระวัง agranulocytosis'},
+
+// ── AMLODIPINE ──
+{sp:'🐈',pt:'แมว Maine Coon',dt:'เพศผู้ 8 ปี',dx:'Systemic Hypertension (Stage III)',cat:'❤️ Cardiovascular',diff:'medium',
+ hist:'BP Systolic 200 mmHg วัดซ้ำ 3 ครั้ง พบ hypertensive retinopathy papilledema เริ่มมีอาการ vision loss',
+ labs:['Systolic BP 200↑↑','Papilledema','Retinal hemorrhage','Creat 1.8 (CKD Stage 2)'],
+ drug:'Amlodipine',grp:'Calcium Channel Blocker',ask:'Dose สำหรับ Feline hypertension?',
+ ans:'0.625 mg/cat PO SID (fixed dose)',
+ opts:['2.5 mg/cat PO SID (dog dose — too high!)','0.625 mg/cat PO SID (fixed dose)','5 mg/cat PO BID (toxic)','0.1 mg/kg PO BID (canine calculation)'],
+ expl:'Amlodipine ในแมวใช้ Fixed dose 0.625 mg/cat (ไม่คำนวณตาม mg/kg) เนื่องจากแมวมี pharmacokinetics พิเศษ Dog dose (2.5–5 mg) สูงเกินไปและอาจทำให้ hypotension อย่างรุนแรง',
+ warn:'⚠️ ห้ามใช้ dose ที่คำนวณจาก canine mg/kg ใน feline — อาจ fatal'},
+
+// ── MANNITOL ──
+{sp:'🐕',pt:'สุนัข Boxer',dt:'เพศผู้ 4 ปี',dx:'Head trauma with elevated ICP',cat:'🧠 Neurology',diff:'hard',
+ hist:'รถทับ head trauma เดินเซ ตาหมุน ICP สูง Bradycardia + Hypertension (Cushing reflex) GCS 8/15',
+ labs:['GCS 8/15↓','HR 48↓ (bradycardia)','BP 175/110↑','Pupils: unequal'],
+ drug:'Mannitol 20%',grp:'Osmotic Diuretic (ICP reduction)',ask:'Dose สำหรับ Acute ICP elevation?',
+ ans:'0.5–1 g/kg IV over 20 min',
+ opts:['0.1 g/kg IV bolus (too low)','0.5–1 g/kg IV over 20 min','2 g/kg IV bolus (fluid overload)','0.25 g/kg SC (wrong route)'],
+ expl:'Mannitol 0.5–1 g/kg IV over 15–20 นาที เพื่อลด ICP ผ่าน osmotic gradient ห้ามให้เร็ว (bolus) เพราะจะทำให้ transient hyperosmolarity ที่เป็นอันตราย ตรวจ serum osmolality ก่อน (ควร <320 mOsm/kg)',
+ warn:'⚠️ ห้ามใช้ใน dehydrated patients หรือ anuric patients เพราะจะเพิ่ม hypernatremia'},
+
+// ── PIMOBENDAN ──
+{sp:'🐕',pt:'สุนัข Doberman',dt:'เพศผู้ 9 ปี',dx:'Dilated Cardiomyopathy (DCM)',cat:'❤️ Cardiovascular',diff:'medium',
+ hist:'อ่อนแรง น้ำหนักลด EF 22% (severely reduced) Cardiomegaly bilateral ventricular dilation',
+ labs:['EF 22%↓↓','LA:Ao 1.9↑','Grade 3/6 murmur','NT-proBNP elevated'],
+ drug:'Pimobendan',grp:'Inodilator (Positive inotrope + Vasodilator)',ask:'Dose ที่เหมาะสม?',
+ ans:'0.25 mg/kg PO BID (1 hr before food)',
+ opts:['0.5 mg/kg PO SID','0.25 mg/kg PO BID (1 hr before food)','0.1 mg/kg PO TID','1 mg/kg PO SID (too high)'],
+ expl:'Pimobendan ใน DCM: 0.25 mg/kg PO BID ให้ก่อนอาหาร 1 ชั่วโมง อาหารลด bioavailability ~35% ห้ามใช้ใน Hypertrophic Cardiomyopathy (HCM) หรือ outflow obstruction เพราะจะเพิ่ม obstruction',
+ warn:'⚠️ ห้ามใน HCM แมว — Pimobendan เพิ่ม cardiac output → เพิ่ม LVOTO → อาการแย่ลง'},
+
+// ── MAROPITANT ──
+{sp:'🐕',pt:'สุนัข Beagle',dt:'เพศเมีย 3 ปี',dx:'Chemotherapy-induced nausea (Prevention)',cat:'💊 GI',diff:'medium',
+ hist:'กำลังรับ Vincristine q3 สัปดาห์ อาเจียนมากหลัง chemo ต้องการ pre-treatment เพื่อป้องกัน acute emesis',
+ labs:['Chemo day 1','BW 11 kg','Pre-treatment needed'],
+ drug:'Maropitant',grp:'NK1 Receptor Antagonist (Antiemetic)',ask:'Dose สำหรับ Prevention of chemotherapy emesis?',
+ ans:'2 mg/kg SC SID (1 hr before chemo)',
+ opts:['1 mg/kg SC PRN (reactive, not preventive)','2 mg/kg SC SID (1 hr before chemo)','0.5 mg/kg IV (sub-therapeutic)','4 mg/kg PO BID (double dose)'],
+ expl:'Maropitant 2 mg/kg SC SID ให้ก่อน chemo 1–2 ชั่วโมง เพื่อ prevent acute emesis (ออกฤทธิ์นาน 24h) Prevention ดีกว่า rescue therapy เพราะ NK1 antagonist ป้องกัน central vomiting trigger zone',
+ warn:''},
+
+// ── LIDOCAINE ──
+{sp:'🐕',pt:'สุนัข Boxer',dt:'เพศผู้ 7 ปี',dx:'Ventricular Tachycardia (VT, symptomatic)',cat:'❤️ Cardiovascular',diff:'hard',
+ hist:'Weak pulse HR 220 bpm Syncope ECG: VT sustained แก้ Electrolyte แล้ว K⁺ 4.2 mEq/L',
+ labs:['HR 220↑↑','ECG: VT sustained','BP 75/40↓','SpO₂ 90%↓'],
+ drug:'Lidocaine',grp:'Class Ib Antiarrhythmic',ask:'Dose สำหรับ Acute VT?',
+ ans:'2 mg/kg IV slow bolus (over 2 min)',
+ opts:['0.5 mg/kg IV rapid bolus (too fast)','2 mg/kg IV slow bolus (over 2 min)','10 mg/kg IV (toxic — seizure, cardiac arrest)','5 mg/kg IM (poor bioavailability)'],
+ expl:'Lidocaine ใน VT: 2 mg/kg IV slow bolus over 2 นาที หาก VT break สามารถต่อ CRI 50–80 µg/kg/min การให้เร็วเกินไปทำให้ hypotension และ CNS toxicity (seizure)',
+ warn:'⚠️ ห้ามใช้ IV Lidocaine ใน cats — Neurotoxic ที่ doses ต่ำมาก'},
+
+// ── CYCLOSPORINE ──
+{sp:'🐕',pt:'สุนัข WHWT',dt:'เพศเมีย 3 ปี',dx:'Canine Atopic Dermatitis (Moderate-Severe)',cat:'🐾 Dermatology',diff:'hard',
+ hist:'Pruritic score 7/10 Bilateral pododermitis periocular Face rubbing Positive IDT: HDM, grass Refractory to steroids',
+ labs:['Pruritic score 7/10','Positive IDT','Failed: Prednisolone','Secondary pyoderma mild'],
+ drug:'Cyclosporine',grp:'Calcineurin Inhibitor (Immunomodulator)',ask:'Dose สำหรับ Atopic Dermatitis?',
+ ans:'5 mg/kg PO SID (4–6 สัปดาห์แรก)',
+ opts:['1 mg/kg PO SID (immunosuppressive — too low)','5 mg/kg PO SID (4–6 สัปดาห์แรก)','10 mg/kg PO BID (organ transplant dose)','2 mg/kg SC q2w (wrong dose/route)'],
+ expl:'Cyclosporine (Atopica) ใน CAD ใช้ 5 mg/kg PO SID × 4–6 สัปดาห์แรกจนอาการดีขึ้น จากนั้นลดเป็น EOD หรือ 2x/week Organ transplant dose สูงกว่ามากและไม่เหมาะกับ dermatology indication',
+ warn:'⚠️ ให้ตอนท้องว่าง อาหารลด bioavailability เฝ้าระวัง GI signs, gingival hyperplasia, papillomatosis'},
+
+// ── VITAMIN K1 ──
+{sp:'🐕',pt:'สุนัข Border Collie',dt:'เพศผู้ 3 ปี',dx:'Anticoagulant Rodenticide Toxicity (Brodifacoum)',cat:'🚨 Toxicology',diff:'hard',
+ hist:'กิน Brodifacoum (second-generation anticoagulant) PT/APTT ยาวมาก เลือดออกปาก เหงือก เลือดออกในช่องท้อง',
+ labs:['PT: >300 sec↑↑','APTT: >300 sec↑↑','PCV 18%↓','Active bleeding+++'],
+ drug:'Vitamin K1',grp:'Antidote (Anticoagulant Rodenticide)',ask:'Duration ที่ถูกต้องสำหรับ Brodifacoum?',
+ ans:'2.5–5 mg/kg PO q12h × 4–6 สัปดาห์ (long-acting rodenticide)',
+ opts:['5 mg/kg PO q12h × 7 วัน (too short — 2nd gen last weeks)','2.5–5 mg/kg PO q12h × 4–6 สัปดาห์ (long-acting rodenticide)','10 mg/kg IV × 1 dose (ไม่เพียงพอ)','1 mg/kg PO SID × 2 สัปดาห์ (too low)'],
+ expl:'Brodifacoum คือ 2nd generation anticoagulant ออกฤทธิ์ได้นานหลายสัปดาห์ ต้องให้ Vitamin K1 PO นาน 4–6 สัปดาห์ ไม่ใช่ 7 วัน หยุดยาก่อน PT หยุดยา 2–3 วัน แล้ว recheck PT/APTT ก่อน stop',
+ warn:'⚠️ ห้ามให้ Vitamin K1 IV เร็ว — Anaphylaxis risk ให้ SC หรือ PO เท่านั้น'},
 ];
 
-// Patient profiles
-const PATIENTS=[
-  {icon:'🐕',name:'สุนัข Golden Retriever',detail:'เพศผู้ 5 ปี',bwRange:[20,35]},
-  {icon:'🐕',name:'สุนัข Shih Tzu',detail:'เพศเมีย 3 ปี',bwRange:[4,8]},
-  {icon:'🐈',name:'แมว DSH',detail:'เพศผู้ตอน 4 ปี',bwRange:[3,5]},
-  {icon:'🐕',name:'สุนัขพันธุ์ผสม',detail:'เพศเมีย 2 ปี',bwRange:[8,15]},
-  {icon:'🐈',name:'แมว Persian',detail:'เพศเมีย 6 ปี',bwRange:[3,4]},
-  {icon:'🐕',name:'สุนัข Labrador',detail:'เพศผู้ 4 ปี',bwRange:[25,35]},
-  {icon:'🐕',name:'สุนัข Poodle',detail:'เพศเมีย 3 ปี',bwRange:[3,6]},
-  {icon:'🐈',name:'แมว Siamese',detail:'เพศผู้ 2 ปี',bwRange:[3,4]},
-  {icon:'🐕',name:'สุนัข German Shepherd',detail:'เพศผู้ 3 ปี',bwRange:[25,40]},
-  {icon:'🐕',name:'สุนัข Beagle',detail:'เพศผู้ 4 ปี',bwRange:[8,14]},
-];
+const DIFF_MAP={easy:['easy'],medium:['easy','medium'],hard:['easy','medium','hard']};
+const COUNT_MAP={easy:15,medium:30,hard:50};
 
-// Helpers
-function round(v,d=1){return Math.round(v*Math.pow(10,d))/Math.pow(10,d);}
-function roundTab(v){return v<=0.5?'½':v<=1?1:v<=1.5?1.5:Math.round(v);}
-
-function calcAnswer(drug,bw){
-  const r=drug.doseRate, c=drug.conc;
-  // Special cases
-  if(drug.drug==='Amlodipine (แมว)')return {val:0.625,unit:'mg'};
-  if(drug.drug==='Methimazole (แมว)')return {val:0.5,unit:'เม็ด'};
-  if(drug.drug==='Mannitol 20% (ICP)'||drug.drug==='Calcium gluconate 10%'){
-    return {val:round(bw*r*1000/c,1),unit:'mL'};
-  }
-  if(drug.ask.includes('mL'))return {val:round(bw*r/c,2),unit:'mL'};
-  if(drug.ask.includes('เม็ด'))return {val:round(bw*r/c,1),unit:'เม็ด'};
-  if(drug.ask.includes('IU'))return {val:round(bw*r,2),unit:'IU'};
-  return {val:round(bw*r,1),unit:'mg'};
-}
-
-function makeDistractors(correct,unit){
-  const v=parseFloat(correct);
-  const d=[];
-  const variants=[v*0.5,v*0.75,v*1.25,v*1.5,v*2,v-1,v+1,v+0.5,v-0.5];
-  const shuffled=variants.filter(x=>x>0&&Math.abs(x-v)>0.01).sort(()=>Math.random()-.5);
-  while(d.length<3){
-    const pick=round(shuffled[d.length]||v+d.length+1,2);
-    const str=pick+' '+unit;
-    if(!d.includes(str)&&str!==correct+' '+unit) d.push(str);
-  }
-  return d;
-}
-
-// Game state
-let gMode='easy', gQueue=[], gIdx=0, gScore=0, gCorrect=0, gStreak=0;
-let gTimer=null, gTimerLeft=0, gCurrentQ=null;
-const MODE_CFG={easy:{count:20,time:0},medium:{count:30,time:30},hard:{count:50,time:20}};
+let gMode='easy', gQ=[], gIdx=0, gScore=0, gOk=0, gStreak=0, gTimer=null;
 
 function showScr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
 
 function startGame(mode){
   gMode=mode;
-  const cfg=MODE_CFG[mode];
-  const diff=mode==='easy'?['easy']:mode==='medium'?['easy','medium']:['easy','medium','hard'];
-  let pool=DRUGS.filter(d=>diff.includes(d.diff));
-  gQueue=[...pool].sort(()=>Math.random()-.5).slice(0,Math.min(cfg.count,pool.length));
-  gIdx=0;gScore=0;gCorrect=0;gStreak=0;
+  const diffs=DIFF_MAP[mode];
+  let pool=QS.filter(q=>diffs.includes(q.diff));
+  gQ=[...pool].sort(()=>Math.random()-.5).slice(0,Math.min(COUNT_MAP[mode],pool.length));
+  gIdx=0; gScore=0; gOk=0; gStreak=0;
   document.getElementById('hScore').textContent='0 pt';
-  showScr('sQ');
-  renderQ();
+  showScr('sQ'); renderQ();
 }
 
 function renderQ(){
-  if(gIdx>=gQueue.length){endGame();return;}
-  const cfg=MODE_CFG[gMode];
-  const drugTmpl=gQueue[gIdx];
-  const patient=PATIENTS[Math.floor(Math.random()*PATIENTS.length)];
-  const bw=patient.bwRange[0]+Math.floor(Math.random()*(patient.bwRange[1]-patient.bwRange[0]+1));
-  gCurrentQ={drugTmpl,patient,bw};
-
+  if(gIdx>=gQ.length){endGame();return;}
+  const q=gQ[gIdx];
   // Progress
-  document.getElementById('pfill').style.width=((gIdx/gQueue.length)*100)+'%';
-  document.getElementById('ptxt').textContent=(gIdx+1)+'/'+gQueue.length;
-  const sp=document.getElementById('streakPill');
-  if(gStreak>=2){sp.textContent='🔥'+gStreak;sp.style.display='';}
-  else sp.style.display='none';
-
-  // Fill case
-  const tagEl=document.getElementById('ctag');
-  tagEl.textContent={easy:'🟢 ง่าย',medium:'🟡 กลาง',hard:'🔴 ยาก'}[drugTmpl.diff];
-  tagEl.className='case-tag '+{easy:'ct-e',medium:'ct-m',hard:'ct-h'}[drugTmpl.diff];
-  document.getElementById('pIcon').textContent=patient.icon;
-  document.getElementById('pName').textContent=patient.name;
-  document.getElementById('pDetail').textContent=patient.detail;
-  document.getElementById('bwVal').textContent=bw+' kg';
-  document.getElementById('drugName').textContent=drugTmpl.drug;
-  document.getElementById('drugDose').textContent='📋 Dose: '+drugTmpl.doseRate+' '+drugTmpl.unit;
-  document.getElementById('drugConc').textContent='💉 Concentration: '+drugTmpl.conc+' '+drugTmpl.concUnit;
-  document.getElementById('qAsk').textContent=drugTmpl.ask;
+  document.getElementById('pfill').style.width=(gIdx/gQ.length*100)+'%';
+  document.getElementById('ptxt').textContent=(gIdx+1)+'/'+gQ.length;
+  const sel=document.getElementById('streakEl');
+  sel.style.display=gStreak>=2?'':'none'; sel.textContent='🔥'+gStreak;
+  // Patient
+  document.getElementById('qSpecies').textContent=q.sp||'🐕';
+  document.getElementById('qPatient').textContent=q.pt||q.name||'—';
+  document.getElementById('qDetail').textContent=q.dt||'';
+  document.getElementById('qDx').textContent=q.dx;
+  document.getElementById('qCat').textContent=q.cat;
+  const dEl=document.getElementById('qDiff');
+  dEl.textContent={easy:'ง่าย',medium:'กลาง',hard:'ยาก'}[q.diff];
+  dEl.className='tag-diff '+{easy:'td-e',medium:'td-m',hard:'td-h'}[q.diff];
+  // History
+  document.getElementById('qHistory').textContent=q.hist;
+  // Labs
+  const labsEl=document.getElementById('qLabs');
+  labsEl.innerHTML=q.labs.map(l=>`<span class="lab-pill${l.includes('↑')||l.includes('↓')||l.includes('+')||l.includes('abnormal')?l.includes('↓')?' abnormal':' abnormal':' normal'}">${l}</span>`).join('');
+  // Drug
+  document.getElementById('qDrug').textContent=q.drug;
+  document.getElementById('qGroup').textContent=q.grp;
+  document.getElementById('qAsk').textContent=q.ask;
+  // Expl off
   document.getElementById('expl').style.display='none';
   document.getElementById('nextBtn').style.display='none';
-
-  // Choices
-  const ans=calcAnswer(drugTmpl,bw);
-  const correct=ans.val+' '+ans.unit;
-  const wrong=makeDistractors(ans.val,ans.unit);
-  const opts=[correct,...wrong].sort(()=>Math.random()-.5);
-  document.getElementById('choices').innerHTML=opts.map((o,i)=>
-    `<button class="ch" id="ch${i}" onclick="pick('${o}','${correct}')">${o}</button>`).join('');
-
-  // Timer
-  if(cfg.time>0)startTimer(cfg.time);
+  // Choices — shuffle
+  const opts=[...q.opts].sort(()=>Math.random()-.5);
+  const letters=['A','B','C','D'];
+  document.getElementById('choices').innerHTML=opts.map((o,i)=>`
+    <button class="ch" id="ch_${i}" onclick="pick(${i},'${o.replace(/'/g,"\\'")}','${q.ans.replace(/'/g,"\\'")}')">
+      <div class="ch-top">
+        <div class="ch-letter">${letters[i]}</div>
+        <div class="ch-main"><div class="ch-dose">${o}</div></div>
+      </div>
+    </button>`).join('');
+  // Timer for hard mode
+  if(gMode==='hard') startTimer(25);
   else{clearInterval(gTimer);document.getElementById('hTimer').textContent='';}
 }
 
-function pick(chosen,correct){
+function pick(idx,chosen,correct){
   clearInterval(gTimer);
   const isOk=chosen===correct;
-  const bonus=gStreak>=3?10:0;
   document.querySelectorAll('.ch').forEach(b=>b.disabled=true);
-  document.querySelectorAll('.ch').forEach(b=>{
-    if(b.textContent===chosen)b.classList.add(isOk?'correct':'wrong');
-    if(!isOk&&b.textContent===correct)b.classList.add('show-c');
-  });
-  if(isOk){gScore+=20+bonus;gCorrect++;gStreak++;}
-  else{gStreak=0;gScore=Math.max(0,gScore-5);}
+  const chEl=document.getElementById('ch_'+idx);
+  chEl.classList.add(isOk?'selected-ok':'selected-ng');
+  if(!isOk){
+    // Reveal correct
+    document.querySelectorAll('.ch').forEach(b=>{
+      const dose=b.querySelector('.ch-dose')?.textContent;
+      if(dose===correct) b.classList.add('reveal-ok');
+    });
+  }
+  const bonus=gStreak>=3?15:gStreak>=2?5:0;
+  if(isOk){gScore+=30+bonus; gOk++; gStreak++; popScore('+'+(30+bonus),isOk);}
+  else{gScore=Math.max(0,gScore-5); gStreak=0; popScore('-5',false);}
   document.getElementById('hScore').textContent=gScore+' pt';
-  // Explanation
-  const q=gCurrentQ;
-  document.getElementById('explBody').textContent=q.drugTmpl.drug+' ('+q.drugTmpl.unit+') — '+q.drugTmpl.cat;
-  document.getElementById('explCalc').textContent='📐 '+q.drugTmpl.explFn(q.bw,q.drugTmpl.doseRate,q.drugTmpl.conc);
+  // Show explanation
+  const q=gQ[gIdx];
   document.getElementById('expl').style.display='block';
+  document.getElementById('explBody').textContent=q.expl;
+  const warnEl=document.getElementById('explWarn');
+  if(q.warn){warnEl.textContent=q.warn;warnEl.style.display='block';}
+  else warnEl.style.display='none';
   document.getElementById('nextBtn').style.display='block';
 }
 
@@ -440,26 +589,35 @@ function nextQ(){gIdx++;renderQ();}
 
 function startTimer(sec){
   clearInterval(gTimer);
-  gTimerLeft=sec;
+  let t=sec;
   const el=document.getElementById('hTimer');
-  el.textContent='⏱'+sec+'s'; el.className='hdr-timer ht-ok';
+  el.textContent='⏱'+t+'s'; el.className='htimer ht-ok';
   gTimer=setInterval(()=>{
-    gTimerLeft--;
-    el.textContent='⏱'+gTimerLeft+'s';
-    el.className='hdr-timer '+(gTimerLeft<=5?'ht-warn':'ht-ok');
-    if(gTimerLeft<=0){clearInterval(gTimer);pick('__timeout__','__never__');}
+    t--;
+    el.textContent='⏱'+t+'s';
+    el.className='htimer '+(t<=7?'ht-warn':'ht-ok');
+    if(t<=0){clearInterval(gTimer);pick(-1,'__timeout__',gQ[gIdx]?.ans||'');}
   },1000);
+}
+
+function popScore(txt,ok){
+  const el=document.createElement('div');
+  el.className='score-popup';
+  el.textContent=txt;
+  el.style.cssText=`color:${ok?'#16a34a':'#dc2626'};left:${50+Math.random()*20}%;top:60%;`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),900);
 }
 
 function endGame(){
   clearInterval(gTimer);
-  const pct=Math.round(gCorrect/gQueue.length*100);
+  const pct=Math.round(gOk/gQ.length*100);
   const e=pct>=90?'🏆':pct>=70?'🎓':pct>=50?'📖':'💀';
   document.getElementById('rEmoji').textContent=e;
-  document.getElementById('rTitle').textContent=pct>=90?'เก่งมาก!':pct>=70?'ดีมาก!':pct>=50?'พอไหว!':'ต้องฝึกเพิ่ม';
-  document.getElementById('rSub').textContent=`ถูก ${gCorrect}/${gQueue.length} (${pct}%) — ${gMode==='hard'?'Hard mode':''}`;
+  document.getElementById('rTitle').textContent=pct>=90?'เก่งมาก!':pct>=70?'ดีมาก!':pct>=50?'พอไหว!':'ต้องอ่านเพิ่ม!';
+  document.getElementById('rSub').textContent=`ถูก ${gOk}/${gQ.length} (${pct}%) — Drug Dose Challenge`;
   document.getElementById('rPt').textContent=gScore;
-  document.getElementById('rOk').textContent=gCorrect+'/'+gQueue.length;
+  document.getElementById('rOk').textContent=gOk+'/'+gQ.length;
   document.getElementById('rAcc').textContent=pct+'%';
   showScr('sResult');
   try{const s=JSON.parse(localStorage.getItem('vetquiz_stats')||'{}');s.games=(s.games||0)+1;s.best=Math.max(s.best||0,gScore);localStorage.setItem('vetquiz_stats',JSON.stringify(s));}catch(e){}
