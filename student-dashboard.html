@@ -240,6 +240,45 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .no-class{font-size:12px;color:var(--slate-l);text-align:center;padding:12px 0;}
 .schedule-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px;font-size:12px;color:#92400e;margin-top:12px;text-align:center;}
 
+
+/* ── Schedule ── */
+.sch-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;align-items:flex-end;justify-content:center;}
+.sch-modal.on{display:flex;}
+.sch-box{background:white;border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:90vh;display:flex;flex-direction:column;}
+.sch-hdr{background:linear-gradient(135deg,var(--teal),var(--teal-d));padding:14px 16px;border-radius:20px 20px 0 0;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.sch-hdr-left{flex:1;}
+.sch-hdr-title{font-family:'Prompt',sans-serif;font-size:15px;font-weight:700;color:white;}
+.sch-hdr-sub{font-size:11px;color:rgba(255,255,255,.7);}
+.sch-close{background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;}
+.sch-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sch-tab{flex:1;padding:10px 4px;border:none;background:none;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;color:var(--slate-l);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.sch-tab.active{color:var(--teal);border-bottom-color:var(--teal);}
+.sch-content{flex:1;overflow-y:auto;padding:14px 14px 32px;}
+/* Day cards */
+.sch-day{margin-bottom:14px;}
+.sch-day-hdr{font-family:'Prompt',sans-serif;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.sch-add-btn{background:rgba(255,255,255,.35);border:none;color:inherit;font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;cursor:pointer;}
+.sch-empty{font-size:12px;color:var(--slate-l);text-align:center;padding:10px 0;}
+/* Class item */
+.sch-class{background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:6px;border-left:3px solid var(--teal-d);}
+.sch-class-top{display:flex;align-items:flex-start;gap:8px;}
+.sch-time{font-size:11px;font-weight:700;color:var(--slate-m);min-width:74px;padding-top:1px;}
+.sch-detail{flex:1;}
+.sch-name{font-size:13px;font-weight:700;color:var(--slate);}
+.sch-room{font-size:11px;color:var(--slate-l);margin-top:2px;}
+.sch-note-txt{font-size:11px;color:#0d9488;margin-top:4px;background:#f0fdfa;padding:3px 7px;border-radius:6px;}
+.sch-actions{display:flex;gap:6px;margin-top:6px;}
+.sch-btn-sm{border:none;background:var(--teal-l);color:var(--teal-d);font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;cursor:pointer;font-family:'Sarabun',sans-serif;}
+.sch-btn-del{background:#fee2e2;color:#991b1b;}
+/* Edit form */
+.sch-form{background:#f8fafc;border-radius:12px;padding:14px;margin-top:10px;}
+.sch-form-title{font-size:12px;font-weight:700;color:var(--teal-d);margin-bottom:10px;}
+.sch-input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;outline:none;margin-bottom:7px;}
+.sch-input:focus{border-color:var(--teal);}
+.sch-textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;outline:none;resize:none;height:60px;}
+.sch-save-btn{width:100%;padding:10px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;}
+.sch-notice{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;text-align:center;margin-top:10px;}
+
 </style>
 </head>
 <body>
@@ -449,8 +488,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
     <div class="bn-item" onclick="switchTab('skills')" id="bn-skills">
       <span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div>
-    </div>
-    
     </div>
     <div class="bn-item" onclick="switchTab('report')" id="bn-report">
       <span class="bn-icon">🖨️</span><span class="bn-label">รายงาน</span><div class="bn-dot"></div>
@@ -858,74 +895,148 @@ ${skills.filter(s=>s.type==='elective').length?`<div style="font-family:'Prompt'
   const win=window.open('','_blank');win.document.write(html);win.document.close();
 }
 
-init();
 
-
-// ─── SCHEDULE ───────────────────────────────────
-// ตารางเรียนตัวอย่าง — แก้ไขได้ตามโปรแกรมจริง
-const SCHEDULE = {
-  'จันทร์': [
-    {time:'08:00–10:00',name:'กายวิภาคศาสตร์และสรีรวิทยา',room:'ห้อง 101 ตึกสัตวแพทย์'},
-    {time:'10:00–12:00',name:'เภสัชวิทยาสัตวแพทย์',room:'ห้อง 203'},
-    {time:'13:00–15:00',name:'ปฏิบัติการ: กายวิภาคฯ',room:'ห้องปฏิบัติการ A'},
-  ],
-  'อังคาร': [
-    {time:'08:00–10:00',name:'จุลชีววิทยาและภูมิคุ้มกันวิทยา',room:'ห้อง 102'},
-    {time:'13:00–16:00',name:'ปฏิบัติการ: จุลชีววิทยา',room:'ห้องปฏิบัติการ B'},
-  ],
-  'พุธ': [
-    {time:'09:00–11:00',name:'พยาธิวิทยาสัตวแพทย์',room:'ห้อง 205'},
-    {time:'13:00–15:00',name:'ปรสิตวิทยา',room:'ห้อง 106'},
-    {time:'15:00–17:00',name:'คลินิกเพื่อการฝึกปฏิบัติ',room:'โรงพยาบาลสัตว์'},
-  ],
-  'พฤหัสบดี': [
-    {time:'08:00–10:00',name:'อายุรกรรมสัตว์เลี้ยง',room:'ห้อง 301'},
-    {time:'10:00–12:00',name:'ศัลยกรรมและรังสีวิทยา',room:'ห้อง 302'},
-  ],
-  'ศุกร์': [
-    {time:'09:00–12:00',name:'ฝึกงานคลินิกสัตว์ใหญ่',room:'ฟาร์มสาธิต'},
-    {time:'13:00–15:00',name:'สัมมนาวิชาการ',room:'ห้องประชุมชั้น 2'},
-  ],
-  'เสาร์': [],
-  'อาทิตย์': [],
+// ─── SCHEDULE (localStorage) ───────────────────
+const SCH_KEY='lb_schedule_v1';
+const DAYS_TH=['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์','อาทิตย์'];
+const DAY_COLORS_SCH=['#0d9488','#7c3aed','#d97706','#0284c7','#e11d48','#64748b','#94a3b8'];
+const DEFAULT_SCH={
+  'จันทร์':[{time:'08:00–10:00',name:'กายวิภาคศาสตร์และสรีรวิทยา',room:'ห้อง 101',note:''}],
+  'อังคาร':[{time:'08:00–10:00',name:'จุลชีววิทยาและภูมิคุ้มกันวิทยา',room:'ห้อง 102',note:''}],
+  'พุธ':[{time:'09:00–11:00',name:'พยาธิวิทยาสัตวแพทย์',room:'ห้อง 205',note:''}],
+  'พฤหัสบดี':[{time:'08:00–10:00',name:'อายุรกรรมสัตว์เลี้ยง',room:'ห้อง 301',note:''}],
+  'ศุกร์':[{time:'09:00–12:00',name:'ฝึกงานคลินิกสัตว์ใหญ่',room:'ฟาร์มสาธิต',note:''}],
+  'เสาร์':[],'อาทิตย์':[]
 };
 
-const DAY_COLORS=['#0d9488','#7c3aed','#d97706','#0284c7','#e11d48','#64748b','#64748b'];
-const DAYS=['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์','อาทิตย์'];
+function loadSch(){
+  try{return JSON.parse(localStorage.getItem(SCH_KEY))||JSON.parse(JSON.stringify(DEFAULT_SCH));}
+  catch(e){return JSON.parse(JSON.stringify(DEFAULT_SCH));}
+}
+function saveSch(data){localStorage.setItem(SCH_KEY,JSON.stringify(data));}
+
+let _schData={}, _schDay='จันทร์', _editIdx=-1;
 
 function openSchedule(){
-  if(window.innerWidth<768){const sb=document.getElementById('sidebar');if(sb)sb.classList.remove('open');}
-  const modal=document.getElementById('scheduleModal');
-  const body=document.getElementById('scheduleBody');
-  modal.classList.add('on');
-  // Highlight today
-  const today=new Date().getDay(); // 0=Sun,1=Mon,...
-  const thaiDay=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][today];
-  body.innerHTML=DAYS.map((day,i)=>{
-    const classes=SCHEDULE[day]||[];
-    const isToday=day===thaiDay;
-    const color=DAY_COLORS[i];
-    return `<div class="day-block">
-      <div class="day-label" style="color:${color};border-color:${color}20;${isToday?'background:'+color+'10;padding:6px 10px;border-radius:8px;':''}">
-        ${isToday?'📍 ':''}${day}${isToday?' (วันนี้)':''}
-      </div>
-      ${classes.length===0
-        ?'<div class="no-class">— ไม่มีคาบเรียน —</div>'
-        :classes.map(cl=>`<div class="class-row" style="border-left-color:${color};">
-          <div class="class-time">${cl.time}</div>
-          <div class="class-info">
-            <div class="class-name">${cl.name}</div>
-            <div class="class-room">📍 ${cl.room}</div>
-          </div>
-        </div>`).join('')
-      }
-    </div>`;
-  }).join('')+'<div class="schedule-note">⚠️ ตารางเรียนนี้เป็นตัวอย่าง — กรุณาติดต่ออาจารย์เพื่อตารางจริง</div>';
+  const sb=document.getElementById('sidebar');
+  if(sb&&window.innerWidth<768)sb.classList.remove('open');
+  const ov=document.getElementById('sbOverlay');
+  if(ov)ov.classList.remove('on');
+  _schData=loadSch();
+  const today=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][new Date().getDay()];
+  _schDay=DAYS_TH.includes(today)?today:'จันทร์';
+  document.getElementById('schModal').classList.add('on');
+  renderSchTabs();
+  renderSchContent();
+}
+function closeSchedule(){document.getElementById('schModal').classList.remove('on');}
+
+function renderSchTabs(){
+  const tabs=document.getElementById('schTabs');
+  const today=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][new Date().getDay()];
+  tabs.innerHTML=DAYS_TH.map((d,i)=>`
+    <button class="sch-tab${d===_schDay?' active':''}" onclick="schSelectDay('${d}')">
+      ${d.slice(0,2)}${d===today?'📍':''}
+    </button>`).join('');
 }
 
-function closeSchedule(){
-  document.getElementById('scheduleModal').classList.remove('on');
+function schSelectDay(day){
+  _schDay=day; _editIdx=-1;
+  renderSchTabs(); renderSchContent();
 }
+
+function renderSchContent(){
+  const content=document.getElementById('schContent');
+  const color=DAY_COLORS_SCH[DAYS_TH.indexOf(_schDay)];
+  const classes=_schData[_schDay]||[];
+  const today=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][new Date().getDay()];
+  const isToday=_schDay===today;
+  let html=`<div class="sch-day">
+    <div class="sch-day-hdr" style="background:${color}20;color:${color};">
+      <span>${isToday?'📍 ':''}${_schDay}${isToday?' — วันนี้':''}</span>
+      <button class="sch-add-btn" onclick="schStartAdd()">+ เพิ่มวิชา</button>
+    </div>`;
+  if(!classes.length){
+    html+='<div class="sch-empty">ไม่มีคาบเรียน</div>';
+  } else {
+    classes.forEach((cl,i)=>{
+      const editing=_editIdx===i;
+      html+=`<div class="sch-class" style="border-left-color:${color};">
+        <div class="sch-class-top">
+          <div class="sch-time">${cl.time||'—'}</div>
+          <div class="sch-detail">
+            <div class="sch-name">${escHtmlSch(cl.name||'')}</div>
+            ${cl.room?`<div class="sch-room">📍 ${escHtmlSch(cl.room)}</div>`:''}
+            ${cl.note?`<div class="sch-note-txt">💡 ${escHtmlSch(cl.note)}</div>`:''}
+          </div>
+        </div>
+        <div class="sch-actions">
+          <button class="sch-btn-sm" onclick="schStartEdit(${i})">✏️ แก้ไข</button>
+          <button class="sch-btn-sm" onclick="schEditNote(${i})">📝 Note</button>
+          <button class="sch-btn-sm sch-btn-del" onclick="schDelete(${i})">🗑️</button>
+        </div>
+        ${editing?schFormHTML(cl,i):''}
+      </div>`;
+    });
+  }
+  // Add form at bottom if _editIdx === -2 (new)
+  if(_editIdx===-2){
+    html+=schFormHTML({time:'',name:'',room:'',note:''},-2);
+  }
+  html+='</div><div class="sch-notice">💾 บันทึกอัตโนมัติในเครื่องนี้เท่านั้น</div>';
+  content.innerHTML=html;
+}
+
+function schFormHTML(cl, idx){
+  const isNew=idx===-2;
+  return `<div class="sch-form" id="schForm${idx}">
+    <div class="sch-form-title">${isNew?'➕ เพิ่มวิชาใหม่':'✏️ แก้ไขวิชา'}</div>
+    <input class="sch-input" id="sfi_time_${idx}" placeholder="เวลา เช่น 08:00–10:00" value="${escAttr(cl.time||'')}">
+    <input class="sch-input" id="sfi_name_${idx}" placeholder="ชื่อวิชา *" value="${escAttr(cl.name||'')}">
+    <input class="sch-input" id="sfi_room_${idx}" placeholder="ห้อง / สถานที่" value="${escAttr(cl.room||'')}">
+    <textarea class="sch-textarea" id="sfi_note_${idx}" placeholder="📝 Note / เตือนความจำ เช่น ส่งงาน, เตรียมอุปกรณ์...">${escHtmlSch(cl.note||'')}</textarea>
+    <button class="sch-save-btn" onclick="schSave(${idx})">💾 บันทึก</button>
+    <button onclick="schCancelEdit()" style="width:100%;padding:8px;background:none;border:none;color:var(--slate-l);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;margin-top:4px;">ยกเลิก</button>
+  </div>`;
+}
+
+function schStartAdd(){_editIdx=-2;renderSchContent();setTimeout(()=>document.getElementById('sfi_name_-2')?.focus(),50);}
+function schStartEdit(i){_editIdx=i;renderSchContent();setTimeout(()=>document.getElementById('sfi_name_'+i)?.focus(),50);}
+function schEditNote(i){
+  // Quick note modal — reuse edit but scroll to note
+  _editIdx=i; renderSchContent();
+  setTimeout(()=>{const ta=document.getElementById('sfi_note_'+i);if(ta){ta.focus();ta.scrollIntoView({behavior:'smooth'});}},50);
+}
+function schCancelEdit(){_editIdx=-1;renderSchContent();}
+
+function schSave(idx){
+  const g=id=>document.getElementById(id)?.value?.trim()||'';
+  const entry={
+    time:g('sfi_time_'+idx),
+    name:g('sfi_name_'+idx),
+    room:g('sfi_room_'+idx),
+    note:g('sfi_note_'+idx),
+  };
+  if(!entry.name){alert('กรุณากรอกชื่อวิชา');return;}
+  if(!_schData[_schDay])_schData[_schDay]=[];
+  if(idx===-2){_schData[_schDay].push(entry);}
+  else{_schData[_schDay][idx]=entry;}
+  saveSch(_schData);
+  _editIdx=-1; renderSchContent();
+}
+
+function schDelete(i){
+  if(!confirm('ลบวิชานี้?'))return;
+  _schData[_schDay].splice(i,1);
+  saveSch(_schData);
+  renderSchContent();
+}
+
+function escHtmlSch(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(s){return String(s).replace(/"/g,'&quot;');}
+
+
+init();
 
 </script>
 
@@ -939,6 +1050,22 @@ function closeSchedule(){
     <div class="schedule-body" id="scheduleBody">
       <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลดตารางเรียน...</div>
     </div>
+  </div>
+</div>
+
+
+<!-- ── Schedule Modal ── -->
+<div class="sch-modal" id="schModal" onclick="if(event.target===this)closeSchedule()">
+  <div class="sch-box">
+    <div class="sch-hdr">
+      <div class="sch-hdr-left">
+        <div class="sch-hdr-title">📅 ตารางเรียน</div>
+        <div class="sch-hdr-sub">แก้ไขและเพิ่ม Note ได้เอง — บันทึกในเครื่อง</div>
+      </div>
+      <button class="sch-close" onclick="closeSchedule()">✕</button>
+    </div>
+    <div class="sch-tabs" id="schTabs"></div>
+    <div class="sch-content" id="schContent"></div>
   </div>
 </div>
 
