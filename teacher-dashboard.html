@@ -577,24 +577,30 @@ async function loadInbox(){
   const myName=(user.fullName||'').trim();
 
   try{
-    // Query by recipient_id OR recipient_name
-    const{data,error}=await sb.from('private_messages')
-      .select('*')
-      .or(`recipient_id.eq.${myKey},recipient_name.eq.${myName}`)
-      .order('created_at',{ascending:false})
-      .limit(50);
+    // Use two separate queries to avoid .or() issues with Thai text
+    const [r1, r2] = await Promise.all([
+      sb.from('private_messages').select('*').eq('recipient_id', myKey).order('created_at',{ascending:false}).limit(50),
+      sb.from('private_messages').select('*').eq('recipient_name', myName).order('created_at',{ascending:false}).limit(50)
+    ]);
 
-    if(error)throw error;
-    if(!data||data.length===0){
+    if(r1.error && r2.error) throw r1.error;
+
+    // Merge + deduplicate by id
+    const seen=new Set();
+    const data=[...(r1.data||[]), ...(r2.data||[])].filter(m=>{
+      if(seen.has(m.id))return false; seen.add(m.id); return true;
+    }).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+    if(data.length===0){
       el.innerHTML=`<div style="text-align:center;padding:32px;color:var(--slate-l);">
         <div style="font-size:40px;margin-bottom:8px;">📭</div>
         <div style="font-size:13px;">ไม่มีข้อความส่วนตัว</div>
-        <div style="font-size:11px;margin-top:6px;">myKey="${myKey}" · myName="${myName}"</div>
+        <div style="font-size:11px;margin-top:6px;color:#94a3b8;">รหัสอาจารย์: "${myKey}"</div>
       </div>`;
       return;
     }
 
-    // Decrypt
+    // Decrypt all messages
     const typeIcon={suggest:'💡',complain:'📢',other:'💬'};
     const msgs=await Promise.all(data.map(async m=>{
       let text='';
@@ -605,11 +611,11 @@ async function loadInbox(){
 
     const unread=msgs.filter(m=>!m.read_at).length;
     const badge=document.getElementById('inboxBadge');
-    if(badge){ badge.style.display=unread>0?'':'none'; if(unread>0)badge.textContent=unread; }
+    if(badge){ badge.style.display=unread>0?'':'none'; if(unread>0) badge.textContent=unread; }
 
     el.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · '+unread+' ยังไม่ได้อ่าน':''}</span>
+        <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · <b>'+unread+' ยังไม่ได้อ่าน</b>':''}</span>
         <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">✓ อ่านทั้งหมด</button>
       </div>
       ${msgs.map(m=>`
@@ -618,15 +624,15 @@ async function loadInbox(){
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:20px;">${typeIcon[m.type]||'💬'}</span>
               <div>
-                <div style="font-size:13px;font-weight:700;color:var(--slate);">${m.sender_name||'ไม่ระบุชื่อ'}</div>
-                <div style="font-size:11px;color:var(--slate-l);">${m.dept||''} · ${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+                <div style="font-size:13px;font-weight:700;color:var(--slate);">${escHtml(m.sender_name||'ไม่ระบุชื่อ')}</div>
+                <div style="font-size:11px;color:var(--slate-l);">${escHtml(m.dept||'')} · ${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
               </div>
             </div>
             ${m.read_at
               ?'<span style="font-size:10px;color:var(--slate-l);">✓ อ่านแล้ว</span>'
               :'<span style="background:#0d9488;color:white;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;">ใหม่</span>'}
           </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;color:${m.text.startsWith('🔒')?'var(--slate-l)':'var(--slate)'};line-height:1.7;font-style:${m.text.startsWith('🔒')?'italic':'normal'};">${escHtml(m.text)}</div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;color:${m.text.startsWith('🔒')?'#94a3b8':'var(--slate)'};line-height:1.7;font-style:${m.text.startsWith('🔒')?'italic':'normal'};">${escHtml(m.text)}</div>
         </div>`).join('')}`;
 
     // Mark as read
@@ -636,36 +642,43 @@ async function loadInbox(){
     }
 
   }catch(e){
-    el.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:12px;background:#fff1f2;border-radius:10px;">
-      ❌ โหลดไม่ได้: ${e.message}
-      <br><small style="color:#64748b;">ตรวจสอบว่าสร้าง table "private_messages" ใน Supabase แล้ว</small>
+    el.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:12px;background:#fff1f2;border-radius:10px;line-height:1.6;">
+      ❌ <b>Error:</b> ${escHtml(e.message)}
+      <br><br>สาเหตุที่เป็นไปได้:
+      <ul style="margin:6px 0 0 16px;font-size:11px;color:#64748b;">
+        <li>ยังไม่ได้สร้าง table <code>private_messages</code> ใน Supabase</li>
+        <li>RLS policy ยังไม่อนุญาต SELECT</li>
+      </ul>
     </div>`;
   }
-}
-async function markAllRead(){
+}async function markAllRead(){
   if(!user)return;
-  await sb.from('private_messages')
-    .update({read_at:new Date().toISOString()})
-    .or(`recipient_id.eq.${user.teacherCode||''},recipient_name.eq.${user.fullName||''}`);
+  const myKey=(user.teacherCode||user.username||'').trim();
+  const myName=(user.fullName||'').trim();
+  const now=new Date().toISOString();
+  await Promise.all([
+    sb.from('private_messages').update({read_at:now}).eq('recipient_id',myKey).is('read_at',null),
+    sb.from('private_messages').update({read_at:now}).eq('recipient_name',myName).is('read_at',null)
+  ]);
   loadInbox();
 }
-
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 async function checkInboxBadge(){
   if(!user)return;
   try{
-    const myKey=user.teacherCode||user.username||'';
-    const myName=user.fullName||'';
-    const{count}=await sb.from('private_messages')
-      .select('*',{count:'exact',head:true})
-      .or(`recipient_id.eq.${myKey},recipient_name.eq.${myName}`)
-      .is('read_at',null);
+    const myKey=(user.teacherCode||user.username||'').trim();
+    const myName=(user.fullName||'').trim();
+    const [r1,r2]=await Promise.all([
+      sb.from('private_messages').select('id').eq('recipient_id',myKey).is('read_at',null),
+      sb.from('private_messages').select('id').eq('recipient_name',myName).is('read_at',null)
+    ]);
+    const ids=new Set([...(r1.data||[]).map(m=>m.id),...(r2.data||[]).map(m=>m.id)]);
+    const count=ids.size;
     const badge=document.getElementById('inboxBadge');
     if(badge&&count>0){badge.textContent=count;badge.style.display='';}
   }catch(e){}
 }
-
 async function init(){
   const s=localStorage.getItem('lb_user');
   if(!s){window.location.href='index.html';return;}
