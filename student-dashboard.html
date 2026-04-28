@@ -450,8 +450,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="bn-item" onclick="switchTab('skills')" id="bn-skills">
       <span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div>
     </div>
-    <div class="bn-item" onclick="window.location.href='games.html'" id="bn-game">
-      <span class="bn-icon">🎮</span><span class="bn-label">เกม</span><div class="bn-dot" style="opacity:0"></div>
+    
     </div>
     <div class="bn-item" onclick="switchTab('report')" id="bn-report">
       <span class="bn-icon">🖨️</span><span class="bn-label">รายงาน</span><div class="bn-dot"></div>
@@ -860,22 +859,7 @@ ${skills.filter(s=>s.type==='elective').length?`<div style="font-family:'Prompt'
 }
 
 init();
-</script>
 
-<!-- ── Schedule Modal ── -->
-<div class="schedule-modal" id="scheduleModal" onclick="if(event.target===this)closeSchedule()">
-  <div class="schedule-box">
-    <div class="schedule-hdr">
-      <div class="schedule-hdr-title">📅 ตารางเรียน</div>
-      <button class="schedule-close" onclick="closeSchedule()">✕</button>
-    </div>
-    <div class="schedule-body" id="scheduleBody">
-      <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลดตารางเรียน...</div>
-    </div>
-  </div>
-</div>
-
-<script src="livechat.js">
 
 // ─── SCHEDULE ───────────────────────────────────
 // ตารางเรียนตัวอย่าง — แก้ไขได้ตามโปรแกรมจริง
@@ -943,6 +927,22 @@ function closeSchedule(){
   document.getElementById('scheduleModal').classList.remove('on');
 }
 
+</script>
+
+<!-- ── Schedule Modal ── -->
+<div class="schedule-modal" id="scheduleModal" onclick="if(event.target===this)closeSchedule()">
+  <div class="schedule-box">
+    <div class="schedule-hdr">
+      <div class="schedule-hdr-title">📅 ตารางเรียน</div>
+      <button class="schedule-close" onclick="closeSchedule()">✕</button>
+    </div>
+    <div class="schedule-body" id="scheduleBody">
+      <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลดตารางเรียน...</div>
+    </div>
+  </div>
+</div>
+
+<script src="livechat.js">
 </script>
 </body>
 </html>
