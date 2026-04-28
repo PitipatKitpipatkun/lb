@@ -20,7 +20,7 @@ let profileSet=false;
 // ─── Boot ────────────────────────────────────
 function boot(){
   if(!window.supabase){ setTimeout(boot,300); return; }
-  sb=window.supabase.createClient(SB_URL,SB_KEY);
+  sb=window.sb||window.supabase.createClient(SB_URL,SB_KEY);
   myId=getUid();
   loadProfile();
   buildCSS();
