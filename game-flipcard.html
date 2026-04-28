@@ -19,7 +19,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;colo
 /* ── HEADER ── */
 .hdr{background:linear-gradient(135deg,#7c3aed,#4c1d95);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
 .hdr-back{background:rgba(255,255,255,.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0;}
-.hdr-title{font-family:'Prompt',sans-serif;font-size:15px;font-weight:800;color:white;flex:1;}
+.hdr-title{font-family:'Prompt',sans-serif;font-size:15px;font-weight:800;color:white;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hdr-badges{display:flex;gap:6px;align-items:center;}
 .badge{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;}
 .b-score{background:rgba(255,255,255,.2);color:white;}
@@ -32,19 +32,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;colo
 /* ── HOME ── */
 #sHome{padding:20px 16px;text-align:center;}
 .h-icon{font-size:60px;margin:16px 0 6px;}
-.h-title{font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--v);margin-bottom:6px;}
-.h-desc{font-size:13px;color:var(--sm);line-height:1.7;margin-bottom:20px;}
+.h-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--v);margin-bottom:8px;}
+.h-desc{font-size:14px;color:var(--sm);line-height:1.75;margin-bottom:20px;}
 .diff-cards{display:flex;flex-direction:column;gap:10px;}
 .diff-card{border-radius:14px;border:2px solid;padding:14px 16px;cursor:pointer;text-align:left;transition:all .15s;background:white;}
 .diff-card:active{transform:scale(.97);}
 .dc-easy{border-color:#16a34a;}.dc-med{border-color:#d97706;}.dc-hard{border-color:#dc2626;}
-.dc-title{font-size:14px;font-weight:700;margin-bottom:3px;}
-.dc-sub{font-size:12px;color:var(--s2);}
+.dc-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.dc-sub{font-size:13px;color:var(--s2);line-height:1.4;}
 
 
 
 /* ── GAME SCREEN ── */
-#sGame{padding:12px 12px 24px;}
+#sGame{padding:12px 12px 32px;}
 .game-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .prog-bar{flex:1;height:7px;background:var(--bd);border-radius:4px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#0d9488);border-radius:4px;transition:width .4s;}
@@ -53,23 +53,82 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;colo
 .combo-bar{text-align:center;min-height:22px;font-size:12px;font-weight:700;margin-bottom:8px;color:var(--v);}
 
 /* ── CARD GRID ── */
-.card-grid{display:grid;gap:8px;}
-.g4{grid-template-columns:repeat(4,1fr);}
-.g5{grid-template-columns:repeat(4,1fr);}
+.card-grid{
+  display:grid;
+  gap:8px;
+}
+/* 4-column grid: rows auto-height = column-width (square) */
+.g4{
+  grid-template-columns:repeat(4,1fr);
+  grid-auto-rows:1fr;
+}
+.g5{
+  grid-template-columns:repeat(4,1fr);
+  grid-auto-rows:1fr;
+}
+/* Make card-wrap fill the grid cell at 1:1 ratio */
+.g4 .card-wrap,
+.g5 .card-wrap{
+  aspect-ratio:1/1;
+  height:auto;
+}
 
 /* ── CARD ── */
-.card-wrap{perspective:600px;aspect-ratio:0.72;}
-.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1);cursor:pointer;border-radius:12px;}
+/* All cards same size: square grid cells */
+.card-wrap{
+  perspective:800px;
+  /* Height controlled by grid rows, not aspect-ratio */
+}
+.card-inner{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  transition:transform .5s cubic-bezier(.4,0,.2,1);
+  cursor:pointer;
+  border-radius:14px;
+}
 .card-wrap.flipped .card-inner{transform:rotateY(180deg);}
-.card-face{position:absolute;inset:0;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
-.card-back{background:#1e293b;border:2px solid #334155;}
 
-.card-front{background:white;border:2px solid var(--bd);transform:rotateY(180deg);text-align:center;}
-.card-front.is-term{border-color:#7c3aed;border-top:3px solid #7c3aed;}
-.card-front.is-def{border-color:#0d9488;border-top:3px solid #0d9488;}
-.c-emoji{font-size:18px;margin-bottom:3px;}
-.c-text{font-size:10px;font-weight:600;line-height:1.3;color:var(--sl);}
-.c-type{font-size:9px;font-weight:700;text-transform:uppercase;margin-top:3px;padding:1px 5px;border-radius:100px;}
+/* BOTH faces need explicit backface-visibility */
+.card-back,
+.card-front{
+  position:absolute;
+  inset:0;
+  border-radius:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:8px 6px;
+  /* CRITICAL: hide back face when rotated */
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+
+/* Back face: pure solid black — no content bleeding through */
+.card-back{
+  background:#0f172a;
+  border:2px solid #1e293b;
+  /* No children, no text */
+}
+
+/* Front face: starts rotated 180° so it's hidden until flipped */
+.card-front{
+  background:white;
+  border:2.5px solid var(--bd);
+  transform:rotateY(180deg);
+  text-align:center;
+}
+.card-front.is-term{border-color:#7c3aed;border-top:4px solid #7c3aed;}
+.card-front.is-def{border-color:#0d9488;border-top:4px solid #0d9488;}
+.c-emoji{font-size:20px;margin-bottom:4px;line-height:1;}
+.c-text{font-size:11px;font-weight:700;line-height:1.4;color:var(--sl);}
+.c-cat{font-size:9px;color:var(--s2);margin-top:3px;}
+.c-type{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  margin-top:4px;padding:2px 6px;border-radius:100px;
+}
 .c-type.term{background:var(--vl);color:#6d28d9;}
 .c-type.def{background:var(--tl);color:var(--td);}
 
@@ -337,11 +396,17 @@ function renderGrid(faceUp){
         <div class="card-front ${c.type==='term'?'is-term':'is-def'}">
           <div class="c-emoji">${c.emoji}</div>
           <div class="c-text">${c.text}</div>
-          <div class="c-type ${c.type}">${c.type==='term'?'คำศัพท์':'ความหมาย'}</div>
+          <div class="c-type ${c.type}">${c.type==='term'?'คำ':'ความหมาย'}</div>
         </div>
       </div>
     </div>`).join('');
   updateProgress();
+  // Force square cards (fallback for browsers without aspect-ratio:1/1 support)
+  requestAnimationFrame(()=>{
+    const grid=document.getElementById('cardGrid');
+    const w=grid.querySelector('.card-wrap')?.offsetWidth;
+    if(w) grid.querySelectorAll('.card-wrap').forEach(cw=>cw.style.height=w+'px');
+  });
 }
 
 // ── Memorize Overlay ──
