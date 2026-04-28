@@ -293,8 +293,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
       <div class="modal-title">🎓 เข้าสู่ระบบนักศึกษา</div>
       <div class="alert" id="studentAlert"></div>
       <div class="form-group">
-        <label class="form-label">รหัสนักศึกษา</label>
-        <input class="form-input" id="studentUsername" type="text" placeholder="กรอกรหัสนักศึกษา" autocomplete="username">
+        <label class="form-label">เบอร์โทรศัพท์</label>
+        <input class="form-input" id="studentUsername" type="text" placeholder="เบอร์โทรศัพท์" type="tel" inputmode="numeric" maxlength="10" autocomplete="username">
       </div>
       <div class="form-group">
         <label class="form-label">รหัสผ่าน</label>
@@ -310,7 +310,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
       <div class="alert" id="teacherAlert"></div>
       <div class="form-group">
         <label class="form-label">เลขตำแหน่งอาจารย์</label>
-        <input class="form-input" id="teacherUsername" type="text" placeholder="กรอกเลขตำแหน่ง" autocomplete="username">
+        <input class="form-input" id="teacherUsername" type="text" placeholder="เบอร์โทรศัพท์" type="tel" inputmode="numeric" maxlength="10" autocomplete="username">
       </div>
       <div class="form-group">
         <label class="form-label">รหัสผ่าน</label>
@@ -401,23 +401,34 @@ async function handleLogin(role,btn){
       showAlert(alertId,'ยินดีต้อนรับ '+p.full_name,'ok');
       setTimeout(()=>{window.location.href='admin-dashboard.html';},800);
     }else if(role==='student'){
-      let{data,error}=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).single();
-      if(error&&(error.message?.includes('relationship')||error.message?.includes('department'))){
-        const res=await sb.from('students').select('*').eq('student_code',username).eq('password',password).single();
-        data=res.data;error=res.error;
+      // Query by phone first, fallback to student_code for backward compat
+      let{data,error}=await sb.from('students').select('*,departments(name)').eq('phone',username).eq('password',password).maybeSingle();
+      if(!data){
+        const r2=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).maybeSingle();
+        data=r2.data; error=r2.error;
       }
-      if(error||!data){showAlert(alertId,'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง','err');return;}
+      if(!data){
+        // strip departments join on error
+        const r3=await sb.from('students').select('*').eq('phone',username).eq('password',password).maybeSingle();
+        if(r3.data){data=r3.data;error=null;}
+      }
+      if(error||!data){showAlert(alertId,'เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง','err');return;}
       localStorage.setItem('lb_user',JSON.stringify({role:'student',fullName:data.full_name,profileId:data.id,studentCode:data.student_code,username,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
       logLogin('student',data.full_name,data.student_code||username);
       showAlert(alertId,'ยินดีต้อนรับ '+data.full_name,'ok');
       setTimeout(()=>{window.location.href='student-dashboard.html';},800);
     }else{
-      let{data,error}=await sb.from('teachers').select('*,departments(name)').eq('teacher_code',username).eq('password',password).single();
-      if(error&&(error.message?.includes('relationship')||error.message?.includes('department'))){
-        const res=await sb.from('teachers').select('*').eq('teacher_code',username).eq('password',password).single();
-        data=res.data;error=res.error;
+      // Query by phone first, fallback to teacher_code for backward compat
+      let{data,error}=await sb.from('teachers').select('*,departments(name)').eq('phone',username).eq('password',password).maybeSingle();
+      if(!data){
+        const r2=await sb.from('teachers').select('*,departments(name)').eq('teacher_code',username).eq('password',password).maybeSingle();
+        data=r2.data; error=r2.error;
       }
-      if(error||!data){showAlert(alertId,'เลขตำแหน่งหรือรหัสผ่านไม่ถูกต้อง','err');return;}
+      if(!data){
+        const r3=await sb.from('teachers').select('*').eq('phone',username).eq('password',password).maybeSingle();
+        if(r3.data){data=r3.data;error=null;}
+      }
+      if(error||!data){showAlert(alertId,'เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง','err');return;}
       const isTA=data.is_admin===true;
       localStorage.setItem('lb_user',JSON.stringify({role:'teacher',fullName:data.full_name,profileId:data.id,teacherCode:data.teacher_code,username,isAdmin:isTA,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
       logLogin('teacher',data.full_name,data.teacher_code||username);

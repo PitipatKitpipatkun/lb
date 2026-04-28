@@ -190,7 +190,8 @@ tr:hover td{background:var(--amber-50);}
     <div class="modal-bd">
       <input type="hidden" id="s_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="s_name" placeholder="นายสมชาย ใจดี"></div>
-      <div class="fg"><label class="fl">รหัสนักศึกษา * (ใช้เป็น Username)</label><input class="fi" id="s_code" placeholder="64010001" inputmode="text"><p class="fhint">นักศึกษาจะใช้รหัสนี้เข้าระบบ</p></div>
+      <div class="fg"><label class="fl">รหัสนักศึกษา *</label><input class="fi" id="s_code" placeholder="64010001"></div>
+      <div class="fg"><label class="fl">เบอร์โทรศัพท์ * (ใช้เข้าสู่ระบบ)</label><input class="fi" id="s_phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0812345678"><p class="fhint">นักศึกษาจะใช้เบอร์นี้เข้าระบบ</p></div>
       <div class="fg"><label class="fl">สาขาวิชา</label><select class="fs" id="s_dept"><option value="">— ไม่ระบุ —</option></select></div>
       <div class="fg"><label class="fl" id="s_pwGrpLabel">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="s_pw" placeholder="••••••" maxlength="6" inputmode="numeric"><p class="fhint">ตัวเลข 6 หลัก</p></div>
     </div>
@@ -205,7 +206,8 @@ tr:hover td{background:var(--amber-50);}
     <div class="modal-bd">
       <input type="hidden" id="t_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="t_name" placeholder="ผศ.ดร.วิภา สุขใส"></div>
-      <div class="fg"><label class="fl">เลขตำแหน่ง * (ใช้เป็น Username)</label><input class="fi" id="t_code" placeholder="T001"><p class="fhint">อาจารย์จะใช้เลขนี้เข้าระบบ</p></div>
+      <div class="fg"><label class="fl">เลขตำแหน่ง/รหัส *</label><input class="fi" id="t_code" placeholder="T001"></div>
+      <div class="fg"><label class="fl">เบอร์โทรศัพท์ * (ใช้เข้าสู่ระบบ)</label><input class="fi" id="t_phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0812345678"><p class="fhint">อาจารย์จะใช้เบอร์นี้เข้าระบบ</p></div>
       <div class="fg"><label class="fl">สาขาวิชา</label><select class="fs" id="t_dept"><option value="">— ไม่ระบุ —</option></select></div>
       <div class="fg" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--amber-50);border-radius:10px;border:1px solid var(--amber-l);">
         <input type="checkbox" id="t_isAdmin" style="width:18px;height:18px;accent-color:var(--amber);">
@@ -677,7 +679,7 @@ async function loadOverview(){
     const done=stuMandIds.filter(cid=>evSet.has(s.id+'_'+cid)).length;
     const total=stuMandIds.length||mIds.length;
     const pct=total>0?Math.round(done/total*100):0;
-    return `<tr><td>${s.full_name}</td><td style="font-family:monospace;font-size:12px;color:var(--slate-m)">${s.student_code||'-'}</td>
+    return `<tr><td>${s.full_name}</td><td style="font-size:11px;color:var(--slate-l);">${s.phone||'—'}</td><td style="font-family:monospace;font-size:12px;color:var(--slate-m)">${s.student_code||'-'}</td>
       <td style="font-size:11px;color:var(--slate-m)">${stuDept}</td>
       <td>${done}/${total}</td>
       <td style="min-width:100px"><div style="background:var(--border);border-radius:100px;height:7px;overflow:hidden"><div style="background:var(--teal);height:7px;border-radius:100px;width:${pct}%;transition:width 0.8s ease"></div></div></td>
@@ -715,7 +717,7 @@ async function loadStudents(){
   sData=data||[];
   document.getElementById('sCount').textContent=`นักศึกษา (${sData.length} คน)`;
   document.getElementById('sTbody').innerHTML=sData.length?sData.map(s=>`
-    <tr><td>${s.full_name}</td><td style="font-family:monospace;font-size:12px">${s.student_code||'-'}</td>
+    <tr><td>${s.full_name}</td><td style="font-size:11px;color:var(--slate-l);">${s.phone||'—'}</td><td style="font-family:monospace;font-size:12px">${s.student_code||'-'}</td>
     <td style="font-size:12px;color:var(--slate-m)">${s.departments?.name||'—'}</td>
     <td style="display:flex;gap:5px;">
       <button class="act-btn ab-edit" onclick="openEditS('${s.id}')">✏️ แก้ไข</button>
@@ -748,19 +750,23 @@ async function saveStudent(){
   const name=document.getElementById('s_name').value.trim();
   const code=document.getElementById('s_code').value.trim();
   const pw=document.getElementById('s_pw').value;
+  const phone=document.getElementById('s_phone')?.value.trim()||'';
   if(!name||!code){showToast('❌ กรุณากรอกชื่อและรหัสนักศึกษา','err');return;}
+  if(!editId&&!phone){showToast('❌ กรุณากรอกเบอร์โทรศัพท์','err');return;}
   if(!editId&&(!pw||pw.length<6)){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
   if(editId){
     const deptId=document.getElementById('s_dept').value||null;
+    const phone=document.getElementById('s_phone')?.value.trim()||'';
     const payload={full_name:name,student_code:code,student_id:code,department_id:deptId};
+    if(phone) payload.phone=phone;
     if(pw&&pw.length>=6)payload.password=pw;
     const{error}=await sb.from('students').update(payload).eq('id',editId);
     if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ แก้ไขสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('แก้ไขนักศึกษา',`${name} (${code})`);}
   }else{
     const deptId=document.getElementById('s_dept').value||null;
-    const{error}=await sb.from('students').insert({full_name:name,student_code:code,student_id:code,email:code+'@student.lb',password:pw,department_id:deptId});
+    const{error}=await sb.from('students').insert({full_name:name,student_code:code,student_id:code,phone:phone,email:code+'@student.lb',password:pw,department_id:deptId});
     if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ เพิ่มนักศึกษาสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('เพิ่มนักศึกษา',`${name} (${code})`);}
   }
@@ -816,13 +822,17 @@ async function saveTeacher(){
   const name=document.getElementById('t_name').value.trim();
   const code=document.getElementById('t_code').value.trim();
   const pw=document.getElementById('t_pw').value;
+  const phone=document.getElementById('t_phone')?.value.trim()||'';
   if(!name||!code){showToast('❌ กรุณากรอกชื่อและเลขตำแหน่ง','err');return;}
+  if(!editId&&!phone){showToast('❌ กรุณากรอกเบอร์โทรศัพท์','err');return;}
   if(!editId&&(!pw||pw.length<6)){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
   if(editId){
     const deptIdT=document.getElementById('t_dept').value||null;
     const isAdm=document.getElementById('t_isAdmin').checked;
+    const phone=document.getElementById('t_phone')?.value.trim()||'';
     const payload={full_name:name,teacher_code:code,teacher_id:code,department_id:deptIdT,is_admin:isAdm};
+    if(phone) payload.phone=phone;
     if(pw&&pw.length>=6)payload.password=pw;
     const{error}=await sb.from('teachers').update(payload).eq('id',editId);
     if(error){showToast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'err');}
@@ -830,7 +840,7 @@ async function saveTeacher(){
   }else{
     const deptIdT=document.getElementById('t_dept').value||null;
     const isAdm=document.getElementById('t_isAdmin').checked;
-    const{error}=await sb.from('teachers').insert({full_name:name,teacher_code:code,teacher_id:code,email:code+'@teacher.lb',password:pw,department_id:deptIdT,is_admin:isAdm});
+    const{error}=await sb.from('teachers').insert({full_name:name,teacher_code:code,teacher_id:code,phone:phone,email:code+'@teacher.lb',password:pw,department_id:deptIdT,is_admin:isAdm});
     if(error){showToast('❌ '+(error.code==='23505'?'เลขตำแหน่งนี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ เพิ่มอาจารย์สำเร็จ','ok');closeM('teacherModal');loadTeachers();logActivity('เพิ่มอาจารย์',`${name} (${code})`);}
   }
