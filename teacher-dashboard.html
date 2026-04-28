@@ -618,11 +618,14 @@ async function loadInbox(){
     el.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · <b>'+unread+' ยังไม่ได้อ่าน</b>':''}</span>
-        <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">✓ อ่านทั้งหมด</button>
+        <div style="display:flex;gap:6px;">
+          <button onclick="printInbox()" style="background:#f1f5f9;border:none;color:var(--slate-m);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">🖨️ พิมพ์ PDF</button>
+          <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">✓ อ่านทั้งหมด</button>
+        </div>
       </div>
       <div style="padding-bottom:8px;"></div>
       ${msgs.map(m=>`
-        <div style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'#0d9488'};padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.12);'}">
+        <div class="pmsg-item" data-type="${m.type||''}" data-sender="${(m.sender_name||'').replace(/"/g,'')}" data-dept="${(m.dept||'').replace(/"/g,'')}" data-date="${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}" data-text="${m.text.startsWith('🔒')?'(ถอดรหัสไม่ได้)':m.text.replace(/"/g,'').replace(/\n/g,' ')}" style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'#0d9488'};padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.12);'}">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:20px;">${typeIcon[m.type]||'💬'}</span>
@@ -636,6 +639,9 @@ async function loadInbox(){
               :'<span style="background:#0d9488;color:white;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;">ใหม่</span>'}
           </div>
           <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;color:${m.text.startsWith('🔒')?'#94a3b8':'var(--slate)'};line-height:1.7;font-style:${m.text.startsWith('🔒')?'italic':'normal'};">${escHtml(m.text)}</div>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <button onclick="deleteMsg('${m.id}')" style="background:none;border:1px solid #fecdd3;color:#dc2626;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">🗑️ ลบ</button>
+          </div>
         </div>`).join('')}`;
 
     // Mark as read
@@ -666,6 +672,72 @@ async function loadInbox(){
   loadInbox();
 }
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function deleteMsg(id){
+  if(!confirm('ลบข้อความนี้?'))return;
+  const{error}=await sb.from('private_messages').delete().eq('id',id);
+  if(error){alert('ลบไม่ได้: '+error.message);return;}
+  loadInbox();
+}
+
+function printInbox(){
+  // Collect all messages from the rendered DOM
+  const inboxEl=document.getElementById('inboxContent');
+  if(!inboxEl)return;
+  const msgs=[...inboxEl.querySelectorAll('.pmsg-item')];
+  const teacherName=user.fullName||'อาจารย์';
+  const now=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const rows=msgs.map(m=>{
+    const type=m.dataset.type||'';
+    const sender=m.dataset.sender||'ไม่ระบุ';
+    const dept=m.dataset.dept||'';
+    const date=m.dataset.date||'';
+    const text=m.dataset.text||'';
+    const typeLabel={suggest:'💡 แนะนำ',complain:'📢 ร้องเรียน',other:'💬 อื่นๆ'}[type]||type;
+    return `<tr>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${typeLabel}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${sender}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${dept}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;">${date}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:12px;line-height:1.5;">${text}</td>
+    </tr>`;
+  }).join('');
+
+  const html=`<!DOCTYPE html><html lang="th"><head>
+    <meta charset="UTF-8">
+    <style>
+      @page{size:A4 landscape;margin:15mm 15mm 15mm 15mm;}
+      body{font-family:'Sarabun','Tahoma',sans-serif;font-size:12px;color:#1e293b;}
+      h1{font-size:16px;font-weight:700;margin-bottom:4px;}
+      .sub{font-size:11px;color:#64748b;margin-bottom:16px;}
+      table{width:100%;border-collapse:collapse;}
+      th{background:#0d9488;color:white;padding:8px 10px;font-size:11px;text-align:left;border:1px solid #0f766e;}
+      tr:nth-child(even) td{background:#f8fafc;}
+      @media print{button{display:none;}}
+    </style>
+  </head><body>
+    <h1>📋 สรุปข้อความส่วนตัว — ${teacherName}</h1>
+    <div class="sub">พิมพ์เมื่อ: ${now} · ทั้งหมด ${msgs.length} ข้อความ</div>
+    <table>
+      <thead><tr>
+        <th style="width:10%">ประเภท</th>
+        <th style="width:15%">ผู้ส่ง</th>
+        <th style="width:15%">ถึง</th>
+        <th style="width:13%">วันที่</th>
+        <th style="width:47%">ข้อความ</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:20px;font-size:10px;color:#94a3b8;">เอกสารนี้ผลิตโดยระบบ Vet RMUTTO Log Book — เนื้อหาเป็นความลับ ห้ามเผยแพร่</div>
+  </body></html>`;
+
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(),500);
+}
 
 async function checkInboxBadge(){
   if(!user)return;
