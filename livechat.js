@@ -20,7 +20,9 @@ let profileSet=false;
 // ─── Boot ────────────────────────────────────
 function boot(){
   if(!window.supabase){ setTimeout(boot,300); return; }
-  sb=window.sb||window.supabase.createClient(SB_URL,SB_KEY);
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{
+    auth:{persistSession:false,storageKey:'lc_auth_'+SB_URL.slice(-8)}
+  });
   myId=getUid();
   loadProfile();
   buildCSS();
