@@ -894,34 +894,35 @@ function searchDrugs(q){
 
 // ── Feedback Recipients ──
 async function loadTeachers(){
+  const sel=document.getElementById('fbRecipient');
+  if(!sel)return;
+  // Reset to just the blank option, then reload
+  sel.innerHTML='<option value="">— กำลังโหลดรายชื่ออาจารย์... —</option>';
   try{
-    const sel=document.getElementById('fbRecipient');
-    if(!sel||sel.options.length>1)return; // already loaded
+    // Simple select: no join — avoid FK dependency issues
     const{data,error}=await sb.from('teachers')
-      .select('id,name,department')
-      .order('department').order('name');
-    if(error||!data)return;
-    const byDept={};
+      .select('id,full_name,teacher_code')
+      .order('full_name');
+    if(error){
+      sel.innerHTML='<option value="">— โหลดไม่ได้: '+error.message+' —</option>';
+      return;
+    }
+    if(!data||data.length===0){
+      sel.innerHTML='<option value="">— ยังไม่มีข้อมูลอาจารย์ในระบบ —</option>';
+      return;
+    }
+    sel.innerHTML='<option value="">— เลือกอาจารย์ที่ต้องการส่งถึง —</option>';
     data.forEach(t=>{
-      const d=t.department||'ทั่วไป';
-      if(!byDept[d])byDept[d]=[];
-      byDept[d].push(t);
+      const o=document.createElement('option');
+      o.value=t.full_name;
+      o.dataset.tid=t.teacher_code||t.id||t.full_name;
+      o.textContent='👤 '+(t.full_name||'ไม่มีชื่อ');
+      sel.appendChild(o);
     });
-    Object.keys(byDept).sort().forEach(dept=>{
-      const og=document.createElement('optgroup');
-      og.label='📚 '+dept;
-      byDept[dept].forEach(t=>{
-        const o=document.createElement('option');
-        o.value=t.name;
-        o.dataset.tid=t.teacher_code||t.id||t.name;
-        o.textContent='👤 '+t.name;
-        og.appendChild(o);
-      });
-      sel.appendChild(og);
-    });
-  }catch(e){}
+  }catch(e){
+    sel.innerHTML='<option value="">— Error: '+e.message+' —</option>';
+  }
 }
-
 function toggleRecipient(){
   const box=document.getElementById('fbRecipientBox');
   const btn=document.getElementById('fbRecToggle');
