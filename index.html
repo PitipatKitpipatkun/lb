@@ -128,6 +128,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 
 /* ── Footer ── */
 .app-footer{text-align:center;font-size:11px;color:var(--slate-l);padding:8px 16px 4px;margin-top:4px;}
+
+/* ── Announcements ── */
+.ann-card{background:white;border-radius:14px;border:1.5px solid var(--border);padding:14px 16px;margin-bottom:10px;cursor:default;transition:all .15s;}
+.ann-card:hover{border-color:var(--teal-l);box-shadow:0 2px 12px rgba(13,148,136,.08);}
+.ann-card-pinned{border-color:#f59e0b;border-left:4px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,white);}
+.ann-title{font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--slate);margin-bottom:5px;}
+.ann-body{font-size:13px;color:var(--slate-m);line-height:1.7;white-space:pre-line;}
+.ann-meta{font-size:11px;color:var(--slate-l);margin-top:8px;display:flex;align-items:center;gap:6px;}
+.ann-tag{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;}
+.ann-tag-info{background:#dbeafe;color:#1e40af;}
+.ann-tag-warn{background:#fef3c7;color:#92400e;}
+.ann-tag-urgent{background:#fee2e2;color:#991b1b;}
+.ann-empty{text-align:center;padding:20px 0;color:var(--slate-l);font-size:13px;}
+
 </style>
 </head>
 <body>
@@ -222,6 +236,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
     <div id="pinnedSection" style="display:none;">
       <div style="font-size:11px;font-weight:700;color:var(--slate-l);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">★ เครื่องมือที่ปักหมุดไว้</div>
       <div id="pinnedGrid" class="tool-grid"></div>
+    </div>
+  </div>
+
+
+  <!-- ANNOUNCEMENTS -->
+  <div class="section" id="annSection">
+    <div class="section-title">📢 ข่าวประกาศ</div>
+    <div id="annList">
+      <div class="ann-empty">⏳ กำลังโหลด...</div>
     </div>
   </div>
 
@@ -953,6 +976,40 @@ function toggleFeedback(){
   el.style.display = isHidden ? 'block' : 'none';
   if(ch) ch.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
 }
+
+
+// ─── ANNOUNCEMENTS ───────────────────────────────────────
+async function loadAnnouncements(){
+  const el=document.getElementById('annList');
+  if(!el)return;
+  try{
+    const{data,error}=await sb.from('announcements')
+      .select('*')
+      .eq('is_active',true)
+      .order('is_pinned',{ascending:false})
+      .order('created_at',{ascending:false})
+      .limit(10);
+    if(error||!data||data.length===0){
+      el.innerHTML='<div class="ann-empty">ไม่มีประกาศในขณะนี้</div>';
+      return;
+    }
+    const tagMap={info:'ann-tag-info',warn:'ann-tag-warn',urgent:'ann-tag-urgent'};
+    const tagLabel={info:'📋 ทั่วไป',warn:'⚠️ สำคัญ',urgent:'🚨 ด่วนมาก'};
+    el.innerHTML=data.map(a=>`
+      <div class="ann-card${a.is_pinned?' ann-card-pinned':''}">
+        <div class="ann-title">${a.is_pinned?'📌 ':''}${escAnn(a.title||'')}</div>
+        <div class="ann-body">${escAnn(a.body||'')}</div>
+        <div class="ann-meta">
+          ${a.tag?`<span class="ann-tag ${tagMap[a.tag]||'ann-tag-info'}">${tagLabel[a.tag]||a.tag}</span>`:''}
+          <span>โดย ${escAnn(a.author_name||'ผู้ดูแลระบบ')}</span>
+          <span>· ${new Date(a.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</span>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML='<div class="ann-empty">ไม่สามารถโหลดประกาศได้</div>';
+  }
+}
+function escAnn(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 </script>
 <script src="livechat.js"></script>
