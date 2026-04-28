@@ -221,6 +221,25 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   .sidebar,.mob-header,.bottom-nav,.no-print{display:none!important;}
   .main{margin-left:0!important;padding:12px!important;}
 }
+
+/* ── Schedule Modal ── */
+.schedule-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.schedule-modal.on{display:flex;}
+.schedule-box{background:white;border-radius:20px;width:90%;max-width:480px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);}
+.schedule-hdr{background:linear-gradient(135deg,var(--teal),var(--teal-d));padding:16px 18px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;}
+.schedule-hdr-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:white;}
+.schedule-close{background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;}
+.schedule-body{padding:16px;}
+.day-block{margin-bottom:14px;}
+.day-label{font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:var(--teal-d);margin-bottom:8px;padding:4px 0;border-bottom:2px solid var(--teal-l);}
+.class-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg);margin-bottom:6px;border-left:3px solid var(--teal);}
+.class-time{font-size:11px;font-weight:700;color:var(--slate-m);min-width:70px;padding-top:1px;}
+.class-info{flex:1;}
+.class-name{font-size:13px;font-weight:700;color:var(--slate);}
+.class-room{font-size:11px;color:var(--slate-l);margin-top:2px;}
+.no-class{font-size:12px;color:var(--slate-l);text-align:center;padding:12px 0;}
+.schedule-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px;font-size:12px;color:#92400e;margin-top:12px;text-align:center;}
+
 </style>
 </head>
 <body>
@@ -241,10 +260,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
   <nav class="sb-nav">
     <div class="nav-item active" onclick="switchTab('overview')" id="ni-overview"><span class="nav-icon">📊</span> ภาพรวม</div>
     <div class="nav-item" onclick="switchTab('skills')" id="ni-skills"><span class="nav-icon">📋</span> ทักษะ</div>
-    <div class="nav-item" onclick="window.location.href='game.html'" id="ni-game"><span class="nav-icon">🎮</span> เกมทายคำถาม</div>
     <div class="nav-item" onclick="switchTab('report')" id="ni-report"><span class="nav-icon">🖨️</span> พิมพ์รายงาน</div>
     <div class="nav-item" onclick="switchTab('qrscan')" id="ni-qrscan"><span class="nav-icon">📲</span> สแกน QR</div>
     <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
+    <div style="height:1px;background:var(--border);margin:8px 12px;"></div>
+    <div class="nav-item" onclick="openSchedule()" id="ni-schedule"><span class="nav-icon">📅</span> ตารางเรียน</div>
   </nav>
   <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
 </aside>
@@ -430,7 +450,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="bn-item" onclick="switchTab('skills')" id="bn-skills">
       <span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div>
     </div>
-    <div class="bn-item" onclick="window.location.href='game.html'" id="bn-game">
+    <div class="bn-item" onclick="window.location.href='games.html'" id="bn-game">
       <span class="bn-icon">🎮</span><span class="bn-label">เกม</span><div class="bn-dot" style="opacity:0"></div>
     </div>
     <div class="bn-item" onclick="switchTab('report')" id="bn-report">
@@ -840,6 +860,89 @@ ${skills.filter(s=>s.type==='elective').length?`<div style="font-family:'Prompt'
 }
 
 init();
+</script>
+
+<!-- ── Schedule Modal ── -->
+<div class="schedule-modal" id="scheduleModal" onclick="if(event.target===this)closeSchedule()">
+  <div class="schedule-box">
+    <div class="schedule-hdr">
+      <div class="schedule-hdr-title">📅 ตารางเรียน</div>
+      <button class="schedule-close" onclick="closeSchedule()">✕</button>
+    </div>
+    <div class="schedule-body" id="scheduleBody">
+      <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลดตารางเรียน...</div>
+    </div>
+  </div>
+</div>
+
+<script src="livechat.js">
+
+// ─── SCHEDULE ───────────────────────────────────
+// ตารางเรียนตัวอย่าง — แก้ไขได้ตามโปรแกรมจริง
+const SCHEDULE = {
+  'จันทร์': [
+    {time:'08:00–10:00',name:'กายวิภาคศาสตร์และสรีรวิทยา',room:'ห้อง 101 ตึกสัตวแพทย์'},
+    {time:'10:00–12:00',name:'เภสัชวิทยาสัตวแพทย์',room:'ห้อง 203'},
+    {time:'13:00–15:00',name:'ปฏิบัติการ: กายวิภาคฯ',room:'ห้องปฏิบัติการ A'},
+  ],
+  'อังคาร': [
+    {time:'08:00–10:00',name:'จุลชีววิทยาและภูมิคุ้มกันวิทยา',room:'ห้อง 102'},
+    {time:'13:00–16:00',name:'ปฏิบัติการ: จุลชีววิทยา',room:'ห้องปฏิบัติการ B'},
+  ],
+  'พุธ': [
+    {time:'09:00–11:00',name:'พยาธิวิทยาสัตวแพทย์',room:'ห้อง 205'},
+    {time:'13:00–15:00',name:'ปรสิตวิทยา',room:'ห้อง 106'},
+    {time:'15:00–17:00',name:'คลินิกเพื่อการฝึกปฏิบัติ',room:'โรงพยาบาลสัตว์'},
+  ],
+  'พฤหัสบดี': [
+    {time:'08:00–10:00',name:'อายุรกรรมสัตว์เลี้ยง',room:'ห้อง 301'},
+    {time:'10:00–12:00',name:'ศัลยกรรมและรังสีวิทยา',room:'ห้อง 302'},
+  ],
+  'ศุกร์': [
+    {time:'09:00–12:00',name:'ฝึกงานคลินิกสัตว์ใหญ่',room:'ฟาร์มสาธิต'},
+    {time:'13:00–15:00',name:'สัมมนาวิชาการ',room:'ห้องประชุมชั้น 2'},
+  ],
+  'เสาร์': [],
+  'อาทิตย์': [],
+};
+
+const DAY_COLORS=['#0d9488','#7c3aed','#d97706','#0284c7','#e11d48','#64748b','#64748b'];
+const DAYS=['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์','อาทิตย์'];
+
+function openSchedule(){
+  if(window.innerWidth<768){const sb=document.getElementById('sidebar');if(sb)sb.classList.remove('open');}
+  const modal=document.getElementById('scheduleModal');
+  const body=document.getElementById('scheduleBody');
+  modal.classList.add('on');
+  // Highlight today
+  const today=new Date().getDay(); // 0=Sun,1=Mon,...
+  const thaiDay=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][today];
+  body.innerHTML=DAYS.map((day,i)=>{
+    const classes=SCHEDULE[day]||[];
+    const isToday=day===thaiDay;
+    const color=DAY_COLORS[i];
+    return `<div class="day-block">
+      <div class="day-label" style="color:${color};border-color:${color}20;${isToday?'background:'+color+'10;padding:6px 10px;border-radius:8px;':''}">
+        ${isToday?'📍 ':''}${day}${isToday?' (วันนี้)':''}
+      </div>
+      ${classes.length===0
+        ?'<div class="no-class">— ไม่มีคาบเรียน —</div>'
+        :classes.map(cl=>`<div class="class-row" style="border-left-color:${color};">
+          <div class="class-time">${cl.time}</div>
+          <div class="class-info">
+            <div class="class-name">${cl.name}</div>
+            <div class="class-room">📍 ${cl.room}</div>
+          </div>
+        </div>`).join('')
+      }
+    </div>`;
+  }).join('')+'<div class="schedule-note">⚠️ ตารางเรียนนี้เป็นตัวอย่าง — กรุณาติดต่ออาจารย์เพื่อตารางจริง</div>';
+}
+
+function closeSchedule(){
+  document.getElementById('scheduleModal').classList.remove('on');
+}
+
 </script>
 </body>
 </html>
