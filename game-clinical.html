@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>🩺 Clinical Case Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--t:#0d9488;--td:#0f766e;--r:#e11d48;--bg:#f8fafc;--w:#fff;--sl:#1e293b;--sm:#475569;--s2:#94a3b8;--bd:#e2e8f0;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--sl);min-height:100vh;}
+.hdr{background:linear-gradient(135deg,#e11d48,#9f1239);padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.hdr-back{background:rgba(255,255,255,.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:17px;cursor:pointer;}
+.hdr-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:white;flex:1;}
+.hdr-info{text-align:right;}
+.hdr-pts{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-q{font-size:11px;color:rgba(255,255,255,.7);}
+.scr{display:none;min-height:calc(100vh - 62px);}
+.scr.on{display:block;}
+/* HOME */
+#sHome{padding:20px 16px;text-align:center;}
+.h-icon{font-size:64px;margin:16px 0 8px;}
+.h-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--r);margin-bottom:8px;}
+.h-desc{font-size:13px;color:var(--sm);line-height:1.7;margin-bottom:20px;}
+.mode-btn{width:100%;padding:14px 16px;border-radius:14px;border:2px solid;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:left;margin-bottom:10px;transition:all .15s;}
+.mode-btn:active{transform:scale(.97);}
+/* CASE SCREEN */
+#sCase{padding:14px 16px;overflow-y:auto;}
+.prog-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.pbar{flex:1;height:7px;background:var(--bd);border-radius:4px;overflow:hidden;}
+.pfill{height:7px;background:linear-gradient(90deg,#e11d48,#f97316);border-radius:4px;transition:width .4s;}
+.timer-pill{padding:4px 11px;border-radius:100px;font-size:12px;font-weight:700;}
+.tp-ok{background:#dcfce7;color:#166534;}
+.tp-warn{background:#fee2e2;color:#991b1b;}
+.case-card{background:white;border-radius:16px;border:1.5px solid var(--bd);padding:14px;margin-bottom:12px;}
+.case-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.case-species{font-size:32px;}
+.case-meta{flex:1;}
+.case-id{font-size:10px;color:var(--s2);font-weight:700;text-transform:uppercase;}
+.case-chief{font-size:13px;font-weight:700;color:var(--sl);}
+.difficulty-badge{padding:2px 9px;border-radius:100px;font-size:10px;font-weight:700;}
+.db-h{background:#fee2e2;color:#991b1b;}
+.case-body{font-size:13px;line-height:1.8;color:var(--sm);}
+.case-body strong{color:var(--sl);}
+.section-label{font-size:10px;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 4px;}
+.choices{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.ch{padding:11px 13px;border:2px solid var(--bd);border-radius:11px;background:white;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;text-align:left;line-height:1.4;transition:all .15s;}
+.ch:active{transform:scale(.98);}
+.ch.correct{border-color:#16a34a;background:#f0fdf4;color:#14532d;}
+.ch.wrong{border-color:#dc2626;background:#fff1f2;color:#7f1d1d;}
+.ch:disabled{cursor:default;}
+.explanation{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px;font-size:12px;line-height:1.7;margin-top:8px;display:none;}
+.exp-title{font-weight:700;color:#166534;margin-bottom:4px;}
+.next-btn{width:100%;padding:12px;background:linear-gradient(135deg,#e11d48,#9f1239);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;display:none;}
+/* RESULT */
+#sResult{padding:20px 16px;text-align:center;}
+.res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0;}
+.sb{background:white;border-radius:12px;border:1px solid var(--bd);padding:12px 6px;text-align:center;}
+.sbn{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--r);}
+.sbl{font-size:10px;color:var(--s2);font-weight:700;text-transform:uppercase;margin-top:2px;}
+.res-btn{width:100%;padding:12px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;}
+.rb-m{background:linear-gradient(135deg,#e11d48,#9f1239);color:white;}
+.rb-s{background:var(--bg);color:var(--sm);border:1.5px solid var(--bd);}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <button class="hdr-back" onclick="location.href='games.html'">←</button>
+  <div class="hdr-title">🩺 Clinical Cases</div>
+  <div class="hdr-info">
+    <div class="hdr-pts" id="hdrPts">0</div>
+    <div class="hdr-q" id="hdrQ">0/20</div>
+  </div>
+</div>
+
+<div id="sHome" class="scr on">
+  <div class="h-icon">🩺</div>
+  <div class="h-title">Clinical Case Challenge</div>
+  <div class="h-desc">100 กรณีศึกษาทางคลินิกสัตวแพทย์<br>วินิจฉัย สั่งการรักษา ตัดสินใจในฉุกเฉิน<br>🔥 ระดับยากสูงสุด — เหมือนสอบจริง</div>
+  <button class="mode-btn" style="border-color:#e11d48;background:#fff1f2;color:#7f1d1d;" onclick="startGame(20)">🔴 Quick Round — 20 case เวลา 30 วิ/ข้อ</button>
+  <button class="mode-btn" style="border-color:#d97706;background:#fffbeb;color:#78350f;" onclick="startGame(50)">🟡 Standard — 50 case ไม่จับเวลา</button>
+  <button class="mode-btn" style="border-color:#7c3aed;background:#faf5ff;color:#4c1d95;" onclick="startGame(100)">🟣 Full Exam — ทั้งหมด 100 case</button>
+</div>
+
+<div id="sCase" class="scr">
+  <div class="prog-row">
+    <div class="pbar"><div class="pfill" id="pfill"></div></div>
+    <div id="timerPill" class="timer-pill tp-ok">⏱ —</div>
+  </div>
+  <div class="case-card">
+    <div class="case-header">
+      <div class="case-species" id="cSpecies">🐕</div>
+      <div class="case-meta">
+        <div class="case-id" id="cId">CASE 1</div>
+        <div class="case-chief" id="cChief"></div>
+      </div>
+      <span class="difficulty-badge db-h">HARD</span>
+    </div>
+    <div class="section-label">📋 History & PE</div>
+    <div class="case-body" id="cBody"></div>
+    <div class="section-label" id="qLabel">❓ คำถาม</div>
+    <div id="cQuestion" style="font-size:13px;font-weight:700;margin-bottom:10px;"></div>
+  </div>
+  <div class="choices" id="choices"></div>
+  <div class="explanation" id="explanation"><div class="exp-title">💡 อธิบาย:</div><div id="expText"></div></div>
+  <button class="next-btn" id="nextBtn" onclick="nextCase()">ถัดไป →</button>
+</div>
+
+<div id="sResult" class="scr">
+  <div style="font-size:56px;margin:20px 0 10px;" id="resEmoji">🏆</div>
+  <div style="font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;" id="resTitle">สุดยอด!</div>
+  <div style="font-size:13px;color:var(--sm);" id="resMsg"></div>
+  <div class="res-stats">
+    <div class="sb"><div class="sbn" id="rS">0</div><div class="sbl">คะแนน</div></div>
+    <div class="sb"><div class="sbn" id="rC">0</div><div class="sbl">ถูก</div></div>
+    <div class="sb"><div class="sbn" id="rA">0%</div><div class="sbl">แม่นยำ</div></div>
+  </div>
+  <button class="res-btn rb-m" onclick="startGame(gNum)">🔄 เล่นใหม่</button>
+  <button class="res-btn rb-s" onclick="showScr('sHome')">เปลี่ยนรอบ</button>
+</div>
+
+<script>
+const CASES=[
+// ── กายวิภาค/สรีรวิทยา ──
+{sp:'🐕',chief:'ขาหน้าขวาหัก',body:'สุนัขพันธุ์ผสม อายุ 3 ปี น้ำหนัก 15 kg รถทับขาหน้าขวา X-ray: Comminuted fracture mid-shaft Humerus สัญญาณชีวิต stable BP 110/70 HR 90',q:'Internal fixation ที่เหมาะสมที่สุด?',opts:['IM pin เดี่ยว','Bone plate + screws','External fixator','Cast ปูน'],ans:1,exp:'Comminuted fracture ต้องการ Rigid fixation — Bone plate ให้ Absolute stability ดีที่สุด IM pin เดี่ยวไม่เพียงพอสำหรับ Comminuted'},
+{sp:'🐈',chief:'ปัสสาวะไม่ออก 2 วัน',body:'แมวเพศผู้ ตอน 5 ปี น้ำหนัก 4 kg อาการปวด ท้อง ซึม BCS 4/9 CBC: Leukocytosis 22,000 Chem: K+ 7.2 mEq/L Creatinine 8.5 mg/dL pH 7.21 ECG: Tall T wave',q:'Treatment ลำดับแรกที่เร่งด่วนที่สุด?',opts:['สวนปัสสาวะทันที','ให้ Calcium gluconate IV','แก้ Hyperkalemia ก่อน','Perineal urethrostomy'],ans:2,exp:'K+ 7.2 mEq/L + ECG changes = Cardiac emergency! ต้องให้ Calcium gluconate IV ก่อนเพื่อ stabilize heart ก่อนทำหัตถการ'},
+{sp:'🐕',chief:'ท้องบวมฉับพลัน หายใจลำบาก',body:'สุนัข Great Dane เพศผู้ 6 ปี 45 kg หลังกินอาหาร 2 ชั่วโมง ท้องบวม percussion tympanic HR 160 bpm CRT 3 วินาที Weak pulse Lateral X-ray: Double bubble sign',q:'Diagnosis และ Treatment เร่งด่วน?',opts:['Bloat (Ruminal tympany) — Trocar','GDV — Decompression + Emergency surgery','Ascites — Abdominocentesis','Peritonitis — IV antibiotics'],ans:1,exp:'GDV = Gastric Dilatation Volvulus Double bubble sign บน X-ray ยืนยัน Volvulus ต้อง Decompress (stomach tube/trocar) แก้ Shock แล้ว Emergency gastropexy'},
+{sp:'🐈',chief:'น้ำหนักลด กินมาก ขน rough',body:'แมวเพศเมีย 13 ปี น้ำหนัก 3.2 kg (เดิม 5 kg) Polyphagia Polydipsia HR 240 bpm Systolic BP 185 mmHg ตรวจพบ thyroid nodule คอ T4 total 8.5 µg/dL (ref 1–4)',q:'First-line treatment?',opts:['Propylthiouracil PO','Methimazole PO','Radioactive iodine I-131','Thyroid surgery'],ans:1,exp:'Methimazole เป็น First-line ใน Feline Hyperthyroidism ปลอดภัย ราคาไม่แพง Radioactive iodine ดีที่สุดแต่ต้องส่งโรงพยาบาลเฉพาะ'},
+{sp:'🐕',chief:'ชัก cluster 3 ครั้งใน 24 ชั่วโมง',body:'สุนัข Golden Retriever เพศเมีย 4 ปี ชักแบบ Grand mal ต่อเนื่อง ขณะนี้ชักอยู่ กัดฟัน ขาเกร็ง ตา c หมุน ชัก 3 นาทีแล้ว',q:'ยาแรกที่ควรให้ทันที?',opts:['Phenobarbital IM 2 mg/kg','Diazepam IV 0.5 mg/kg slow','Ketamine IV 5 mg/kg','Mannitol IV 0.5 g/kg'],ans:1,exp:'Status epilepticus = ชัก >5 min → Diazepam IV 0.5 mg/kg คือ First-line ออกฤทธิ์เร็ว ถ้าไม่มี IV ให้ Midazolam IM/IN'},
+{sp:'🐕',chief:'อาเจียน 5 ครั้ง ปวดท้อง',body:'สุนัข Miniature Schnauzer เพศเมีย 7 ปี อาเจียนเลือดปน ปวดท้อง กินไขมันสูงเมื่อวาน Chem: Lipase 3200 U/L (ref <250) Amylase 2800 U/L วิ้วตาน้ำตาล',q:'Management ที่ถูกต้อง?',opts:['NPO + IV fluids + Pain control','Feed bland diet ทันที','Antibiotics ก่อนเป็นอันดับแรก','Laparotomy ทันที'],ans:0,exp:'Pancreatitis treatment: NPO เพื่อ rest pancreas, IV fluids แก้ dehydration, Analgesics ลดปวด Antiemetics ป้องกันอาเจียน'},
+{sp:'🐕',chief:'อุจจาระมีเลือดสด น้ำหนักลด',body:'ลูกสุนัข 8 สัปดาห์ พันธุ์ผสม อาเจียน ท้องเสียเลือดสดมาก 6 ชั่วโมง อ่อนแรงมาก BT 40.2°C WBC 1800 (Leukopenia) PCV 22% HCT ต่ำ',q:'Presumptive diagnosis?',opts:['Hemorrhagic gastroenteritis','Canine Parvovirus','Intestinal intussusception','Canine distemper'],ans:1,exp:'Canine Parvovirus: ลูกสุนัขไม่ได้วัคซีน + Bloody diarrhea + Leukopenia = Classic presentation รักษา: IV fluids, Antibiotics, Antiemetics'},
+{sp:'🐈',chief:'หายใจลำบาก อ้าปากหายใจ',body:'แมวเพศผู้ 8 ปี Dyspnea รุนแรง Orthopnea นั่งยืด neck อ้าปากหายใจ Muffled heart sounds Dullness percussion ทั้งสองข้าง SpO2 78% HR 220 bpm',q:'Priority แรกก่อน Diagnostics?',opts:['Lateral X-ray ทันที','Oxygen therapy + Minimal stress','Echocardiography','Thoracocentesis bilateral'],ans:1,exp:'แมวที่ Respiratory distress รุนแรง → O2 ก่อน! Minimal handling Stress น้อยที่สุด แมวอาจตายได้จากการ restrain ก่อน stabilize'},
+{sp:'🐕',chief:'กระหายน้ำมาก ปัสสาวะบ่อย ท้องใหญ่',body:'สุนัข Poodle เพศเมีย 9 ปี ไม่ได้ทำหมัน PU/PD Polyphagia Pot-belly Bilateral alopecia ผิวหนังหนา Calcinosis cutis Glucose 135 mg/dL UCCR สูง',q:'Diagnostic test ที่ดีที่สุดเพื่อยืนยัน?',opts:['ACTH stimulation test','Low-dose DST (LDDST)','Urine cortisol:creatinine ratio (UCCR)','Abdominal ultrasound'],ans:1,exp:'LDDST = Gold standard สำหรับ Hyperadrenocorticism ใน dogs แยก PDH กับ AT ได้ UCCR ใช้ Screen เท่านั้น'},
+{sp:'🐕',chief:'เดินเซ กล้ามเนื้ออ่อนแรง',body:'สุนัข Labrador 5 ปี เดินเซ Progressive ataxia 3 สัปดาห์ ขาหลังอ่อนแรง Deep pain กลาง Back T13-L2 MRI: IVDD type II T13-L2 Cord compression',q:'Treatment สำหรับ Grade IV (No DPP)?',opts:['Medical management เท่านั้น','Surgical decompression ภายใน 48 ชั่วโมง','Physical therapy เริ่มทันที','Corticosteroids high dose'],ans:1,exp:'Grade IV IVDD (Para/Tetraplegia with DPP intact) → Surgical decompression ภายใน 24–48h ให้โอกาสฟื้นตัวสูงสุด ถ้าช้า prognosis แย่ลง'},
+// ── Emergency ──
+{sp:'🐕',chief:'กลืนกระดูกไก่ เจ็บคอ',body:'สุนัข mixed 3 ปี กลืนกระดูกไก่ 2 ชั่วโมงก่อน ลำบากกลืน น้ำลายไหล ไอ hypersalivation X-ray cervical lateral: Radio-opaque FB ที่ pharynx/proximal esophagus',q:'แนวทางการรักษา?',opts:['Emetic drug ให้อาเจียน','Endoscopy ดึง FB ออก','Surgery ทันที','Barium swallow ก่อน'],ans:1,exp:'Esophageal FB = Endoscopy First เพื่อ visualize และดึงออก ถ้าไม่ได้จึงทำ Esophagotomy ห้ามให้ Emetics เสี่ยง esophageal laceration'},
+{sp:'🐕',chief:'กินยากำจัดหนู',body:'สุนัข 10 kg กิน Brodifacoum (anticoagulant rodenticide) เมื่อ 3 วันก่อน ขณะนี้มีเลือดออกปาก เหงือก จมูก ปัสสาวะมีเลือด PT/APTT ยาวมาก',q:'Treatment ที่จำเป็น?',opts:['Vitamin K1 SC + transfusion','Vitamin K3 IV stat','Atropine IV + O2','Plasma transfusion เดียว'],ans:0,exp:'Anticoagulant rodenticide = Vitamin K1 (ไม่ใช่ K3) 2.5–5 mg/kg PO/SC นาน 4–6 สัปดาห์ + Fresh frozen plasma ถ้า active bleeding'},
+{sp:'🐈',chief:'ขาหลังเย็น เป็นอัมพาต',body:'แมวเพศผู้ 10 ปี ขาหลังทั้งสองอ่อนแรงฉับพลัน เย็น ปลายเล็บ cyanosis ไม่มี pulse femoral ปวดร้องมาก Echo: HCM + Left atrial enlargement',q:'Diagnosis ที่ถูกต้อง?',opts:['Lumbar disc herniation','Aortic thromboembolism (ATE)','Hip dysplasia bilateral','Spinal tumor'],ans:1,exp:'Feline ATE: Saddle thrombus ที่ aortic bifurcation ขาหลังเย็น+ไม่มี femoral pulse+ปวด+HCM background = Classic presentation'},
+{sp:'🐕',chief:'กินสารพิษ collapse',body:'สุนัข 12 kg กิน Metaldehyde (ยาฆ่าหอยทาก) 1 ชั่วโมงก่อน ชัก รุนแรง hyperthermia BT 41.5°C tachycardia salivation',q:'Treatment เร่งด่วนที่สุด?',opts:['Activated charcoal ก่อน','ลดอุณหภูมิ + Diazepam IV','Induce emesis','Antidote specific'],ans:1,exp:'Metaldehyde poisoning: ชัก + Hyperthermia เป็น Life-threatening → ลด BT (cool water, fan) + Diazepam/Phenobarbital ควบคุมชัก ไม่มี Specific antidote'},
+{sp:'🐕',chief:'ซีดมาก collapse อ่อนแรง',body:'สุนัข Golden Retriever 8 ปี collapse ฉับพลัน เยื่อเมือกซีดขาว CRT 4 วินาที HR 160 bpm Weak pulse PCV 12% TP 3.2 g/dL Abdomen: fluid wave Ultrasound: Free fluid ม้ามโต mass',q:'แนวทางการรักษา?',opts:['Blood transfusion แล้ว Monitor','Emergency splenectomy หลัง stabilize','IV fluid aggressive','Chemotherapy ทันที'],ans:1,exp:'Splenic hemangiosarcoma ที่แตก = Hemoabdomen life-threatening → Stabilize ด้วย IV fluid + pRBC แล้ว Emergency splenectomy'},
+// ── สัตว์ใหญ่ ──
+{sp:'🐄',chief:'ขาหลังอ่อนแรง นอนไม่ลุก หลังคลอด 6 ชั่วโมง',body:'โค นม Holstein เพศเมีย 5 ปี คลอดลูกเมื่อ 6 ชั่วโมงก่อน นอนไม่ลุก กล้ามเนื้ออ่อนแรง หัวเหวียงไปด้านหลัง Calcium serum 4.2 mg/dL (ref 8.5–10.5)',q:'Diagnosis และ Treatment?',opts:['Hypomagnesemia — Mg sulfate IV','Milk fever — Ca gluconate IV slow','DOWNER syndrome — ประคับประคอง','Hypoglycemia — Dextrose IV'],ans:1,exp:'Milk fever (Parturient paresis): Post-partum Hypocalcemia ใน dairy cow → Calcium borogluconate 400–800 mL IV slow (monitor heart) ห้ามให้เร็วเสี่ยง Cardiac arrest'},
+{sp:'🐄',chief:'ท้องด้านซ้ายใหญ่ผิดปกติ',body:'โค นม Friesian 7 ปี หลังคลอด 2 สัปดาห์ นมลด กินลด ท้องด้านซ้ายใหญ่ Tinkling sound auscultation ซ้าย percussion บน left paralumbar fossa',q:'Diagnosis?',opts:['Rumen bloat free gas','LDA (Left Displaced Abomasum)','RDA (Right Displaced Abomasum)','Vagus indigestion'],ans:1,exp:'LDA: Ping ด้านซ้าย + Post-partum + Tinkling sound = LDA ยืนยัน ผ่าตัด Toggle pin/Right flank omentopexy'},
+{sp:'🐷',chief:'ลูกหมูตายและแท้ง',body:'ฟาร์มสุกร แม่พันธุ์ หลายตัวมีปัญหา: ลูกตายในครรภ์ Mummified fetus แท้งระยะปลาย ลูกที่เกิดมา Weak ตายใน 24h พ่อพันธุ์ไม่ Fertile ชั่วคราว',q:'Diagnosis ที่น่าจะเป็นที่สุด?',opts:['Porcine Parvovirus (SMEDI)','ASF','PRRS','PED'],ans:0,exp:'Porcine Parvovirus = SMEDI: Stillbirth Mummification Embryonic Death Infertility แม่ไม่มีอาการ ลูกตาย fetus ใน uterus'},
+{sp:'🐄',chief:'เดินกะเผลก กีบเจ็บ',body:'โค นม 6 ปี น้ำหนัก 600 kg กินอาหารลด เดินกะเผลก ขาหน้าทั้ง 2 ข้าง กีบบวมแดงร้อน ก้าวสั้น เพิ่งเปลี่ยน feed เป็นข้าวโพดมากขึ้น 2 สัปดาห์ก่อน',q:'Diagnosis และ predisposing factor?',opts:['Foot rot — Dichelobacter','Laminitis — High carbohydrate diet','White line disease — trauma','Solar ulcer — poor claw trimming'],ans:1,exp:'Laminitis ใน dairy: High starch/Carbohydrate → Rumen acidosis → Laminitis ลดอาหารเข้มข้น เพิ่ม Hay Biotin supplement'},
+// ── Internal Medicine ──
+{sp:'🐕',chief:'ดื่มน้ำมาก ปัสสาวะมาก',body:'สุนัข French Bulldog เพศเมีย 8 ปี ไม่ได้ทำหมัน PU/PD 3 สัปดาห์ กลิ่นช่องคลอดแรง เพิ่งผ่านช่วง Estrus ล่าสุด CBC: Leukocytosis 35,000 Neutrophilia Ultrasound: ผนังมดลูกหนา ของเหลวใน Uterus',q:'Diagnosis และ Treatment?',opts:['UTI — Antibiotics 2 สัปดาห์','Open pyometra — OHE ฉุกเฉิน + Antibiotics','Closed pyometra — Prostaglandins','Diabetes insipidus — Desmopressin'],ans:1,exp:'Pyometra: Intact female + Post-estrus + PU/PD + Leukocytosis + Uterine fluid = Pyometra ต้อง OHE เร่งด่วน Open type ปลอดภัยกว่า Closed'},
+{sp:'🐈',chief:'ตัวเหลือง อ่อนแรง ไม่กิน 1 สัปดาห์',body:'แมวเพศผู้ 5 ปี น้ำหนัก 7 kg (เดิม 8.5 kg) ไม่กินอาหาร 7 วันจากความเครียดที่บ้าน ตัวเหลือง ALT 850 U/L ALP 320 Bilirubin 6.5 mg/dL Ultrasound: diffuse hyperechoic liver',q:'Diagnosis และ Treatment หลัก?',opts:['Feline infectious hepatitis — Antiviral','Hepatic lipidosis — Feeding tube ด่วน','Cholangiohepatitis — Antibiotics','Liver neoplasia — Chemotherapy'],ans:1,exp:'Feline Hepatic Lipidosis: อดอาหาร >2-3 วัน + ตัวเหลือง + Hyperechoic liver = ต้อง Esophagostomy/NJ tube ให้ High-protein diet ทันที'},
+{sp:'🐕',chief:'กระดูกอ่อน ขาโก่ง ฟันหลุดง่าย',body:'สุนัข German Shepherd 3 ปี มีโรคไตเรื้อรัง Creatinine 4.5 mg/dL BUN 85 Phosphorus 8.2 mg/dL (สูง) Calcium 8.1 mg/dL (ต่ำ) กระดูก X-ray: Osteopenia กรามบวมนุ่ม "Rubber jaw"',q:'Pathophysiology หลักของอาการนี้?',opts:['Primary hyperparathyroidism','Renal secondary hyperparathyroidism','Nutritional secondary hyperparathyroidism','Hypoparathyroidism'],ans:1,exp:'CKD → Phosphorus retention → ลด Ca → ↑PTH (Renal 2° HPT) → Bone resorption → Rubber jaw รักษา: Phosphate binders, Calcitriol'},
+{sp:'🐕',chief:'ซีดฉับพลัน ตัวเหลือง',body:'สุนัข Cocker Spaniel เพศเมีย 4 ปี ซีดฉับพลัน Icterus PCV 12% Spherocytes ใน PBS Positive Coombs test Bilirubinuria HR 180 bpm ไม่มีประวัติสัมผัสสารพิษ',q:'Diagnosis และ Treatment?',opts:['Iron deficiency anemia — Fe supplement','IMHA — Prednisolone + supportive','Microangiopathic hemolysis — treat cause','Pyruvate kinase deficiency — Splenectomy'],ans:1,exp:'IMHA (Immune-mediated Hemolytic Anemia): Spherocytes + Positive Coombs = IMHA ต้อง Immunosuppressive (Prednisolone 2 mg/kg/day) ± Blood transfusion'},
+{sp:'🐕',chief:'ไอเรื้อรัง หัวใจโต',body:'สุนัข CKCS เพศผู้ 11 ปี ไอตอนกลางคืน หายใจหอบ Grade 5/6 systolic murmur L apex Echocardiography: LA:Ao ratio 2.0 LA enlarged LV eccentric hypertrophy EF 48%',q:'Stage ตาม ACVIM guideline และ Treatment?',opts:['Stage B1 — Vet check เท่านั้น','Stage C CHF — Furosemide + Pimobendan + ACEI','Stage B2 — Pimobendan alone','Stage D refractory — Spironolactone เดียว'],ans:1,exp:'Stage C CHF (LA:Ao>1.7 + Clinical signs): Furosemide ลด congestion + Pimobendan เพิ่ม cardiac output + Enalapril/Benazepril ลด afterload'},
+{sp:'🐕',chief:'ข้อบวม ปวด ไม่ยอมเดิน',body:'สุนัข Doberman 2 ปี ไข้ 40.5°C ข้อหลายข้อบวมแดงร้อน ปวดมาก WBC 28,000 Joint tap: ของเหลวขุ่น Neutrophils เด่น ไม่พบ bacterial growth แต่ Brucella titer ลบ',q:'Diagnosis ที่น่าจะเป็น?',opts:['Septic polyarthritis','Immune-mediated polyarthritis (IMPA)','Systemic lupus erythematosus','Lyme disease'],ans:1,exp:'IMPA: Non-infective polyarthritis หลายข้อ ไข้ Neutrophilic joint fluid sterile = IMPA รักษาด้วย Immunosuppressive therapy'},
+// ── Exotic ──
+{sp:'🐰',chief:'ท้องอืด กินน้อย นิ่ง',body:'กระต่าย Rex เพศเมีย 3 ปี กินน้อยลง 48 ชั่วโมง ท้องอืด gas-filled loops ใน X-ray ไม่มีขี้ 24 ชั่วโมง BT 38.1°C',q:'แนวทางการรักษา GI Stasis?',opts:['NPO รอให้ระบบทำงานเอง','Force feed Critical Care + IV/SQ fluids + Pain + Motility drug','Surgery ทันที','Antibiotics เท่านั้น'],ans:1,exp:'GI Stasis ในกระต่าย: Pain control (Meloxicam) + Fluid therapy + Critical Care syringes + Metoclopramide/Cisapride ห้าม NPO เด็ดขาด'},
+{sp:'🦜',chief:'ขนหลุดร่วง ขน frayed',body:'นกแก้ว African Grey 5 ปี ขนร่วงเรื้อรัง ขนหัก frayed ก่อนออกจากฝัก CBC: Leukopenia PCR positive',q:'Diagnosis?',opts:['Feather destructive behavior','PBFD (Psittacine Beak and Feather Disease)','Nutritional deficiency','Mites infestation'],ans:1,exp:'PBFD = Circovirus: ขนผิดปกติ Leukopenia + PCR positive = ยืนยัน ไม่มียารักษา Supportive care กักโรคจากนกอื่น'},
+{sp:'🐢',chief:'กระดองอ่อน ขาอ่อนแรง',body:'เต่า Box turtle 3 ปี เลี้ยงในห้องไม่มีไฟ UVB กระดองอ่อน nubby ขาเดินลำบาก Ca serum 4.1 mg/dL (ต่ำ) X-ray: Thin cortices กระดูก',q:'Diagnosis และ Prevention?',opts:['Bacterial osteomyelitis — Antibiotics','MBD — Calcium + Vitamin D3 + UVB light','Hypovitaminosis A — Vitamin A injection','Shell rot — Topical antiseptic'],ans:1,exp:'MBD (Metabolic Bone Disease): ขาด UVB → ไม่สังเคราะห์ Vit D3 → ดูด Ca ไม่ได้ → กระดูก/กระดองอ่อน แก้: UVB lamp 12h/day + Calcium dusting + Gut loading'},
+{sp:'🦦',chief:'Vulvar swelling ขนร่วง',body:'Ferret เพศเมีย 5 ปี ขนร่วงสมมาตร Bilateral symmetric alopecia Vulvar swelling ไม่ได้ Intact แต่ทำหมันแล้ว ABD ultrasound: Adrenal gland โต bilateral',q:'Diagnosis?',opts:['Ovarian remnant syndrome','Ferret adrenal disease','Cushing\'s disease','Hyperaldosteronism'],ans:1,exp:'Ferret Adrenal Disease: พบมากมากสุดในเฟอร์เรตอายุ>3ปี Alopecia symmetric + Vulvar swelling + ต่อม adrenal โต รักษา Surgical adrenalectomy หรือ Deslorelin implant'},
+// ── Pharmacology Cases ──
+{sp:'🐕',chief:'ชัก หลังได้รับยา',body:'สุนัข Border Collie 20 kg ได้รับ Ivermectin 0.4 mg/kg SC สำหรับ demodicosis จากคลินิกอื่น 2 ชั่วโมงก่อน ตอนนี้ Ataxia ชัก Hypersalivation ไม่รู้สึกตัว',q:'กลไกพิษและการรักษา?',opts:['Ivermectin ปกติ overdose — Vitamin K','MDR1 mutation → ระดับ Ivermectin ใน CNS สูง — Lipid emulsion + Supportive','Seizure from unrelated cause','Ivermectin-induced nephrotoxicity'],ans:1,exp:'Collie/MDR1 breeds: Ivermectin ผ่าน BBB ได้เพราะขาด P-glycoprotein รักษา: Physostigmine IV, Lipid emulsion 20%, Supportive ยาวนานหลายวัน'},
+{sp:'🐈',chief:'อาเจียน ซีด ตัวเหลือง หลังกินยาแก้ปวด',body:'แมวเพศเมีย 3 ปี เจ้าของให้ Paracetamol (Acetaminophen) 500 mg 1 เม็ด 3 ชั่วโมงก่อน ตอนนี้ อาเจียน Methemoglobinemia Brown mucous membrane Heinz body ใน RBC',q:'Antidote และ Treatment?',opts:['Vitamin K1 IV','N-Acetylcysteine IV + Ascorbic acid + O2','Naloxone IV','Activated charcoal เท่านั้น'],ans:1,exp:'Paracetamol poisoning in cats: แมวขาด Glucuronyl transferase → NAPQI สะสม → Liver necrosis + Methemoglobin รักษา N-Acetylcysteine 70 mg/kg IV q6h + Ascorbic acid'},
+{sp:'🐕',chief:'เป็นอัมพาตหลังได้รับยา flea',body:'สุนัข Greyhound 30 kg เจ้าของใส่ Permethrin topical (flea treatment สำหรับสุนัข) Fasciculation clonus hyperthermia tachycardia hypertension',q:'Treatment?',opts:['Atropine IV ลด secretions','Wash off + Methocarbamol IV + Diazepam + Cooling','Vitamin K SC','Neostigmine IV'],ans:1,exp:'Permethrin toxicity ใน dogs (ไม่ใช่แมว): Na channel blocker → Tremors seizures ล้างออก + Methocarbamol (muscle relaxant) + Benzodiazepine + ลด BT'},
+// ── Radiology/Diagnosis ──
+{sp:'🐕',chief:'X-ray ผิดปกติ',body:'สุนัข Dachshund 6 ปี หลังโค้ง เดินผิดปกติ Lateral thoracolumbar radiograph พบ Calcified disc material ที่ T12-T13 Narrowing disc space Myelogram: Cord compression',q:'Classification ของ disc disease?',opts:['Hansen Type II — Fibrous extrusion','Hansen Type I — Chondroid extrusion ใน Chondrodystrophic breeds','Congenital spinal stenosis','Discospondylitis'],ans:1,exp:'Hansen Type I: Calcified nucleus pulposus extrudes through Annulus fibrosus พบใน Chondrodystrophic breeds (Dachshund, Beagle) อาการเฉียบพลัน ต้อง Decompressive surgery'},
+{sp:'🐈',chief:'Echocardiography ผิดปกติ',body:'แมว Maine Coon เพศผู้ 6 ปี ไม่มีอาการ Echo: Septal thickness 7.5 mm (ref <6mm) LV free wall thickness 7.2 mm SAM (Systolic Anterior Motion) of mitral valve Left atrial mildly enlarged',q:'Diagnosis และ Contraindicated drug?',opts:['DCM — ห้าม Atenolol','HCM — ห้าม Pimobendan','Pericardial effusion — ห้าม Furosemide','MVD — ห้าม Digoxin'],ans:1,exp:'HCM: Hypertrophic walls + SAM + normal/increased EF = HCM ห้าม Pimobendan (Positive inotrope เพิ่ม outflow obstruction) ใช้ Diltiazem/Atenolol ลด HR'},
+// ── Dermatology ──
+{sp:'🐕',chief:'คันรุนแรง ผิวหนังอักเสบ',body:'สุนัข West Highland White Terrier 3 ปี คันมาก Pruritic score 8/10 ผิวหนัง erythema papule pustule ระหว่างนิ้ว รอบปาก รักแร้ ขาหนีบ Intradermal test positive HDM Grass pollen',q:'Diagnosis และ Treatment ระยะยาว?',opts:['Food allergy — Hydrolyzed diet','Canine Atopic Dermatitis — Allergen-specific immunotherapy + Oclacitinib','Scabies — Ivermectin','Contact dermatitis — Remove allergen'],ans:1,exp:'CAD (Canine Atopic Dermatitis): Positive IDT + Distribution pattern = CAD รักษา Allergen-specific immunotherapy + Oclacitinib/Lokivetmab ระยะยาว'},
+{sp:'🐕',chief:'ขนร่วงวนเป็นวง ไม่คัน',body:'สุนัข Labrador 4 ปี ขนร่วงสมมาตรทั้ง 2 ข้าง Bilateral non-pruritic alopecia ผิวหนัง hyperpigmented ลิ้นหนา Cold intolerance น้ำหนักเพิ่ม TT4 0.5 µg/dL (ref 1.5–3.5)',q:'Diagnosis?',opts:['Hyperadrenocorticism','Hypothyroidism','Seasonal flank alopecia','Demodicosis'],ans:1,exp:'Hypothyroidism: Bilateral symmetric alopecia + Hyperpigmentation + Cold intolerance + Low T4 = ยืนยัน รักษา Levothyroxine ตลอดชีวิต'},
+{sp:'🐈',chief:'แผลที่ริมฝีปาก ไม่หายหลายเดือน',body:'แมวเพศเมีย 5 ปี แผลคล้าย Ulcer ที่ upper lip ไม่เจ็บปวด เรื้อรัง 3 เดือน ลิ้นมี plaques ผิวหนังบริเวณท้อง linear granuloma CBC ปกติ Culture ลบ',q:'Diagnosis?',opts:['Squamous cell carcinoma','Eosinophilic granuloma complex (EGC)','Bacterial dermatitis','Pemphigus foliaceus'],ans:1,exp:'EGC ในแมว: Indolent ulcer + Linear granuloma + Eosinophilic plaques = EGC Complex รักษา Corticosteroids, Cyclosporine ค้นหา underlying trigger'},
+// ── Neurology ──
+{sp:'🐕',chief:'ศีรษะเอียง ตาสั่น',body:'สุนัข Cocker Spaniel 9 ปี Head tilt to the right Nystagmus horizontal fast phase to the left เดินเวียน Roll ไปทางขวา ไม่มี CN deficits อื่น onset เฉียบพลัน',q:'Localization ของ lesion?',opts:['Cerebellum','Peripheral vestibular (right side)','Central vestibular','Cerebellar infarction'],ans:1,exp:'Peripheral vestibular: Head tilt + Horizontal nystagmus fast phase AWAY from lesion + no other CN deficits + ไม่มี Intention tremor = Peripheral (otitis interna หรือ Idiopathic)'},
+{sp:'🐕',chief:'ชักเฉพาะขาข้างเดียว',body:'สุนัข Golden Retriever 7 ปี ชักเฉพาะขาหน้าซ้าย Focal seizure ต่อเนื่อง ไม่หมดสติ MRI brain: Lesion ที่ right parietal cortex ลักษณะ Ring-enhancing mass-like',q:'Differential diagnosis หลัก?',opts:['Idiopathic epilepsy','Meningioma vs. Glioma vs. metastasis','Granulomatous meningoencephalitis','Hydrocephalus'],ans:1,exp:'Focal seizure + MRI ring-enhancing mass ใน older dog = Brain neoplasia (Meningioma, Glioma) ต้อง CSF tap + Histopathology แยก GME ด้วย'},
+// ── Reproductive ──
+{sp:'🐕',chief:'แท้งลูกอายุครรภ์ 7 สัปดาห์',body:'สุนัข Labrador เพศเมีย 4 ปี แท้งลูก 2 ครอกติดต่อกัน Brucella titer positive Rose Bengal 1:32 Vaginal culture: Gram-negative coccobacilli',q:'Diagnosis, Treatment และ Zoonotic risk?',opts:['Leptospirosis — Doxycycline','Brucella canis — Castrate/Spay + Doxycycline + Zoonosis','Fetal malformation — Supportive','Progesterone deficiency — Supplements'],ans:1,exp:'Brucella canis: Reproductive failure + Positive titer = Brucellosis ควร Castrate/Spay + Doxycycline + Rifampicin หลายเดือน เป็น ZOONOSIS แจ้งเจ้าของ!'},
+{sp:'🐈',chief:'ร้องหวีดตลอดเวลา กลิ้ง',body:'แมวเพศเมีย 1 ปี ไม่ได้ทำหมัน ร้องดังมาก ตลอด 24 ชั่วโมง กลิ้ง ยกก้น เจ้าของต้องการ terminate heat',q:'ยาหยุด Estrus ที่ถูกต้องและปลอดภัย?',opts:['Megestrol acetate ระยะยาว','Deslorelin implant (GnRH agonist)','Testosterone injection','Progestin ฉีดซ้ำ'],ans:1,exp:'Deslorelin implant: GnRH superagonist down-regulate → Suppresses reproductive cycle ปลอดภัยกว่า Progestin (เสี่ยง Pyometra, Diabetes) OHE คือทางเลือกดีที่สุด'},
+// ── Ophthalmology ──
+{sp:'🐕',chief:'ตาแดง น้ำตาไหล ปิดตา',body:'สุนัข Bichon Frise 2 ปี ตาขวาแดงมาก blepharospasm photophobia น้ำตาไหล Fluorescein stain: Positive uptake แผล dendritic pattern ที่กระจกตา',q:'Diagnosis?',opts:['Bacterial corneal ulcer','Canine Herpesvirus keratitis (dendritic ulcer)','Foreign body keratitis','KCS (Dry eye)'],ans:1,exp:'Dendritic corneal ulcer = Herpesvirus keratitis! Pattern branching = pathognomonic ใช้ Antiviral ophthalmic (Cidofovir/Idoxuridine) ห้าม Steroids'},
+{sp:'🐕',chief:'ตาโปน เจ็บมาก',body:'สุนัข Shiba Inu 6 ปี ตาโปนออกมาฉับพลัน Buphthalmos (ลูกตาโต) เจ็บปวดมาก Intraocular pressure 65 mmHg (ref 10–25) Corneal edema Fixed dilated pupil',q:'Diagnosis และ Treatment เร่งด่วน?',opts:['Uveitis — Steroid','Acute Glaucoma — Mannitol IV + Topical antiglaucoma','Corneal ulcer — Antibiotic drops','Lens luxation — Wait and see'],ans:1,exp:'Acute Glaucoma: IOP 65 + Buphthalmos + Fixed pupil = Emergency! Mannitol 20% 1–2 g/kg IV slow + Dorzolamide/Timolol topical ลด IOP ก่อน vision loss'},
+{sp:'🐕',chief:'ตาแห้ง ขี้ตาหนาเหนียว',body:'สุนัข Bulldog 5 ปี ตาทั้งสองข้าง ขี้ตาสีเหลืองเขียวหนา corneal opacity Schirmer Tear Test (STT) 4 mm/min (ref >15 mm)',q:'Diagnosis และ Treatment?',opts:['Conjunctivitis — Antibiotics','KCS — Cyclosporine 0.2% + Tacrolimus ophthalmic','Uveitis — Steroid drops','Distichiasis — Cryotherapy'],ans:1,exp:'KCS (Keratoconjunctivitis Sicca): STT <10 mm = KCS รักษา Cyclosporine 0.2% oint หรือ Tacrolimus 0.02% ลด immune-mediated destruction ของ lacrimal gland'},
+// ── Oncology ──
+{sp:'🐕',chief:'ก้อนที่ผิวหนัง Boxer',body:'สุนัข Boxer เพศผู้ 8 ปี ก้อนที่ผิวหนัง 3 cm หลังซ้าย เนื้อนุ่ม FNA: round cells ขนาดใหญ่ cytoplasmic granules eosinophilic Giemsa stain',q:'Diagnosis?',opts:['Lipoma','Mast cell tumor (Patnaik grade II–III)','Histiocytoma','Soft tissue sarcoma'],ans:1,exp:'MCT ใน Boxer: Round cells + Eosinophilic cytoplasmic granules (Histamine) = Mast cell tumor Staging, Wide excision + Histopathology Grading ด้วย Patnaik/Kiupel'},
+{sp:'🐕',chief:'กระดูกขาหน้าบวม เจ็บปวดมาก',body:'สุนัข German Shepherd 9 ปี ขาหน้าซ้ายบวมบริเวณ distal radius เจ็บมาก Pathologic fracture Aggressive bone lesion X-ray: Sunburst pattern, Codman\'s triangle Chest X-ray: Pulmonary nodules multiple',q:'Diagnosis และ Prognosis?',opts:['Bacterial osteomyelitis','Osteosarcoma (OSA) with pulmonary metastasis — Guarded prognosis','Giant cell tumor','Bone cyst'],ans:1,exp:'OSA: Distal radius + Sunburst + Codman\'s triangle + Pulmonary mets = Osteosarcoma ที่แพร่แล้ว Median survival Amputation + Carboplatin ≈ 10–12 เดือน'},
+{sp:'🐕',chief:'ปัสสาวะเป็นเลือด น้ำหนักลด',body:'สุนัข Scottish Terrier เพศเมีย 10 ปี Hematuria เรื้อรัง 3 เดือน น้ำหนักลด Ultrasound: irregular mass ที่ bladder trigone Cystoscopy: papillary mass Transitional epithelium biopsy',q:'Diagnosis และ Treatment?',opts:['Bladder polyp — Cystotomy excision','TCC (Urothelial carcinoma) — Piroxicam + Mitoxantrone','Chronic cystitis — Long-term antibiotics','Bladder hemangioma — Laser ablation'],ans:1,exp:'TCC: Trigone location + Scottish Terrier predisposition + Papillary transitional epithelium = TCC Piroxicam (NSAID) มี anti-tumor effect + Chemo ลด tumor size'},
+// ── Extra Hard Cases ──
+{sp:'🐕',chief:'ตัวสั่น ซึมเศร้า หลังฉีดยา',body:'สุนัข 8 kg ได้รับ Acepromazine 0.05 mg/kg IM เพื่อ sedation แต่ตอนนี้ BP 60/40 HR 160 bpm Pale mucous CRT 4 sec Weak pulse ภายใน 20 นาที',q:'Acepromazine ทำให้เกิด Hypotension ผ่านกลไกใด?',opts:['Direct cardiac depression','Alpha-1 adrenergic blockade → Vasodilation','Beta-1 blockade → Bradycardia','Direct renal vasodilation'],ans:1,exp:'Acepromazine: Alpha-1 antagonist → Peripheral vasodilation → ความดันตก รักษา IV fluids แก้ Hypotension ห้ามให้ Epinephrine (Beta effect unopposed → worse) ให้ Norepinephrine/Phenylephrine'},
+{sp:'🐄',chief:'ท้องเสียรุนแรง ลูกโค 5 วัน',body:'ลูกโค Holstein 5 วัน ท้องเสียสีเหลือง dehydration 8% ไม่ยืน acidosis pH 7.12 HCO3 10 mEq/L Fecal ELISA: Rotavirus positive Cryptosporidium positive',q:'Fluid therapy ที่ถูกต้อง?',opts:['Oral rehydration only','IV Lactated Ringer\'s + NaHCO3 + Dextrose + Continue milk feeding','IV NSS เท่านั้น','NPO + IV fluids only'],ans:1,exp:'Neonatal calf scours + Metabolic acidosis: IV LRS + NaHCO3 (1-2 mEq/kg/hr) แก้ acidosis + Dextrose ป้องกัน hypoglycemia สำคัญ: Continue milk feeding ห้าม NPO'},
+{sp:'🐕',chief:'ค่าเลือดผิดปกติมาก',body:'สุนัข 5 ปี CBC: PCV 18% MCV 50 fL (Microcytic) MCHC 28% (Hypochromic) Reticulocytes 3.2% (สูง) Serum iron ต่ำ TIBC สูง Occult blood stool positive',q:'Diagnosis ที่ถูกต้อง?',opts:['Hemolytic anemia IMHA','Iron deficiency anemia (Blood loss)','Anemia of chronic disease','B12 deficiency anemia'],ans:1,exp:'Iron deficiency: Microcytic hypochromic regenerative anemia + Low serum iron + High TIBC + Occult blood = Blood loss anemia (GI bleeding) ค้นหาสาเหตุ bleeding'},
+{sp:'🐕',chief:'ผล Lab ผิดปกติทั้ง panel',body:'สุนัข 7 ปี ผล Lab: Na 128 mEq/L (↓), K 6.8 mEq/L (↑), Glucose 55 mg/dL (↓), BUN 40 mg/dL (↑), Na:K ratio 18:1, ACTH stim test: Pre 1.2, Post 1.5 µg/dL',q:'Diagnosis?',opts:['Chronic renal failure','Hypoadrenocorticism (Addison\'s disease)','Hyperaldosteronism','SIADH'],ans:1,exp:'Addison: Na:K ratio <27 + Hyponatremia + Hyperkalemia + Hypoglycemia + Blunted ACTH stim = Hypoadrenocorticism รักษา Prednisolone + Fludrocortisone (หรือ DOCP)'},
+// more
+{sp:'🐕',chief:'Polyuria หลัง ACTH stimulation',body:'สุนัข Dachshund ACTH stim: Pre 2.1, Post 22.4 µg/dL (Exaggerated response) Abdominal US: Both adrenal glands enlarged symmetrically cortex thickened',q:'PDH vs. AT กรณีนี้เป็นอะไร?',opts:['Adrenal tumor (AT) unilateral','PDH (Pituitary dependent) bilateral adrenal hyperplasia','Iatrogenic from steroids','Bilateral adrenal tumor'],ans:1,exp:'PDH (Pituitary): Bilateral adrenal enlargement + Exaggerated ACTH stim = PDH ใน 85% ของ canine HAC รักษา Trilostane หรือ Mitotane'},
+{sp:'🐈',chief:'อาเจียน 2 สัปดาห์ น้ำหนักลด',body:'แมว DSH 12 ปี อาเจียน chronic 2 สัปดาห์ น้ำหนักลด 1 kg ใน 1 เดือน Hematocrit 28% hypoproteinemia Endoscopy biopsy: Lymphocytic-plasmacytic infiltration ทั้ง duodenum',q:'Diagnosis?',opts:['Feline lymphoma GI form','IBD feline (Lymphocytic-plasmacytic enteritis)','Helicobacter gastritis','Alimentary SCC'],ans:1,exp:'Feline IBD LPE: Chronic vomiting + Weight loss + LP infiltration = IBD รักษา Prednisolone + Chlorambucil (+B12 หาก Cobalamin ต่ำ) แยกจาก GI Lymphoma ด้วย Clonality test'},
+{sp:'🐕',chief:'Hypercalcemia ค้นหาสาเหตุ',body:'สุนัข Golden Retriever 9 ปี Ca 14.2 mg/dL P 2.8 iCa สูง PTH ต่ำ PTHrP สูง Lymph nodes ทั้งตัวโต Thoracic X-ray: Sternal LN enlarged Cytology: Large lymphocytes',q:'Hypercalcemia of malignancy จากอะไร?',opts:['Primary hyperparathyroidism','Multicentric lymphoma (PTHrP-mediated)','Vitamin D toxicity','Addison\'s disease'],ans:1,exp:'Hypercalcemia of malignancy: Low PTH + High PTHrP + Lymphadenopathy = Lymphoma-mediated hypercalcemia (PTHrP) รักษา Lymphoma ด้วย CHOP protocol'},
+{sp:'🐕',chief:'ปัสสาวะหยดไม่หยุด',body:'สุนัข German Shepherd เพศเมีย 7 ปี ทำหมันแล้ว ปัสสาวะเล็ด incontinence ระหว่างนอนหลับ ตรวจ neurological normal cystoscopy: Urethral sphincter mechanism incompetence',q:'Treatment ที่มีประสิทธิผลดีที่สุด?',opts:['Antibiotics สำหรับ UTI','Phenylpropanolamine (PPA) Alpha-1 agonist','Bethanechol agonist','Surgical colposuspension'],ans:1,exp:'Urethral sphincter mechanism incompetence (USMI) หลัง OHE: PPA (Alpha-1 agonist เพิ่ม urethral tone) efficacy >80% ใน dogs หรือ Estriol'},
+{sp:'🐈',chief:'Abdominal mass ในแมวสูงอายุ',body:'แมว DSH เพศเมีย 15 ปี น้ำหนักลด ท้องโต Ultrasound: Mesenteric mass 8x6 cm echo-poor irregular margin Jejunal wall thickening diffuse FNA: Large granular lymphocytes',q:'Most likely diagnosis?',opts:['IBD','Alimentary lymphoma — Large cell','FIP (Wet form)','Carcinoid tumor'],ans:1,exp:'Large cell GI lymphoma (Feline): Large granular lymphocytes + Mesenteric mass + Diffuse wall thickening = Large cell lymphoma (aggressive) Prognosis poor ≈ 1–2 เดือน'},
+{sp:'🐕',chief:'ตรวจพบ Protein ใน urine',body:'สุนัข Soft Coated Wheaten Terrier 7 ปี ตรวจประจำปี UPC 3.8 (สูงมาก) Hypoalbuminemia 1.8 g/dL Ascites mild edema Creatinine 1.3 mg/dL Biopsy: Membranoproliferative GN',q:'Diagnosis?',opts:['Prerenal azotemia','Protein-losing nephropathy (PLN)','Protein-losing enteropathy','IRIS Stage 2 CKD เท่านั้น'],ans:1,exp:'PLN: High UPC + Hypoalbuminemia + Ascites = Protein-losing nephropathy Membranoproliferative GN รักษา: Renin-angiotensin blockade, Low-protein diet, Antithrombotics'},
+{sp:'🐕',chief:'เลือดออกผิดปกติ',body:'สุนัข Doberman เพศผู้ 5 ปี เลือดออกมากหลัง spay เมื่อวาน PT 10s (ปกติ) APTT 15s (ปกติ) vWF antigen 12% (ref >70%) Buccal Mucosal Bleeding Time (BMBT) 7 min (สูง) Platelet normal',q:'Diagnosis?',opts:['Hemophilia A (Factor VIII deficiency)','von Willebrand Disease type I','DIC','Thrombocytopenia'],ans:1,exp:'vWD type I: Low vWF + Prolonged BMBT + Normal platelet count + Normal PT/APTT = vWD พบมากใน Doberman รักษา DDAVP (Desmopressin) ก่อนผ่าตัด หรือ Fresh frozen plasma'},
+];
+
+let gAll=[],gIdx=0,gNum=20,gScore=0,gCorrect=0,gTimer=null,gTimeLeft=0,gDone=false,gMode='quick';
+function showScr(id){['sHome','sCase','sResult'].forEach(s=>document.getElementById(s).classList.remove('on'));document.getElementById(id).classList.add('on');}
+function startGame(n){
+  gNum=n; gAll=[...CASES].sort(()=>Math.random()-.5).slice(0,n);
+  gIdx=0;gScore=0;gCorrect=0;gDone=false;
+  document.getElementById('hdrPts').textContent='0';
+  showScr('sCase'); renderCase();
+}
+function renderCase(){
+  if(gIdx>=gAll.length){endGame();return;}
+  const c=gAll[gIdx];
+  document.getElementById('pfill').style.width=((gIdx/gNum)*100)+'%';
+  document.getElementById('hdrQ').textContent=(gIdx+1)+'/'+gNum;
+  document.getElementById('cSpecies').textContent=c.sp;
+  document.getElementById('cId').textContent='CASE '+(gIdx+1);
+  document.getElementById('cChief').textContent=c.chief;
+  document.getElementById('cBody').innerHTML=c.body.replace(/\n/g,'<br>');
+  document.getElementById('cQuestion').textContent=c.q;
+  document.getElementById('explanation').style.display='none';
+  document.getElementById('nextBtn').style.display='none';
+  const ch=document.getElementById('choices');
+  ch.innerHTML=c.opts.map((o,i)=>`<button class="ch" onclick="pick(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+  // Timer for quick mode
+  if(gNum<=20){startTimer(30);}
+  else clearInterval(gTimer),document.getElementById('timerPill').textContent='—';
+}
+function pick(i){
+  clearInterval(gTimer);
+  const c=gAll[gIdx];
+  const btns=document.querySelectorAll('.ch');
+  btns.forEach(b=>b.disabled=true);
+  btns[i].classList.add(i===c.ans?'correct':'wrong');
+  if(i!==c.ans) btns[c.ans].classList.add('correct');
+  const timeBonus=gNum<=20?Math.max(0,Math.round(gTimeLeft/3)):0;
+  if(i===c.ans){gScore+=50+timeBonus;gCorrect++;}
+  else gScore=Math.max(0,gScore-10);
+  document.getElementById('hdrPts').textContent=gScore;
+  document.getElementById('expText').textContent=c.exp;
+  document.getElementById('explanation').style.display='block';
+  document.getElementById('nextBtn').style.display='block';
+}
+function nextCase(){gIdx++;renderCase();}
+function startTimer(s){
+  clearInterval(gTimer);gTimeLeft=s;
+  const p=document.getElementById('timerPill');
+  p.textContent='⏱ '+s+'s'; p.className='timer-pill tp-ok';
+  gTimer=setInterval(()=>{
+    gTimeLeft--;
+    p.textContent='⏱ '+gTimeLeft+'s';
+    p.className='timer-pill '+(gTimeLeft<=8?'tp-warn':'tp-ok');
+    if(gTimeLeft<=0){clearInterval(gTimer);pick(99);}
+  },1000);
+}
+function endGame(){
+  clearInterval(gTimer);
+  const pct=Math.round(gCorrect/gNum*100);
+  const e=pct>=80?'🏆':pct>=60?'🎓':pct>=40?'📖':'💀';
+  document.getElementById('resEmoji').textContent=e;
+  document.getElementById('resTitle').textContent=pct>=80?'เก่งมาก!':pct>=60?'ดีมาก!':pct>=40?'ยังพอไปได้':'ต้องอ่านเพิ่ม';
+  document.getElementById('resMsg').textContent=`${gCorrect}/${gNum} ถูก (${pct}%)`;
+  document.getElementById('rS').textContent=gScore;
+  document.getElementById('rC').textContent=gCorrect+'/'+gNum;
+  document.getElementById('rA').textContent=pct+'%';
+  showScr('sResult');
+  try{const s=JSON.parse(localStorage.getItem('vetquiz_stats')||'{}');s.games=(s.games||0)+1;s.best=Math.max(s.best||0,gScore);localStorage.setItem('vetquiz_stats',JSON.stringify(s));}catch(e){}
+}
+</script>
+</body>
+</html>

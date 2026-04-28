@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>🧩 Anatomy Flip Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--t:#0d9488;--td:#0f766e;--tl:#ccfbf1;--v:#7c3aed;--r:#e11d48;--bg:#f8fafc;--w:#fff;--sl:#1e293b;--sm:#475569;--s2:#94a3b8;--bd:#e2e8f0;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;color:var(--sl);}
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.hdr-back{background:rgba(255,255,255,.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:17px;cursor:pointer;flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:800;color:white;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.7);}
+.hdr-score{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;color:white;text-align:right;}
+/* SCREENS */
+.scr{display:none;min-height:calc(100vh - 60px);}
+.scr.on{display:block;}
+/* HOME */
+#sHome{padding:20px 16px;text-align:center;}
+.home-icon{font-size:64px;margin:20px 0 8px;}
+.home-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--v);margin-bottom:8px;}
+.home-desc{font-size:13px;color:var(--sm);line-height:1.7;margin-bottom:24px;}
+.diff-row{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.diff-btn{padding:14px;border-radius:14px;border:2px solid;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:left;transition:all .15s;}
+.diff-btn:active{transform:scale(.97);}
+.d-e{border-color:#16a34a;background:#f0fdf4;color:#14532d;}
+.d-m{border-color:#d97706;background:#fffbeb;color:#78350f;}
+.d-h{border-color:#dc2626;background:#fff1f2;color:#7f1d1d;}
+/* GAME - MATCHING */
+#sGame{padding:14px 16px;}
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.prog-bar{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;}
+.prog-fill{height:8px;background:linear-gradient(90deg,#7c3aed,#0d9488);border-radius:4px;transition:width .4s;}
+.prog-txt{font-size:11px;color:var(--s2);font-weight:700;white-space:nowrap;}
+.timer-badge{padding:4px 10px;background:#fee2e2;color:#991b1b;border-radius:100px;font-size:12px;font-weight:700;}
+.timer-badge.ok{background:#dcfce7;color:#166534;}
+.round-label{text-align:center;font-size:12px;color:var(--s2);font-weight:700;text-transform:uppercase;margin-bottom:10px;}
+/* Card grid */
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.card{background:white;border:2px solid var(--bd);border-radius:14px;padding:12px 10px;cursor:pointer;min-height:72px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;font-weight:600;line-height:1.4;transition:all .18s;user-select:none;position:relative;}
+.card:active{transform:scale(.95);}
+.card.left{border-left:4px solid #7c3aed;}
+.card.right{border-left:4px solid #0d9488;}
+.card.selected{border-color:#7c3aed;background:#faf5ff;transform:scale(1.03);}
+.card.matched{border-color:#16a34a;background:#f0fdf4;opacity:.7;pointer-events:none;}
+.card.matched::after{content:'✓';position:absolute;top:4px;right:6px;font-size:11px;color:#16a34a;font-weight:800;}
+.card.wrong{border-color:#dc2626;background:#fff1f2;animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.cat-tag{position:absolute;top:4px;left:6px;font-size:9px;background:#ede9fe;color:#6d28d9;padding:1px 5px;border-radius:100px;font-weight:700;}
+/* RESULT */
+#sResult{padding:20px 16px;text-align:center;}
+.res-emoji{font-size:64px;margin-bottom:12px;}
+.res-title{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0;}
+.stat-box{background:white;border-radius:12px;border:1px solid var(--bd);padding:12px 8px;text-align:center;}
+.stat-n{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--v);}
+.stat-l{font-size:10px;color:var(--s2);font-weight:700;text-transform:uppercase;}
+.res-btn{width:100%;padding:13px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;}
+.rb-main{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;}
+.rb-sub{background:var(--bg);color:var(--sm);border:1.5px solid var(--bd);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <button class="hdr-back" onclick="goBack()">←</button>
+  <div class="hdr-info">
+    <div class="hdr-title">🧩 Anatomy Flip Match</div>
+    <div class="hdr-sub" id="hdrSub">จับคู่คำศัพท์สัตวแพทย์</div>
+  </div>
+  <div class="hdr-score" id="hdrScore">0</div>
+</div>
+
+<!-- HOME -->
+<div id="sHome" class="scr on">
+  <div class="home-icon">🧩</div>
+  <div class="home-title">Anatomy Flash Match</div>
+  <div class="home-desc">จับคู่คำศัพท์กับความหมาย<br>100 คู่จากทุกหมวดวิชาสัตวแพทย์<br>🔥 ยิ่งตอบเร็ว ยิ่งได้คะแนนมาก</div>
+  <div class="diff-row">
+    <button class="diff-btn d-e" onclick="startGame('easy')">
+      🟢 <strong>ง่าย</strong> — ไม่มีจับเวลา, 6 คู่ต่อรอบ
+    </button>
+    <button class="diff-btn d-m" onclick="startGame('medium')">
+      🟡 <strong>กลาง</strong> — 30 วินาที/รอบ, 8 คู่ต่อรอบ
+    </button>
+    <button class="diff-btn d-h" onclick="startGame('hard')">
+      🔴 <strong>ยาก (สอบ)</strong> — 20 วินาที/รอบ, 10 คู่ต่อรอบ
+    </button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="sGame" class="scr">
+  <div class="progress-row">
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-txt" id="progTxt">0/20</div>
+    <div class="timer-badge ok" id="timerBadge">⏱ —</div>
+  </div>
+  <div class="round-label" id="roundLabel">รอบที่ 1</div>
+  <div class="card-grid" id="cardGrid"></div>
+  <div id="matchFeedback" style="text-align:center;min-height:28px;font-size:13px;font-weight:700;margin-top:8px;"></div>
+</div>
+
+<!-- RESULT -->
+<div id="sResult" class="scr">
+  <div class="res-emoji" id="resEmoji">🏆</div>
+  <div class="res-title" id="resTitle">สุดยอด!</div>
+  <div id="resMsg" style="font-size:13px;color:var(--sm);margin-bottom:8px;"></div>
+  <div class="res-stats">
+    <div class="stat-box"><div class="stat-n" id="rScore">0</div><div class="stat-l">คะแนน</div></div>
+    <div class="stat-box"><div class="stat-n" id="rPairs">0</div><div class="stat-l">คู่ถูก</div></div>
+    <div class="stat-box"><div class="stat-n" id="rTime">0s</div><div class="stat-l">เวลา</div></div>
+  </div>
+  <button class="res-btn rb-main" onclick="startGame(lastDiff)">🔄 เล่นอีกรอบ</button>
+  <button class="res-btn rb-sub" onclick="showScr('sHome')">เปลี่ยนระดับ</button>
+  <button class="res-btn rb-sub" onclick="goBack()">🏠 กลับ</button>
+</div>
+
+<script>
+// ════ DATA: 100 pairs ════
+const PAIRS=[
+// กายวิภาค
+['Femur','กระดูกต้นขา'],['Tibia','กระดูกแข้ง'],['Fibula','กระดูกน่อง'],['Humerus','กระดูกต้นแขน'],['Radius','กระดูกปลายแขนด้านนอก'],
+['Carpus','ข้อมือ'],['Tarsus','ข้อเท้า'],['Patella','ลูกสะบ้า'],['Sternum','กระดูกหน้าอก'],['Atlas','กระดูกสันหลัง C1'],
+['Axis','กระดูกสันหลัง C2'],['Cervical vertebra','กระดูกสันหลังคอ 7 ชิ้น'],['Thoracic vertebra','กระดูกสันหลังอก'],['Lumbar vertebra','กระดูกสันหลังเอว'],['Sacrum','กระดูกกระเบนเหน็บ'],
+['Left ventricle','ห้องหัวใจซ้ายล่าง ผนังหนาที่สุด'],['Mitral valve','ลิ้นหัวใจคั่น LA กับ LV'],['Tricuspid valve','ลิ้นหัวใจคั่น RA กับ RV'],['Aortic valve','ลิ้นหัวใจคั่น LV กับ Aorta'],['Pulmonary valve','ลิ้นหัวใจคั่น RV กับ Pulmonary artery'],
+// สรีรวิทยา
+['Erythropoietin','ฮอร์โมนไตกระตุ้นสร้าง RBC'],['ADH (Vasopressin)','ฮอร์โมนไตดูดน้ำกลับ'],['Aldosterone','ฮอร์โมนดูด Na+ ขับ K+'],['Cortisol','Glucocorticoid หลักของ Adrenal cortex'],['Insulin','ฮอร์โมน Beta cells ลดน้ำตาล'],
+['Glucagon','ฮอร์โมน Alpha cells เพิ่มน้ำตาล'],['T3/T4','ฮอร์โมน Thyroid เพิ่ม Metabolic rate'],['GH (Growth Hormone)','Anterior pituitary เพิ่มการเจริญ'],['LH','กระตุ้น Ovulation และ Testosterone'],['FSH','กระตุ้น Follicle development'],
+['PCV (สุนัข)','37–55% ค่าเม็ดเลือดแดงอัดแน่น'],['WBC ปกติสุนัข','6,000–17,000 cells/µL'],['Neutrophil','WBC มากที่สุดในสุนัข Granulocyte'],['Lymphocyte','WBC มากสุดในแมว Agranulocyte'],['Eosinophil','WBC เพิ่มใน Allergy/Parasite'],
+// เภสัชวิทยา
+['Beta-lactam','กลุ่ม Amoxicillin Penicillin'],['Fluoroquinolone','กลุ่ม Enrofloxacin ห้ามในสัตว์เล็ก'],['Aminoglycoside','กลุ่ม Gentamicin ระวัง Nephrotoxic'],['Macrolide','กลุ่ม Azithromycin Erythromycin'],['Metronidazole','Anaerobe + Protozoa ระวัง Neuro ถ้า overdose'],
+['Praziquantel','ยาถ่าย Tapeworm Trematode'],['Ivermectin','Antiparasitic ห้ามใน MDR1 Collie'],['Phenobarbital','Anticonvulsant ชัก เฝ้า Liver'],['Naloxone','Antidote ของ Opioid'],['Flumazenil','Antidote ของ Benzodiazepine'],
+['NSAIDs','ยับยั้ง COX ลด PG ลดปวด/ไข้'],['Corticosteroid','กด Inflammatory cascade ทุกขั้นตอน'],['Atropine','Anticholinergic แก้ Bradycardia'],['Pimobendan','Inodilator DCM/MVD ห้ามใน HCM'],['Furosemide','Loop diuretic ขับ Na K Cl'],
+// จุลชีววิทยา
+['Parvovirus canine','DNA ไม่มี Envelope ทนทาน ท้องเสียเลือด'],['Distemper virus','RNA Paramyxovirus หลายระบบ'],['FIP virus','Feline Coronavirus mutation'],['Rabies virus','Rhabdovirus RNA ติดเชื้อ CNS'],['Leptospira','Spirochete Zoonosis ทางน้ำ'],
+['Brucella canis','Gram− Rod แท้งลูก Epididymitis'],['Staphylococcus pseudintermedius','Gram+ สาเหตุ Pyoderma สุนัข'],['E. coli','Gram− Rod ท้องเสีย UTI'],['Dermatophyte','Fungus กลาก Ringworm'],['Malassezia pachydermatis','Yeast ผิวหนัง หู สุนัข'],
+// ปรสิตวิทยา
+['Dirofilaria immitis','Heartworm พาหะยุง Adult ใน Heart'],['Toxocara canis','Roundworm ลูกสุนัข Zoonosis'],['Dipylidium caninum','Tapeworm พาหะหมัด ข้าวสารในอุจจาระ'],['Demodex canis','Follicular mite ภูมิคุ้มกันบกพร่อง'],['Sarcoptes scabiei','Burrowing mite คันรุนแรง Zoonosis'],
+['Babesia canis','Protozoa RBC พาหะเห็บ Hemolysis'],['Giardia','Protozoa Fecal-oral Cyst ในน้ำ'],['Toxoplasma gondii','Protozoa Definitive host แมว Zoonosis'],['Otodectes cynotis','Ear mite สุนัข/แมว'],['Cheyletiella','Walking dandruff Zoonosis'],
+// พยาธิวิทยา
+['Apoptosis','Programmed cell death ไม่ก่อ Inflammation'],['Necrosis','Cell death ก่อ Inflammation บวมแดง'],['Hypertrophy','เซลล์ขยายใหญ่ขึ้น'],['Hyperplasia','จำนวนเซลล์เพิ่มขึ้น'],['Metaplasia','เซลล์เปลี่ยนชนิด (reversible)'],
+['Dysplasia','เซลล์ผิดรูปผิดขนาด Precancerous'],['Carcinoma','มะเร็งจาก Epithelial cells'],['Sarcoma','มะเร็งจาก Mesenchymal cells'],['Lymphoma','มะเร็ง Lymphocyte/Lymph node'],['Mast cell tumor','พบมากใน Boxer สุนัข'],
+// อายุรกรรม
+['Cushing\'s disease','Hyperadrenocorticism PU/PD Pot-belly'],['Addison\'s disease','Hypoadrenocorticism Hyponatremia Hyperkalemia'],['Hypothyroidism','Bilateral alopecia Cold intolerance สุนัข'],['Hyperthyroidism','Weight loss Polyphagia แมวสูงอายุ'],['DM canine','Polyuria Polydipsia Polyphagia hyperglycemia'],
+['GDV','Gastric Dilatation Volvulus Giant breeds'],['Pancreatitis','Lipase Amylase สูง Vomiting Pain'],['Hepatic lipidosis','แมวอดอาหาร ไขมันสะสมตับ ตัวเหลือง'],['MVD','Mitral Valve Disease CKCS ชนิดพบมากสุด'],['HCM','Hypertrophic Cardiomyopathy แมว Aortic TE'],
+// ศัลยกรรม
+['TPLO','Tibial Plateau Leveling Osteotomy CCL rupture'],['MPL','Medial Patellar Luxation Toy breeds'],['FHO','Femoral Head Ostectomy False joint Hip dysplasia'],['GDV gastropexy','ยึดกระเพาะป้องกัน GDV กลับมา'],['TECA','Total Ear Canal Ablation End-stage otitis'],
+['Esophagotomy','ผ่าตัดหลอดอาหาร FB obstruction'],['Pyometra sx','OHE ฉุกเฉิน Septic pyometra'],['Perineal urethrostomy','แก้ Urethral obstruction แมวเพศผู้'],['Enucleation','เอาลูกตาออก Glaucoma/Neoplasia'],['Stifle joint','ข้อเข่า Cranial cruciate ligament'],
+// สัตว์ใหญ่
+['Hardware disease','Traumatic reticulitis วัวกลืนโลหะ Magnet rx'],['Milk fever (Parturient paresis)','Hypocalcemia วัวหลังคลอด Ca gluconate IV'],['Ketosis (Acetonemia)','Negative energy วัวนม β-hydroxybutyrate สูง'],['Bloat (Ruminal tympany)','แก๊ส Rumen สะสม Trocar/Simethicone'],['LDA','Left Displaced Abomasum วัวนมหลังคลอด'],
+['BVD','Bovine Viral Diarrhea Pestivirus Immunosuppression'],['FMD','Foot and Mouth Disease Picornavirus OIE List A'],['IBR','Infectious Bovine Rhinotracheitis BHV-1'],['PRRS','Porcine Reproductive Respiratory Syndrome Arterivirus'],['ASF','African Swine Fever Asfivirus DNA ไม่มีวัคซีน'],
+];
+
+let gDiff='hard', gPairs=[], gRound=0, gTotalRounds=0;
+let gScore=0, gMatchedTotal=0, gMistakes=0;
+let gSelected=null, gTimer=null, gTimeLeft=0;
+let gStartTime=0, gTotalTime=0, lastDiff='hard';
+const DIFF={easy:{n:6,time:0},medium:{n:8,time:30},hard:{n:10,time:20}};
+
+function showScr(id){['sHome','sGame','sResult'].forEach(s=>document.getElementById(s).classList.remove('on'));document.getElementById(id).classList.add('on');}
+function goBack(){if(confirm('ออกจากเกม?')||!['sGame'].includes(document.querySelector('.scr.on')?.id))location.href='games.html';}
+
+function startGame(diff){
+  lastDiff=diff; gDiff=diff; gDiff=diff;
+  const cfg=DIFF[diff];
+  gPairs=[...PAIRS].sort(()=>Math.random()-.5);
+  gRound=0; gScore=0; gMatchedTotal=0; gMistakes=0;
+  gTotalRounds=Math.ceil(gPairs.length/cfg.n);
+  gStartTime=Date.now(); gTotalTime=0;
+  document.getElementById('hdrScore').textContent='0';
+  showScr('sGame');
+  nextRound();
+}
+
+function nextRound(){
+  const cfg=DIFF[gDiff];
+  const start=gRound*cfg.n;
+  const roundPairs=gPairs.slice(start,start+cfg.n);
+  if(!roundPairs.length){endGame();return;}
+  gRound++;
+  renderRound(roundPairs);
+  document.getElementById('roundLabel').textContent=`รอบที่ ${gRound} / ${gTotalRounds}`;
+  document.getElementById('progFill').style.width=((gMatchedTotal/PAIRS.length)*100)+'%';
+  document.getElementById('progTxt').textContent=`${gMatchedTotal}/${PAIRS.length}`;
+  if(cfg.time>0) startTimer(cfg.time);
+  else document.getElementById('timerBadge').textContent='⏱ ไม่มีกำหนด';
+}
+
+function renderRound(pairs){
+  gSelected=null;
+  const lefts=pairs.map(p=>({text:p[0],pair:p,side:'left'}));
+  const rights=[...pairs].sort(()=>Math.random()-.5).map(p=>({text:p[1],pair:p,side:'right'}));
+  const half=Math.ceil(pairs.length/2);
+  // Interleave left/right
+  const grid=document.getElementById('cardGrid');
+  grid.innerHTML='';
+  lefts.forEach((l,i)=>{
+    grid.appendChild(makeCard(l));
+    grid.appendChild(makeCard(rights[i]));
+  });
+  document.getElementById('matchFeedback').textContent='';
+}
+
+function makeCard(item){
+  const d=document.createElement('div');
+  d.className='card '+item.side;
+  d.textContent=item.text;
+  d.dataset.text=item.text;
+  d.dataset.side=item.side;
+  d.onclick=()=>pickCard(d,item);
+  return d;
+}
+
+function pickCard(el,item){
+  if(el.classList.contains('matched')||el.classList.contains('selected'))return;
+  if(!gSelected){
+    gSelected={el,item};
+    el.classList.add('selected');
+    return;
+  }
+  // Must pick opposite side
+  if(item.side===gSelected.item.side){
+    gSelected.el.classList.remove('selected');
+    gSelected={el,item};
+    el.classList.add('selected');
+    return;
+  }
+  // Check match
+  const a=gSelected, b={el,item};
+  a.el.classList.remove('selected');
+  gSelected=null;
+  const timeBonus=DIFF[gDiff].time>0?Math.max(0,Math.round(gTimeLeft*2)):10;
+  if(a.item.pair===b.item.pair||(a.item.side==='left'&&a.item.text===b.item.pair[0])||(a.item.side==='right'&&a.item.text===b.item.pair[1])){
+    // Match!
+    a.el.classList.add('matched'); b.el.classList.add('matched');
+    gMatchedTotal++;
+    const pts=20+timeBonus;
+    gScore+=pts;
+    document.getElementById('hdrScore').textContent=gScore;
+    document.getElementById('matchFeedback').textContent='✅ จับคู่ถูก! +'+pts;
+    document.getElementById('matchFeedback').style.color='#16a34a';
+    // Check if round complete
+    const unmatched=[...document.querySelectorAll('.card:not(.matched)')];
+    if(unmatched.length===0) setTimeout(nextRound,800);
+  } else {
+    a.el.classList.add('wrong'); b.el.classList.add('wrong');
+    gMistakes++;
+    gScore=Math.max(0,gScore-5);
+    document.getElementById('hdrScore').textContent=gScore;
+    document.getElementById('matchFeedback').textContent='❌ ไม่ใช่คู่กัน -5';
+    document.getElementById('matchFeedback').style.color='#dc2626';
+    setTimeout(()=>{a.el.classList.remove('wrong');b.el.classList.remove('wrong');},500);
+  }
+}
+
+function startTimer(sec){
+  clearInterval(gTimer); gTimeLeft=sec;
+  const badge=document.getElementById('timerBadge');
+  badge.textContent='⏱ '+sec+'s'; badge.className='timer-badge ok';
+  gTimer=setInterval(()=>{
+    gTimeLeft--;
+    badge.textContent='⏱ '+gTimeLeft+'s';
+    badge.className='timer-badge'+(gTimeLeft<=5?'':' ok');
+    if(gTimeLeft<=0){
+      clearInterval(gTimer);
+      // Mark all unmatched as missed
+      document.querySelectorAll('.card:not(.matched)').forEach(c=>c.classList.add('wrong'));
+      setTimeout(nextRound,1200);
+    }
+  },1000);
+}
+
+function endGame(){
+  clearInterval(gTimer);
+  gTotalTime=Math.round((Date.now()-gStartTime)/1000);
+  const pct=Math.round(gMatchedTotal/PAIRS.length*100);
+  const emojis=['💀','😰','😅','😊','🥳','🏆'];
+  const idx=Math.min(Math.floor(pct/20),5);
+  document.getElementById('resEmoji').textContent=emojis[idx];
+  document.getElementById('resTitle').textContent=pct>=80?'สุดยอด!':pct>=60?'ดีมาก!':pct>=40?'พอใช้':'ลองใหม่!';
+  document.getElementById('resMsg').textContent=`จับคู่ถูก ${gMatchedTotal}/${PAIRS.length} (${pct}%) ผิด ${gMistakes} ครั้ง`;
+  document.getElementById('rScore').textContent=gScore;
+  document.getElementById('rPairs').textContent=gMatchedTotal+'/'+PAIRS.length;
+  document.getElementById('rTime').textContent=gTotalTime+'s';
+  showScr('sResult');
+  try{const s=JSON.parse(localStorage.getItem('vetquiz_stats')||'{}');s.games=(s.games||0)+1;s.best=Math.max(s.best||0,gScore);localStorage.setItem('vetquiz_stats',JSON.stringify(s));}catch(e){}
+}
+</script>
+</body>
+</html>

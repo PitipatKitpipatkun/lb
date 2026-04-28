@@ -311,18 +311,21 @@ function connect(){
 
   ch.on('presence',{event:'sync'},()=>{
     const state=ch.presenceState();
-    online=Object.keys(state).length;
+    // Count unique users across all presence keys
+    const uids=new Set();
+    for(const k in state){ const arr=state[k]; if(arr&&arr[0]&&arr[0].uid) uids.add(arr[0].uid); }
+    online=Math.max(uids.size,1);
     updateOnline();
   });
   ch.on('presence',{event:'join'},({key,newPresences})=>{
-    online=Math.max(online+1,1);updateOnline();
+    updateOnlineFromState();
     const p=newPresences[0];
     // Don't show join msg here since lcJoin() handles it
   });
   ch.on('presence',{event:'leave'},({key,leftPresences})=>{
-    online=Math.max(online-1,1);updateOnline();
+    updateOnlineFromState();
     const p=leftPresences[0];
-    if(p&&p.uid!==myId) lcAddSys('🚪 '+(p.nick||'ผู้ใช้')+' ออกไป');
+    if(p&&p.uid!==myId){ updateOnlineFromState(); lcAddSys('🚪 '+(p.nick||'ผู้ใช้')+' ออกไป'); }
   });
 
   ch.on('broadcast',{event:'msg'},(payload)=>{

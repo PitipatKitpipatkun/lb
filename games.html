@@ -82,6 +82,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 
 .hidden{display:none!important;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 </head>
 <body>
 
@@ -149,17 +150,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
         <div class="gc-desc">ทายขนาดยาตาม BW และสายพันธุ์</div>
         <span class="gc-badge badge-soon">เร็วๆ นี้</span>
       </div>
-      <div class="game-card gc-solo coming" onclick="showSoon('Anatomy Flash Cards','Flash card กายวิภาคสัตว์ พร้อมภาพ กำลังพัฒนา')" data-name="anatomy flash card กายวิภาค">
-        <div class="gc-icon">🦴</div>
-        <div class="gc-name">Anatomy Cards</div>
-        <div class="gc-desc">Flash card กายวิภาคพร้อมภาพ</div>
-        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game-flipcard.html'" data-name="anatomy flip card match จับคู่ กายวิภาค">
+        <div class="gc-icon">🧩</div>
+        <div class="gc-name">Flip Match</div>
+        <div class="gc-desc">จับคู่คำศัพท์สัตวแพทย์ 100 คู่</div>
+        <span class="gc-badge badge-live">▶ เล่นได้เลย</span>
       </div>
-      <div class="game-card gc-solo coming" onclick="showSoon('Clinical Case Scenario','กรณีศึกษาทางคลินิก เลือก Diagnosis และ Treatment กำลังพัฒนา')" data-name="clinical case scenario diagnosis">
+      <div class="game-card gc-vetquiz" onclick="window.location.href='game-clinical.html'" data-name="clinical case diagnosis treatment คลินิก">
         <div class="gc-icon">🩺</div>
         <div class="gc-name">Clinical Cases</div>
-        <div class="gc-desc">กรณีศึกษา เลือก Diagnosis</div>
-        <span class="gc-badge badge-soon">เร็วๆ นี้</span>
+        <div class="gc-desc">วินิจฉัยและรักษา 48 กรณีศึกษา Hard mode</div>
+        <span class="gc-badge badge-live">▶ เล่นได้เลย</span>
       </div>
     </div>
   </div>
@@ -261,5 +262,6 @@ function doSearch(q){
   });
 }
 </script>
+<script src="livechat.js"></script>
 </body>
 </html>
