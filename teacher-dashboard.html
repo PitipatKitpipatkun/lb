@@ -531,7 +531,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 <div id="toast" class="toast"></div>
 
 <!-- ── Private Inbox ── -->
-<div class="tab-view" id="tab-inbox">
+<div class="tab-view" id="tab-inbox" style="padding-bottom:calc(var(--nav-h,64px) + 48px + env(safe-area-inset-bottom,0px));">
   <div style="margin-bottom:14px;">
     <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--teal-d);">🔐 ข้อความส่วนตัว</div>
     <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ข้อความเข้ารหัส AES — เฉพาะคุณเท่านั้นที่อ่านได้</div>
@@ -618,6 +618,7 @@ async function loadInbox(){
         <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · <b>'+unread+' ยังไม่ได้อ่าน</b>':''}</span>
         <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">✓ อ่านทั้งหมด</button>
       </div>
+      <div style="padding-bottom:8px;"></div>
       ${msgs.map(m=>`
         <div style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'#0d9488'};padding:14px;margin-bottom:10px;${m.read_at?'':'box-shadow:0 2px 12px rgba(13,148,136,.12);'}">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
