@@ -1028,7 +1028,14 @@ async function loadAnnouncements(){
 }
 function escAnn(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+
+
+
+// Auto-load announcements on page open
+document.addEventListener("DOMContentLoaded", function(){ setTimeout(loadAnnouncements, 500); });
+
 </script>
+
 <script src="livechat.js"></script>
 </body>
 </html>
