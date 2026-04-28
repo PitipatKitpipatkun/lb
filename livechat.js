@@ -51,6 +51,7 @@ function loadProfile(){
 function saveProfile(nick,av){
   myNick=nick; myAvatar=av; profileSet=true;
   localStorage.setItem('lc_profile',JSON.stringify({nick,avatar:av}));
+  // Re-track with updated nick so others see real name
   if(ch) ch.track({uid:myId,nick:myNick,avatar:myAvatar,page:pageLabel()}).catch(()=>{});
 }
 
@@ -304,30 +305,49 @@ function lcShowJoin(){
 }
 
 // ─── Supabase ─────────────────────────────────
+// Track all online users via both Presence + Broadcast ping
+const _onlineUsers = new Map(); // uid -> {nick, page, ts}
+
 function connect(){
   ch=sb.channel(CHANNEL,{
-    config:{presence:{key:myId},broadcast:{self:true}}
+    config:{presence:{key:myId},broadcast:{self:false}}
   });
 
+  // ─── PRESENCE (Supabase v2 correct syntax) ───
   ch.on('presence',{event:'sync'},()=>{
     const state=ch.presenceState();
-    // Count unique users across all presence keys
-    const uids=new Set();
-    for(const k in state){ const arr=state[k]; if(arr&&arr[0]&&arr[0].uid) uids.add(arr[0].uid); }
-    online=Math.max(uids.size,1);
+    // Count by presence KEY count (each user = unique key = myId)
+    const n=Object.keys(state).length;
+    online=Math.max(n,1);
     updateOnline();
-  });
-  ch.on('presence',{event:'join'},({key,newPresences})=>{
-    updateOnlineFromState();
-    const p=newPresences[0];
-    // Don't show join msg here since lcJoin() handles it
-  });
-  ch.on('presence',{event:'leave'},({key,leftPresences})=>{
-    updateOnlineFromState();
-    const p=leftPresences[0];
-    if(p&&p.uid!==myId){ updateOnlineFromState(); lcAddSys('🚪 '+(p.nick||'ผู้ใช้')+' ออกไป'); }
+    console.log('[chat] sync state keys:',Object.keys(state).length, Object.keys(state));
   });
 
+  ch.on('presence',{event:'join'},({key,newPresences})=>{
+    const state=ch.presenceState();
+    online=Math.max(Object.keys(state).length,1);
+    updateOnline();
+    // Show join notification if not self
+    const p=newPresences&&newPresences[0];
+    if(p&&p.uid&&p.uid!==myId&&p.nick&&p.nick!=='?'){
+      lcAddSys('👋 '+p.nick+' เข้ามาในห้อง');
+    }
+  });
+
+  ch.on('presence',{event:'leave'},({key,leftPresences})=>{
+    // Wait a tick for state to update
+    setTimeout(()=>{
+      const state=ch.presenceState();
+      online=Math.max(Object.keys(state).length,1);
+      updateOnline();
+    },100);
+    const p=leftPresences&&leftPresences[0];
+    if(p&&p.uid&&p.uid!==myId&&p.nick&&p.nick!=='?'){
+      lcAddSys('🚪 '+p.nick+' ออกไป');
+    }
+  });
+
+  // ─── BROADCAST messages ───
   ch.on('broadcast',{event:'msg'},(payload)=>{
     const d=payload?.payload??payload;
     if(!d)return;
@@ -336,16 +356,25 @@ function connect(){
     if(!isOpen){unread++;updateBadge();}
   });
 
+  // ─── SUBSCRIBE ───
   ch.subscribe(async(status)=>{
+    console.log('[chat] channel status:',status);
     if(status==='SUBSCRIBED'){
+      // Track presence — this is what other users will see
       const trackData={uid:myId,nick:myNick||'?',avatar:myAvatar,page:pageLabel()};
-      await ch.track(trackData).catch(()=>{});
+      const r=await ch.track(trackData).catch(e=>{console.error('[chat] track error',e);});
+      console.log('[chat] track result:',r);
+      startHeartbeat();
+      // Count myself at minimum
+      online=1;
       updateOnline();
       // Auto-show chat if profile already set
       if(profileSet&&isOpen){
         showChat();
         if(!_historyLoaded){ _historyLoaded=true; loadHistory(); }
       }
+    } else if(status==='CHANNEL_ERROR'){
+      console.error('[chat] channel error');
     }
   });
 }
@@ -447,7 +476,18 @@ function updateBadge(){
 }
 function updateOnline(){
   const el=document.getElementById('_lcOnlineTxt');
-  if(el)el.textContent='🟢 ออนไลน์ '+online+' คน';
+  if(!el)return;
+  el.textContent='🟢 ออนไลน์ '+online+' คน';
+  // Show who's on page
+  if(ch){
+    const state=ch.presenceState();
+    const pages=[];
+    for(const k in state){
+      const p=state[k]&&state[k][0];
+      if(p&&p.page) pages.push(p.page);
+    }
+    if(pages.length>1) el.title=pages.join(', ');
+  }
 }
 function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -550,6 +590,16 @@ function initDrag(){
   // Remove the direct click handler (pointerup handles it)
   fab.removeEventListener('click',lcToggle);
   fab.addEventListener('click',(e)=>e.stopImmediatePropagation(),true);
+}
+
+
+// ── PRESENCE HEARTBEAT (re-track every 25s to stay alive) ──
+let _hbInterval=null;
+function startHeartbeat(){
+  clearInterval(_hbInterval);
+  _hbInterval=setInterval(()=>{
+    if(ch) ch.track({uid:myId,nick:myNick||'?',avatar:myAvatar,page:pageLabel()}).catch(()=>{});
+  },25000);
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
