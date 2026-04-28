@@ -35,6 +35,26 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .section-name{font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;color:var(--slate-m);text-transform:uppercase;letter-spacing:0.4px;}
 .section-line{flex:1;height:1px;background:var(--border);}
 
+.cc-ref{border-color:#0d9488;border-top:3px solid #0d9488;background:linear-gradient(135deg,#f0fdfa,#fff);}
+.cc-ref:hover,.cc-ref:focus{border-color:#0d9488;background:#f0fdfa;}
+
+
+/* Reference Tables */
+.ref-tbl{padding:4px 0;}
+.ref-tbl h4{font-size:12px;font-weight:700;color:var(--teal-d);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.3px;}
+.ref-tbl table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px;}
+.ref-tbl th{background:var(--teal-l);color:var(--teal-d);padding:5px 7px;text-align:left;font-weight:700;font-size:11px;}
+.ref-tbl td{padding:5px 7px;border-bottom:1px solid var(--border);color:var(--slate-m);}
+.ref-tbl tr:hover td{background:var(--bg);}
+.ref-formula{background:var(--teal-l);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;color:var(--teal-d);margin:8px 0;text-align:center;}
+.ref-note{background:#fff7ed;border-radius:8px;padding:7px 10px;font-size:11px;color:#92400e;margin-top:6px;line-height:1.5;}
+.ref-ok{color:#16a34a;font-weight:700;}
+.ref-warn{color:#d97706;font-weight:700;}
+.ref-bad{color:#dc2626;font-weight:700;}
+.asa-badge{padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;color:white;}
+.asa-1{background:#16a34a;}.asa-2{background:#0d9488;}.asa-3{background:#d97706;}
+.asa-4{background:#dc2626;}.asa-5{background:#7f1d1d;}.asa-e{background:#7c3aed;}
+
 /* Calc Grid */
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .calc-card{background:var(--white);border-radius:16px;border:1.5px solid var(--border);padding:14px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
@@ -103,6 +123,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 .tag-ok{background:#dcfce7;color:#166534;}
 .tag-info{background:#dbeafe;color:#1d4ed8;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
 </head>
 <body>
 
@@ -350,7 +371,100 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);mi
 </div>
 
 
-</div><!-- /content -->
+</div>
+<!-- ── Reference Values ── -->
+<div class="section" id="sec-ref">
+  <div class="section-hdr">
+    <span class="section-icon">📊</span>
+    <span class="section-name">อ้างอิง (Reference Values)</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-card cc-ref" onclick="openCalc('ref_vitals')" data-name="vital signs อุณหภูมิ ชีพจร หายใจ อ้างอิง" data-id="ref_vitals">
+      <div class="calc-icon">🌡️</div>
+      <div class="calc-name">Vital Signs</div>
+      <div class="calc-desc">HR, RR, Temp, BP ปกติ</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_cbc')" data-name="cbc เม็ดเลือด hematology ค่าปกติ" data-id="ref_cbc">
+      <div class="calc-icon">🩸</div>
+      <div class="calc-name">CBC Reference</div>
+      <div class="calc-desc">เม็ดเลือดแดง ขาว เกล็ดเลือด</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_chem')" data-name="blood chemistry biochem ค่าเลือด ตับ ไต" data-id="ref_chem">
+      <div class="calc-icon">🧪</div>
+      <div class="calc-name">Blood Chemistry</div>
+      <div class="calc-desc">ALT, Creat, BUN, Glucose ฯลฯ</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_ua')" data-name="urinalysis ปัสสาวะ urine" data-id="ref_ua">
+      <div class="calc-icon">🔬</div>
+      <div class="calc-name">Urinalysis</div>
+      <div class="calc-desc">USG, protein, glucose, sediment</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_imaging')" data-name="imaging VHS VLAS ขนาดไต ลำไส้ radiology" data-id="ref_imaging">
+      <div class="calc-icon">📷</div>
+      <div class="calc-name">Imaging Reference</div>
+      <div class="calc-desc">VHS, VLAS, ขนาดไต, ลำไส้</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_electrolyte')" data-name="electrolyte sodium potassium ค่าปกติ" data-id="ref_electrolyte">
+      <div class="calc-icon">⚗️</div>
+      <div class="calc-name">Electrolytes</div>
+      <div class="calc-desc">Na, K, Cl, Ca, Mg, Phosphorus</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_coag')" data-name="coagulation PT APTT fibrinogen platelet bleeding" data-id="ref_coag">
+      <div class="calc-icon">🩹</div>
+      <div class="calc-name">Coagulation</div>
+      <div class="calc-desc">PT, APTT, Fibrinogen, D-dimer</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_lactate')" data-name="lactate lac ค่าปกติ shock" data-id="ref_lactate">
+      <div class="calc-icon">⚡</div>
+      <div class="calc-name">Lactate & ABG</div>
+      <div class="calc-desc">Lactate, pH, HCO₃, pCO₂</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_dehydration')" data-name="dehydration score ขาดน้ำ turgor" data-id="ref_dehydration">
+      <div class="calc-icon">💧</div>
+      <div class="calc-name">Dehydration Score</div>
+      <div class="calc-desc">ประเมินระดับการขาดน้ำ</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_bp')" data-name="blood pressure BP hypertension ค่าปกติ" data-id="ref_bp">
+      <div class="calc-icon">🫀</div>
+      <div class="calc-name">Blood Pressure</div>
+      <div class="calc-desc">ค่าปกติ + Hypertension staging</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_bcs')" data-name="body condition score BCS ประเมิน" data-id="ref_bcs">
+      <div class="calc-icon">⚖️</div>
+      <div class="calc-name">Body Condition Score</div>
+      <div class="calc-desc">BCS 1–9 สุนัข แมว</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_asa')" data-name="ASA classification risk anesthesia สลบ" data-id="ref_asa">
+      <div class="calc-icon">🏥</div>
+      <div class="calc-name">ASA Classification</div>
+      <div class="calc-desc">ระดับความเสี่ยงก่อนสลบ</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_pain')" data-name="pain score CMPS Glasgow ปวด" data-id="ref_pain">
+      <div class="calc-icon">😣</div>
+      <div class="calc-name">Pain Scoring</div>
+      <div class="calc-desc">CMPS-SF, Glasgow, Feline</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_wound')" data-name="wound classification สะอาด ปนเปื้อน ผ่าตัด" data-id="ref_wound">
+      <div class="calc-icon">🩺</div>
+      <div class="calc-name">Wound Classification</div>
+      <div class="calc-desc">Class I–IV + Contamination</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_shockindex')" data-name="shock index hr bp ช็อค" data-id="ref_shockindex">
+      <div class="calc-icon">🚨</div>
+      <div class="calc-name">Shock Index Guide</div>
+      <div class="calc-desc">SI = HR÷SBP + Interpretation</div>
+    </div>
+    <div class="calc-card cc-ref" onclick="openCalc('ref_iris')" data-name="IRIS CKD staging ไต creatinine" data-id="ref_iris">
+      <div class="calc-icon">🫘</div>
+      <div class="calc-name">IRIS CKD Staging</div>
+      <div class="calc-desc">Stage I–IV + Sub-staging</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- /content -->
 
 <!-- ═══ MODAL ═══ -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
@@ -1114,9 +1228,459 @@ fluid_types:{
   </table>
   <div class="info-box" style="margin-top:10px;">Maintenance สุนัข 40-60 mL/kg/day | แมว 40-50 mL/kg/day</div>`
 },
+ref_vitals:{
+title:'🌡️ Vital Signs Reference',sub:'ค่าปกติของ Vital Signs ในสัตว์',
+html:`<div class="ref-tbl">
+<h4>🐕 สุนัข</h4>
+<table><tr><th>Parameter</th><th>Normal Range</th></tr>
+<tr><td>Heart Rate</td><td>60–140 bpm (small >140)</td></tr>
+<tr><td>Respiratory Rate</td><td>10–30 breaths/min</td></tr>
+<tr><td>Temperature (Rectal)</td><td>37.5–39.2 °C</td></tr>
+<tr><td>Systolic BP</td><td>110–160 mmHg</td></tr>
+<tr><td>MAP</td><td>80–120 mmHg</td></tr>
+<tr><td>SpO₂</td><td>≥ 95%</td></tr>
+<tr><td>CRT</td><td>< 2 วินาที</td></tr>
+<tr><td>Mucous Membrane</td><td>Pink, moist</td></tr>
+</table>
+<h4>🐈 แมว</h4>
+<table><tr><th>Parameter</th><th>Normal Range</th></tr>
+<tr><td>Heart Rate</td><td>140–220 bpm</td></tr>
+<tr><td>Respiratory Rate</td><td>20–40 breaths/min</td></tr>
+<tr><td>Temperature</td><td>38.1–39.2 °C</td></tr>
+<tr><td>Systolic BP</td><td>120–170 mmHg</td></tr>
+<tr><td>SpO₂</td><td>≥ 95%</td></tr>
+<tr><td>CRT</td><td>< 2 วินาที</td></tr>
+</table>
+<h4>🐄 โค / 🐴 ม้า</h4>
+<table><tr><th>สัตว์</th><th>HR</th><th>RR</th><th>Temp</th></tr>
+<tr><td>โค</td><td>48–84</td><td>15–30</td><td>38–39.5 °C</td></tr>
+<tr><td>ม้า</td><td>28–44</td><td>8–16</td><td>37.5–38.5 °C</td></tr>
+<tr><td>แกะ/แพะ</td><td>60–120</td><td>16–34</td><td>38.5–40 °C</td></tr>
+<tr><td>หมู</td><td>60–80</td><td>15–25</td><td>38–40 °C</td></tr>
+<tr><td>กระต่าย</td><td>130–325</td><td>30–60</td><td>38.5–40 °C</td></tr>
+</table>
+</div>`},
 
+ref_cbc:{
+title:'🩸 CBC Reference Values',sub:'ค่าปกติของ Complete Blood Count',
+html:`<div class="ref-tbl">
+<h4>🐕 สุนัข</h4>
+<table><tr><th>Parameter</th><th>Unit</th><th>Normal</th></tr>
+<tr><td>PCV / Hct</td><td>%</td><td>37–55</td></tr>
+<tr><td>Hgb</td><td>g/dL</td><td>12–18</td></tr>
+<tr><td>RBC</td><td>×10⁶/µL</td><td>5.5–8.5</td></tr>
+<tr><td>MCV</td><td>fL</td><td>60–77</td></tr>
+<tr><td>MCH</td><td>pg</td><td>19–25</td></tr>
+<tr><td>MCHC</td><td>g/dL</td><td>31–36</td></tr>
+<tr><td>WBC</td><td>×10³/µL</td><td>6–17</td></tr>
+<tr><td>Neutrophils</td><td>%</td><td>60–77</td></tr>
+<tr><td>Lymphocytes</td><td>%</td><td>12–30</td></tr>
+<tr><td>Monocytes</td><td>%</td><td>3–10</td></tr>
+<tr><td>Eosinophils</td><td>%</td><td>2–10</td></tr>
+<tr><td>Basophils</td><td>%</td><td>0–1</td></tr>
+<tr><td>Platelets</td><td>×10³/µL</td><td>200–500</td></tr>
+<tr><td>Reticulocytes</td><td>%</td><td>0–1.5</td></tr>
+</table>
+<h4>🐈 แมว</h4>
+<table><tr><th>Parameter</th><th>Unit</th><th>Normal</th></tr>
+<tr><td>PCV / Hct</td><td>%</td><td>30–45</td></tr>
+<tr><td>Hgb</td><td>g/dL</td><td>9–15</td></tr>
+<tr><td>RBC</td><td>×10⁶/µL</td><td>5–10</td></tr>
+<tr><td>MCV</td><td>fL</td><td>41–55</td></tr>
+<tr><td>WBC</td><td>×10³/µL</td><td>5.5–19.5</td></tr>
+<tr><td>Neutrophils</td><td>%</td><td>35–75</td></tr>
+<tr><td>Lymphocytes</td><td>%</td><td>20–55</td></tr>
+<tr><td>Platelets</td><td>×10³/µL</td><td>300–700</td></tr>
+</table>
+<div class="ref-note">⚠️ Reticulocyte ≥ 1% = Regenerative anemia</div>
+</div>`},
+
+ref_chem:{
+title:'🧪 Blood Chemistry Reference',sub:'ค่าปกติของ Blood Chemistry / Biochemistry',
+html:`<div class="ref-tbl">
+<h4>🔬 Liver Panel</h4>
+<table><tr><th>Parameter</th><th>สุนัข</th><th>แมว</th><th>Unit</th></tr>
+<tr><td>ALT</td><td>10–118</td><td>10–100</td><td>U/L</td></tr>
+<tr><td>AST</td><td>15–52</td><td>10–100</td><td>U/L</td></tr>
+<tr><td>ALP</td><td>20–150</td><td>10–90</td><td>U/L</td></tr>
+<tr><td>GGT</td><td>1–12</td><td>1–10</td><td>U/L</td></tr>
+<tr><td>Total Bilirubin</td><td>0–0.4</td><td>0–0.4</td><td>mg/dL</td></tr>
+<tr><td>Total Protein</td><td>5.4–7.1</td><td>5.7–7.8</td><td>g/dL</td></tr>
+<tr><td>Albumin</td><td>2.7–3.9</td><td>2.4–3.8</td><td>g/dL</td></tr>
+<tr><td>Globulin</td><td>2.0–3.5</td><td>2.5–5.0</td><td>g/dL</td></tr>
+</table>
+<h4>🫘 Renal Panel</h4>
+<table><tr><th>Parameter</th><th>สุนัข</th><th>แมว</th><th>Unit</th></tr>
+<tr><td>BUN</td><td>7–27</td><td>15–34</td><td>mg/dL</td></tr>
+<tr><td>Creatinine</td><td>0.5–1.5</td><td>0.6–2.4</td><td>mg/dL</td></tr>
+<tr><td>SDMA</td><td>0–14</td><td>0–14</td><td>µg/dL</td></tr>
+<tr><td>Phosphorus</td><td>2.5–6.8</td><td>3.4–8.5</td><td>mg/dL</td></tr>
+</table>
+<h4>🍬 Metabolic</h4>
+<table><tr><th>Parameter</th><th>สุนัข</th><th>แมว</th><th>Unit</th></tr>
+<tr><td>Glucose</td><td>70–138</td><td>70–150</td><td>mg/dL</td></tr>
+<tr><td>Cholesterol</td><td>110–314</td><td>89–258</td><td>mg/dL</td></tr>
+<tr><td>Triglycerides</td><td>20–150</td><td>25–160</td><td>mg/dL</td></tr>
+<tr><td>Lipase</td><td>0–250</td><td>0–200</td><td>U/L</td></tr>
+<tr><td>Amylase</td><td>500–2500</td><td>500–1500</td><td>U/L</td></tr>
+</table>
+<h4>🦋 Thyroid/Endocrine</h4>
+<table><tr><th>Parameter</th><th>สุนัข</th><th>แมว</th><th>Unit</th></tr>
+<tr><td>TT4</td><td>1.5–3.5</td><td>1.0–4.0</td><td>µg/dL</td></tr>
+<tr><td>TSH</td><td>0.03–0.5</td><td>—</td><td>ng/mL</td></tr>
+<tr><td>Cortisol (basal)</td><td>1–6</td><td>1–6</td><td>µg/dL</td></tr>
+</table>
+</div>`},
+
+ref_ua:{
+title:'🔬 Urinalysis Reference',sub:'ค่าปกติของ Urinalysis',
+html:`<div class="ref-tbl">
+<table><tr><th>Parameter</th><th>สุนัข</th><th>แมว</th></tr>
+<tr><td>Color</td><td colspan="2">Yellow, clear</td></tr>
+<tr><td>USG</td><td>1.015–1.045</td><td>1.020–1.060</td></tr>
+<tr><td>pH</td><td>5.5–7.5</td><td>5.5–7.5</td></tr>
+<tr><td>Protein</td><td colspan="2">Negative/Trace</td></tr>
+<tr><td>Glucose</td><td colspan="2">Negative</td></tr>
+<tr><td>Ketones</td><td colspan="2">Negative</td></tr>
+<tr><td>Bilirubin</td><td>Neg–1+</td><td>Negative</td></tr>
+<tr><td>Blood/Hemoglobin</td><td colspan="2">Negative</td></tr>
+<tr><td>WBC (Sediment)</td><td colspan="2">0–5/hpf</td></tr>
+<tr><td>RBC (Sediment)</td><td colspan="2">0–5/hpf</td></tr>
+<tr><td>Casts</td><td colspan="2">0–2 hyaline/lpf</td></tr>
+<tr><td>Bacteria</td><td colspan="2">None</td></tr>
+</table>
+<h4>📊 USG Interpretation</h4>
+<table><tr><th>USG</th><th>Interpretation</th></tr>
+<tr><td>> 1.030 (dog) / 1.035 (cat)</td><td>✅ Concentrated = adequate renal function</td></tr>
+<tr><td>1.013–1.029</td><td>⚠️ Isosthenuric zone</td></tr>
+<tr><td>1.008–1.012</td><td>⚠️ Hyposthenuric = tubular dysfunction</td></tr>
+<tr><td>< 1.008</td><td>❌ Dilute = DI, renal failure</td></tr>
+</table>
+<h4>📋 UPC Ratio</h4>
+<table><tr><th>UPC</th><th>ความหมาย</th></tr>
+<tr><td>< 0.2 (dog) / < 0.4 (cat)</td><td>✅ Normal</td></tr>
+<tr><td>0.2–0.5 (dog)</td><td>⚠️ Borderline</td></tr>
+<tr><td>> 0.5</td><td>❌ Proteinuria — investigate</td></tr>
+</table>
+</div>`},
+
+ref_imaging:{
+title:'📷 Imaging Reference',sub:'ค่าปกติทางรังสีวิทยา VHS, VLAS, ขนาดอวัยวะ',
+html:`<div class="ref-tbl">
+<h4>❤️ VHS (Vertebral Heart Score)</h4>
+<table><tr><th>ค่า VHS</th><th>ความหมาย</th></tr>
+<tr><td>สุนัข: 8.5–10.5 v</td><td>✅ ปกติ (varies by breed)</td></tr>
+<tr><td>สุนัข: > 10.5 v</td><td>❌ Cardiomegaly</td></tr>
+<tr><td>แมว: 6.7–8.1 v</td><td>✅ ปกติ</td></tr>
+<tr><td>แมว: > 8.0 v</td><td>❌ Cardiomegaly</td></tr>
+</table>
+<div class="ref-note">วัด L (long axis) + S (short axis) เทียบกับ vertebrae ที่ T4</div>
+<h4>🏹 VLAS (Vertebral Left Atrial Size)</h4>
+<table><tr><th>ค่า VLAS</th><th>ความหมาย</th></tr>
+<tr><td>สุนัข: ≤ 2.3 v</td><td>✅ ปกติ</td></tr>
+<tr><td>สุนัข: > 2.3 v</td><td>❌ LA Enlargement</td></tr>
+</table>
+<h4>🫘 ขนาดไต (Radiograph)</h4>
+<table><tr><th>สัตว์</th><th>ขนาดปกติ</th></tr>
+<tr><td>สุนัข (L)</td><td>2.5–3.5× L2 length</td></tr>
+<tr><td>แมว (L)</td><td>1.9–2.6× L2 length</td></tr>
+<tr><td>Kidney asymmetry</td><td>< 30% ต่างกัน = acceptable</td></tr>
+</table>
+<h4>🧫 ขนาดลำไส้ (Radiograph)</h4>
+<table><tr><th>ส่วน</th><th>ขนาดปกติ</th><th>Obstruction</th></tr>
+<tr><td>Small intestine (dog)</td><td>< 1/3 depth abdomen</td><td>> 1.6× rib width</td></tr>
+<tr><td>Small intestine (cat)</td><td>< 12 mm</td><td>> 12 mm</td></tr>
+<tr><td>Colon (dog)</td><td>< 3/4 depth pelvis</td><td>—</td></tr>
+</table>
+<h4>🌬️ Trachea-to-Vertebra Ratio</h4>
+<table><tr><th>ค่า</th><th>ความหมาย</th></tr>
+<tr><td>สุนัข: ≥ 0.16</td><td>✅ ปกติ</td></tr>
+<tr><td>แมว: ≥ 0.16</td><td>✅ ปกติ</td></tr>
+<tr><td>< 0.16</td><td>⚠️ Tracheal hypoplasia</td></tr>
+</table>
+<h4>📡 Echo — LA:Ao Ratio</h4>
+<table><tr><th>ค่า</th><th>ความหมาย</th></tr>
+<tr><td>สุนัข: ≤ 1.6</td><td>✅ ปกติ</td></tr>
+<tr><td>สุนัข: > 1.7</td><td>⚠️ LA Enlargement (EPIC B2)</td></tr>
+<tr><td>แมว: ≤ 1.5</td><td>✅ ปกติ</td></tr>
+</table>
+</div>`},
+
+ref_electrolyte:{
+title:'⚗️ Electrolytes Reference',sub:'ค่าปกติของ Electrolytes',
+html:`<div class="ref-tbl">
+<table><tr><th>Electrolyte</th><th>สุนัข</th><th>แมว</th><th>Unit</th></tr>
+<tr><td>Sodium (Na⁺)</td><td>138–156</td><td>145–158</td><td>mEq/L</td></tr>
+<tr><td>Potassium (K⁺)</td><td>3.6–5.5</td><td>3.4–5.6</td><td>mEq/L</td></tr>
+<tr><td>Chloride (Cl⁻)</td><td>105–122</td><td>107–127</td><td>mEq/L</td></tr>
+<tr><td>Total Calcium</td><td>8.9–11.4</td><td>8.8–11.9</td><td>mg/dL</td></tr>
+<tr><td>Ionized Calcium</td><td>1.12–1.42</td><td>1.12–1.40</td><td>mmol/L</td></tr>
+<tr><td>Phosphorus</td><td>2.5–6.8</td><td>3.4–8.5</td><td>mg/dL</td></tr>
+<tr><td>Magnesium</td><td>0.44–1.20</td><td>0.49–1.07</td><td>mmol/L</td></tr>
+<tr><td>Bicarbonate (HCO₃⁻)</td><td>18–25</td><td>17–24</td><td>mEq/L</td></tr>
+<tr><td>Na:K ratio</td><td>> 27</td><td>> 27</td><td>ratio</td></tr>
+</table>
+<h4>⚠️ Critical Values</h4>
+<table><tr><th>Electrolyte</th><th>Hypo (Critical)</th><th>Hyper (Critical)</th></tr>
+<tr><td>Na⁺</td><td>< 125</td><td>> 170</td></tr>
+<tr><td>K⁺</td><td>< 2.5</td><td>> 7.0</td></tr>
+<tr><td>Ca²⁺ (total)</td><td>< 7.0</td><td>> 14.0</td></tr>
+</table>
+<div class="ref-note">Na:K ratio < 27 → Suspect Hypoadrenocorticism (Addison's)</div>
+</div>`},
+
+ref_coag:{
+title:'🩹 Coagulation Reference',sub:'ค่าปกติของ Coagulation Profile',
+html:`<div class="ref-tbl">
+<table><tr><th>Parameter</th><th>สุนัข</th><th>แมว</th><th>Unit</th></tr>
+<tr><td>PT (Prothrombin time)</td><td>6–8</td><td>7–10</td><td>sec</td></tr>
+<tr><td>APTT</td><td>10–16</td><td>12–18</td><td>sec</td></tr>
+<tr><td>Fibrinogen</td><td>150–400</td><td>100–400</td><td>mg/dL</td></tr>
+<tr><td>D-dimer</td><td>< 250</td><td>< 250</td><td>ng/mL</td></tr>
+<tr><td>Platelets</td><td>200–500</td><td>300–700</td><td>×10³/µL</td></tr>
+<tr><td>ACT</td><td>65–95</td><td>65–95</td><td>sec</td></tr>
+</table>
+<h4>📊 Interpretation</h4>
+<table><tr><th>ผล</th><th>ความหมาย</th></tr>
+<tr><td>↑PT only</td><td>Extrinsic pathway defect (Factor VII)</td></tr>
+<tr><td>↑APTT only</td><td>Intrinsic pathway (VIII, IX, XI, XII)</td></tr>
+<tr><td>↑PT + ↑APTT</td><td>Common pathway หรือ DIC</td></tr>
+<tr><td>↑D-dimer + ↓Fibrinogen</td><td>DIC — fibrinolysis active</td></tr>
+<tr><td>Platelet < 50,000</td><td>Spontaneous bleeding risk</td></tr>
+<tr><td>Platelet < 20,000</td><td>Critical — imminent hemorrhage</td></tr>
+</table>
+<h4>🩸 vWD (von Willebrand Disease)</h4>
+<table><tr><th>vWF Antigen</th><th>Type</th></tr>
+<tr><td>> 70%</td><td>Normal</td></tr>
+<tr><td>50–70%</td><td>Type 1 (mild)</td></tr>
+<tr><td>< 50%</td><td>Type 1/2/3 — clinical bleeding</td></tr>
+</table>
+</div>`},
+
+ref_lactate:{
+title:'⚡ Lactate & Blood Gas',sub:'ค่าปกติ Lactate และ Acid-Base',
+html:`<div class="ref-tbl">
+<h4>🧪 Lactate</h4>
+<table><tr><th>ค่า (mmol/L)</th><th>ความหมาย</th><th>Action</th></tr>
+<tr><td>< 2.0</td><td>✅ ปกติ</td><td>Monitor ปกติ</td></tr>
+<tr><td>2.0–4.0</td><td>⚠️ Mildly elevated</td><td>Reassess ใน 1–2h</td></tr>
+<tr><td>4.0–8.0</td><td>⚠️ Significantly elevated</td><td>Fluid therapy + Identify cause</td></tr>
+<tr><td>> 8.0</td><td>❌ Critical</td><td>Aggressive treatment</td></tr>
+</table>
+<h4>🫁 Arterial Blood Gas (ABG)</h4>
+<table><tr><th>Parameter</th><th>Normal</th><th>Unit</th></tr>
+<tr><td>pH</td><td>7.35–7.45</td><td>—</td></tr>
+<tr><td>pCO₂</td><td>35–45</td><td>mmHg</td></tr>
+<tr><td>pO₂</td><td>80–100</td><td>mmHg</td></tr>
+<tr><td>HCO₃⁻</td><td>18–24</td><td>mEq/L</td></tr>
+<tr><td>Base Excess</td><td>-4 to +4</td><td>mEq/L</td></tr>
+<tr><td>SpO₂ (pulse ox)</td><td>≥ 95%</td><td>%</td></tr>
+<tr><td>EtCO₂ (capnograph)</td><td>35–45</td><td>mmHg</td></tr>
+</table>
+<h4>📊 Acid-Base Interpretation</h4>
+<table><tr><th>pH</th><th>pCO₂</th><th>HCO₃</th><th>Disorder</th></tr>
+<tr><td>↓ < 7.35</td><td>↑</td><td>Normal</td><td>Respiratory Acidosis</td></tr>
+<tr><td>↑ > 7.45</td><td>↓</td><td>Normal</td><td>Respiratory Alkalosis</td></tr>
+<tr><td>↓ < 7.35</td><td>Normal</td><td>↓</td><td>Metabolic Acidosis</td></tr>
+<tr><td>↑ > 7.45</td><td>Normal</td><td>↑</td><td>Metabolic Alkalosis</td></tr>
+</table>
+</div>`},
+
+ref_dehydration:{
+title:'💧 Dehydration Assessment',sub:'ประเมินระดับการขาดน้ำ',
+html:`<div class="ref-tbl">
+<table><tr><th>%Dehydration</th><th>Clinical Signs</th><th>Action</th></tr>
+<tr><td>< 5% (Mild)</td><td>ประวัติเท่านั้น ไม่มีสัญญาณทางคลินิก</td><td>Oral fluids</td></tr>
+<tr><td>5–6%</td><td>Skin turgor ลดเล็กน้อย เยื่อเมือกเริ่มแห้ง</td><td>Oral หรือ SQ fluids</td></tr>
+<tr><td>7–8%</td><td>Skin turgor ลดชัดเจน เยื่อเมือกแห้ง ตาลึก</td><td>IV fluids 2–4h replacement</td></tr>
+<tr><td>9–10%</td><td>Marked skin turgor ตาลึกมาก mucous membrane แห้ง</td><td>IV fluids + monitor</td></tr>
+<tr><td>11–12%</td><td>Skin เกาะ ตาลึกมาก ซึม CRT > 2s</td><td>Aggressive IV + shock Tx</td></tr>
+<tr><td>12–15% (Severe)</td><td>Shock, collapse, moribund</td><td>Emergency resuscitation</td></tr>
+</table>
+<h4>🧮 Fluid Deficit Formula</h4>
+<div class="ref-formula">Deficit (mL) = BW (kg) × %dehydration × 10</div>
+<div class="ref-note">ตัวอย่าง: สุนัข 10 kg, dehydration 8% → Deficit = 10 × 8 × 10 = 800 mL</div>
+<h4>💊 Skin Tent Test</h4>
+<table><tr><th>Time for skin to return</th><th>Assessment</th></tr>
+<tr><td>< 1 วินาที</td><td>Normal hydration</td></tr>
+<tr><td>1–2 วินาที</td><td>5–6% dehydration</td></tr>
+<tr><td>2–4 วินาที</td><td>7–9% dehydration</td></tr>
+<tr><td>> 4 วินาที</td><td>≥ 10% dehydration</td></tr>
+</table>
+</div>`},
+
+ref_bp:{
+title:'🫀 Blood Pressure Reference',sub:'ค่าปกติและการแปลผล Blood Pressure',
+html:`<div class="ref-tbl">
+<h4>🐕 สุนัข</h4>
+<table><tr><th>Category</th><th>Systolic (mmHg)</th><th>Action</th></tr>
+<tr><td>✅ Normal</td><td>< 140</td><td>Recheck q year</td></tr>
+<tr><td>⚠️ Pre-hypertensive</td><td>140–159</td><td>Monitor q 3–6 mo</td></tr>
+<tr><td>❌ Hypertensive</td><td>160–179</td><td>Treat + workup</td></tr>
+<tr><td>🚨 Severe</td><td>≥ 180</td><td>Urgent treatment</td></tr>
+</table>
+<h4>🐈 แมว</h4>
+<table><tr><th>Category</th><th>Systolic (mmHg)</th><th>Action</th></tr>
+<tr><td>✅ Normal</td><td>< 150</td><td>Recheck q year</td></tr>
+<tr><td>⚠️ Pre-hypertensive</td><td>150–159</td><td>Monitor q 3–6 mo</td></tr>
+<tr><td>❌ Hypertensive</td><td>160–179</td><td>Treat (Amlodipine)</td></tr>
+<tr><td>🚨 Severe</td><td>≥ 180</td><td>Urgent treatment</td></tr>
+</table>
+<h4>📏 MAP (Mean Arterial Pressure)</h4>
+<table><tr><th>MAP</th><th>ความหมาย</th></tr>
+<tr><td>≥ 80 mmHg</td><td>✅ Adequate perfusion</td></tr>
+<tr><td>60–79 mmHg</td><td>⚠️ Borderline — monitor</td></tr>
+<tr><td>< 60 mmHg</td><td>❌ Hypotension — treat immediately</td></tr>
+</table>
+<div class="ref-formula">MAP = DBP + (SBP − DBP) ÷ 3</div>
+<div class="ref-note">⚠️ ACVIM guideline: วัด BP ≥ 3 ครั้ง บันทึกค่าเฉลี่ย ลด white coat effect</div>
+</div>`},
+
+ref_bcs:{
+title:'⚖️ Body Condition Score (BCS)',sub:'ประเมิน BCS 1–9 สุนัขและแมว',
+html:`<div class="ref-tbl">
+<table><tr><th>BCS</th><th>ลักษณะ</th><th>สรุป</th></tr>
+<tr><td>1</td><td>กระดูกซี่โครง สันหลัง กระดูกเชิงกราน ยื่นชัดเจน ไม่มีไขมันเลย กล้ามเนื้อลีบ</td><td class="ref-bad">Emaciated</td></tr>
+<tr><td>2</td><td>เห็นกระดูกชัด ไขมันน้อยมาก กล้ามเนื้อลดลง</td><td class="ref-bad">Very thin</td></tr>
+<tr><td>3</td><td>ซี่โครงคลำได้ง่าย เห็นได้บ้าง เอวชัดเจน</td><td class="ref-warn">Thin</td></tr>
+<tr><td>4</td><td>ซี่โครงคลำได้ง่าย เอวชัดเจน ท้องกระชับ</td><td class="ref-warn">Underweight</td></tr>
+<tr><td>5</td><td>ซี่โครงคลำได้ด้วยแรงกดเล็กน้อย เอวมองเห็นจากด้านบน ท้องขึ้น</td><td class="ref-ok">✅ Ideal</td></tr>
+<tr><td>6</td><td>ซี่โครงคลำได้แต่มีไขมันเล็กน้อย เอวแยกได้ยาก</td><td class="ref-warn">Overweight</td></tr>
+<tr><td>7</td><td>ซี่โครงคลำยาก ไขมันชัดเจน ไม่เห็นเอว ท้องโต</td><td class="ref-bad">Obese</td></tr>
+<tr><td>8</td><td>ซี่โครงคลำยากมาก ไขมันหนา ไม่เห็นเอวและซี่โครง</td><td class="ref-bad">Obese</td></tr>
+<tr><td>9</td><td>ซี่โครงคลำไม่ได้เลย ไขมันสะสมมาก ท้องห้อย ไม่เห็นเอว</td><td class="ref-bad">Grossly obese</td></tr>
+</table>
+<div class="ref-note">BCS 4–5 = Ideal · BCS > 7 = Obesity → ลด calorie 10–20% · เป้าหมาย BCS 5</div>
+</div>`},
+
+ref_asa:{
+title:'🏥 ASA Physical Status Classification',sub:'ระดับความเสี่ยงก่อนการวางยาสลบ (ASA 1–5)',
+html:`<div class="ref-tbl">
+<table><tr><th>ASA</th><th>ลักษณะผู้ป่วย</th><th>ตัวอย่าง</th></tr>
+<tr><td><span class="asa-badge asa-1">ASA I</span></td><td>สัตว์ปกติ ไม่มีโรคอื่น</td><td>Elective surgery ที่แข็งแรง</td></tr>
+<tr><td><span class="asa-badge asa-2">ASA II</span></td><td>โรคระบบเดียว ไม่รุนแรง ไม่กระทบการทำงาน</td><td>Obesity, อายุมาก, Controlled DM</td></tr>
+<tr><td><span class="asa-badge asa-3">ASA III</span></td><td>โรครุนแรง จำกัดการทำงานบ้าง</td><td>CHF mild, Renal disease, Anemia</td></tr>
+<tr><td><span class="asa-badge asa-4">ASA IV</span></td><td>โรครุนแรงมาก เสี่ยงชีวิต</td><td>Severe CHF, Uremia, Trauma รุนแรง</td></tr>
+<tr><td><span class="asa-badge asa-5">ASA V</span></td><td>Moribund ไม่น่ารอดแม้ผ่าตัด</td><td>Profound shock, Multi-organ failure</td></tr>
+<tr><td><span class="asa-badge asa-e">ASA E</span></td><td>เพิ่ม "E" = Emergency ในทุก grade</td><td>ASA IE, IIE, IIIE...</td></tr>
+</table>
+<div class="ref-note">⚠️ ASA III–V: เตรียม crash cart, monitor ใกล้ชิด, พิจารณา CRI opioid</div>
+</div>`},
+
+ref_pain:{
+title:'😣 Pain Scoring Systems',sub:'ระบบประเมินความเจ็บปวดในสัตว์',
+html:`<div class="ref-tbl">
+<h4>🐕 CMPS-SF (Colorado State University — Dog)</h4>
+<table><tr><th>Score</th><th>ความหมาย</th><th>Action</th></tr>
+<tr><td>0–3</td><td>Minimal pain</td><td>Monitor</td></tr>
+<tr><td>4–6</td><td>Moderate pain</td><td>Analgesia indicated</td></tr>
+<tr><td>7–10</td><td>Severe pain</td><td>Immediate analgesia</td></tr>
+</table>
+<div class="ref-note">Intervention threshold: ≥ 4/10 for CMPS-SF</div>
+<h4>🐈 Feline Grimace Scale (FGS)</h4>
+<table><tr><th>Action Unit (AU)</th><th>Score 0–2 each</th></tr>
+<tr><td>Orbital tightening</td><td>0 = relaxed, 2 = squinting</td></tr>
+<tr><td>Nose bulgeing</td><td>0 = flat, 2 = round bulgeing</td></tr>
+<tr><td>Cheek flattening</td><td>0 = full, 2 = sunken</td></tr>
+<tr><td>Ear position</td><td>0 = natural, 2 = flat/rotated</td></tr>
+<tr><td>Whisker position</td><td>0 = loose, 2 = tense/forward</td></tr>
+</table>
+<div class="ref-note">FGS total ÷ 10 → Pain score 0.0–1.0 · Intervention ≥ 0.4</div>
+<h4>📏 Glasgow Composite Pain Scale (GCMPS)</h4>
+<table><tr><th>Grade</th><th>Score</th><th>Meaning</th></tr>
+<tr><td>None</td><td>0</td><td>No pain</td></tr>
+<tr><td>Mild</td><td>1–5</td><td>Mild discomfort</td></tr>
+<tr><td>Moderate</td><td>6–10</td><td>Needs analgesia</td></tr>
+<tr><td>Severe</td><td>11–15</td><td>Urgent analgesia</td></tr>
+</table>
+<h4>🏇 Pain Signs ที่พบบ่อย</h4>
+<table><tr><th>สัตว์</th><th>สัญญาณปวด</th></tr>
+<tr><td>สุนัข</td><td>Guard/brace, restless, vocalize, aggression</td></tr>
+<tr><td>แมว</td><td>Hiding, reduced grooming, facial grimace, hunched</td></tr>
+<tr><td>ม้า</td><td>Rolling, pawing, flank watching, sweating</td></tr>
+</table>
+</div>`},
+
+ref_wound:{
+title:'🩺 Wound Classification',sub:'การจำแนกประเภทแผล Surgical/Contamination',
+html:`<div class="ref-tbl">
+<h4>📋 Surgical Wound Classification (CDC)</h4>
+<table><tr><th>Class</th><th>ชนิดแผล</th><th>ตัวอย่าง</th><th>Infection rate</th></tr>
+<tr><td><b>Class I</b></td><td>Clean</td><td>Elective, closed primarily, dry field, no GI/GU</td><td>< 2%</td></tr>
+<tr><td><b>Class II</b></td><td>Clean-contaminated</td><td>GI/GU/Respiratory entered, minor break</td><td>2–10%</td></tr>
+<tr><td><b>Class III</b></td><td>Contaminated</td><td>Open wound, fresh trauma, gross spillage</td><td>10–20%</td></tr>
+<tr><td><b>Class IV</b></td><td>Dirty/Infected</td><td>Old trauma, pus, perforated viscus</td><td>> 20%</td></tr>
+</table>
+<h4>🕒 Wound Age Classification</h4>
+<table><tr><th>อายุแผล</th><th>สถานะ</th><th>Management</th></tr>
+<tr><td>< 6–8 ชั่วโมง</td><td>Fresh/Acute</td><td>Primary closure possible</td></tr>
+<tr><td>6–12 ชั่วโมง</td><td>Borderline</td><td>Delayed primary closure (Day 3–5)</td></tr>
+<tr><td>> 12 ชั่วโมง</td><td>Contaminated</td><td>Open wound management → Secondary closure</td></tr>
+</table>
+<h4>🦠 Bite Wound Classification</h4>
+<table><tr><th>Grade</th><th>ลักษณะ</th><th>Treatment</th></tr>
+<tr><td>Grade I</td><td>Puncture only, no tearing</td><td>Flush, antibiotics</td></tr>
+<tr><td>Grade II</td><td>Single puncture + laceration</td><td>Debride, lavage, antibiotics</td></tr>
+<tr><td>Grade III</td><td>Multiple punctures + lacerations</td><td>Surgical debridement</td></tr>
+<tr><td>Grade IV</td><td>Deep tissue damage + avulsion</td><td>Extensive surgery, drain</td></tr>
+</table>
+</div>`},
+
+ref_shockindex:{
+title:'🚨 Shock Index Guide',sub:'การแปลผล Shock Index = HR ÷ SBP',
+html:`<div class="ref-tbl">
+<h4>🐕 สุนัข</h4>
+<table><tr><th>Shock Index</th><th>ความหมาย</th><th>Action</th></tr>
+<tr><td>< 0.9</td><td>✅ Normal</td><td>Routine monitoring</td></tr>
+<tr><td>0.9–1.0</td><td>⚠️ Borderline</td><td>Close monitoring, prepare IV</td></tr>
+<tr><td>1.0–1.5</td><td>❌ Mild-Moderate Shock</td><td>IV fluids, workup</td></tr>
+<tr><td>> 1.5</td><td>🚨 Severe Shock</td><td>Aggressive resuscitation</td></tr>
+</table>
+<h4>🐈 แมว</h4>
+<table><tr><th>Shock Index</th><th>ความหมาย</th></tr>
+<tr><td>< 1.0</td><td>✅ Normal</td></tr>
+<tr><td>1.0–1.3</td><td>⚠️ Borderline Shock</td></tr>
+<tr><td>> 1.3</td><td>❌ Shock</td></tr>
+</table>
+<div class="ref-formula">SI = HR (bpm) ÷ Systolic BP (mmHg)</div>
+<h4>⚠️ Shock Types</h4>
+<table><tr><th>Type</th><th>ลักษณะ</th><th>Treatment</th></tr>
+<tr><td>Hypovolemic</td><td>Pale, tachycardia, weak pulse</td><td>Crystalloid bolus</td></tr>
+<tr><td>Distributive (Septic)</td><td>Hyperemic early, tachycardia</td><td>Antibiotics + fluids</td></tr>
+<tr><td>Cardiogenic</td><td>Weak pulse, jugular distension</td><td>Inotropes, diuretics</td></tr>
+<tr><td>Obstructive</td><td>GDV/PE/tamponade</td><td>Decompress + surgery</td></tr>
+</table>
+</div>`},
+
+ref_iris:{
+title:'🫘 IRIS CKD Staging',sub:'International Renal Interest Society — CKD Staging',
+html:`<div class="ref-tbl">
+<h4>🐕 สุนัข</h4>
+<table><tr><th>Stage</th><th>Creatinine (mg/dL)</th><th>SDMA (µg/dL)</th></tr>
+<tr><td>Stage 1</td><td>< 1.4</td><td>< 18</td></tr>
+<tr><td>Stage 2</td><td>1.4–2.8</td><td>18–35</td></tr>
+<tr><td>Stage 3</td><td>2.9–5.0</td><td>36–54</td></tr>
+<tr><td>Stage 4</td><td>> 5.0</td><td>> 54</td></tr>
+</table>
+<h4>🐈 แมว</h4>
+<table><tr><th>Stage</th><th>Creatinine (mg/dL)</th><th>SDMA (µg/dL)</th></tr>
+<tr><td>Stage 1</td><td>< 1.6</td><td>< 18</td></tr>
+<tr><td>Stage 2</td><td>1.6–2.8</td><td>18–25</td></tr>
+<tr><td>Stage 3</td><td>2.9–5.0</td><td>26–38</td></tr>
+<tr><td>Stage 4</td><td>> 5.0</td><td>> 38</td></tr>
+</table>
+<h4>📋 Sub-staging</h4>
+<table><tr><th>Blood Pressure</th><th>UPC</th><th>Sub-stage</th></tr>
+<tr><td>< 140 mmHg</td><td>< 0.2</td><td>NP + Normotensive</td></tr>
+<tr><td>140–159</td><td>0.2–0.5</td><td>BP / Borderline proteinuric</td></tr>
+<tr><td>160–179</td><td>0.5–1.0</td><td>Hypertensive / Proteinuric (P)</td></tr>
+<tr><td>≥ 180</td><td>> 1.0</td><td>Severely hypertensive / Severely proteinuric (SP)</td></tr>
+</table>
+<div class="ref-note">แนวทาง: IRIS Stage 1–2 → Renal diet, BP control, recheck q3–6 mo</div>
+</div>`},
 
 };
+
 
 function buildEmergencyHTML(){
   const drugs=[['Epinephrine (CPR)','0.01 mg/kg IV/IT q3-5min'],['Atropine (Bradycardia)','0.02-0.04 mg/kg IV/IM'],['Lidocaine (VT)','2 mg/kg IV slow bolus'],['Diazepam (Seizure)','0.5 mg/kg IV slow'],['Midazolam (Seizure)','0.2-0.4 mg/kg IM/IN'],['Naloxone (Opioid OD)','0.01-0.04 mg/kg IV/IM'],['Flumazenil (Benzo OD)','0.01 mg/kg IV slow'],['Dextrose 50%','0.5-1 mL/kg IV diluted (Hypoglycemia)'],['NaHCO3 8.4%','1 mEq/kg IV slow (Acidosis)'],['Calcium gluconate 10%','50-150 mg/kg slow IV'],['Mannitol 20%','0.5-1 g/kg IV over 20min (ICP)'],['Vasopressin','0.4-4 mU/kg/min CRI (Shock)'],['Dobutamine','5-10 mcg/kg/min CRI (CHF)'],['Dopamine','5-10 mcg/kg/min CRI (Shock)'],['Furosemide (Edema)','2-4 mg/kg IV/IM'],['Norepinephrine','0.05-1 mcg/kg/min CRI (Shock)'],['Terbutaline (Bronchospasm)','0.01 mg/kg SC q4h'],['Diphenhydramine (Anaphylaxis)','1-2 mg/kg IV slow'],['Dantrolene (Malign.Hyperthermia)','2.5-5 mg/kg IV slow']];
@@ -1673,5 +2237,6 @@ function calcUC(){
   document.getElementById('uc_res').innerHTML=`<div class="result-row"><span class="result-lbl">ผลลัพธ์</span><span class="result-val">${result[0].toFixed(4)}<span class="result-unit">${result[1]}</span></span></div>`;
 }
 </script>
+<script src="livechat.js"></script>
 </body>
 </html>
