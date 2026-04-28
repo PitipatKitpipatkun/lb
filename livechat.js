@@ -196,15 +196,15 @@ function buildCSS(){
 function buildHTML(){
   const d=document.createElement('div');
   d.innerHTML=`
-<button id="_lcFab" title="Live Chat">💬<span id="_lcBadge"></span></button>
+<button id="_lcFab" title="คุยกับเพื่อนที่กำลังออนไลน์">💬<span id="_lcBadge"></span></button>
 
 <div id="_lcPanel">
   <!-- Header (always visible) -->
   <div class="_lcHdr">
     <div class="_lcHdrIco">💬</div>
     <div class="_lcHdrInfo">
-      <div class="_lcHdrTitle">Live Chat</div>
-      <div class="_lcOnline" id="_lcOnlineTxt">🟢 กำลังโหลด...</div>
+      <div class="_lcHdrTitle" style="font-size:12px;line-height:1.3;">คุยกับเพื่อนออนไลน์</div>
+      <div class="_lcOnline" id="_lcOnlineTxt">🗑️ ข้อความถูกลบหลังเที่ยงคืน</div>
     </div>
     <button class="_lcClose" id="_lcCloseBtn" title="ย่อ">—</button>
   </div>
@@ -212,7 +212,7 @@ function buildHTML(){
   <!-- JOIN SCREEN -->
   <div id="_lcJoin">
     <div class="_lcMyAvBig" id="_lcJoinAvBig">🐾</div>
-    <div class="_lcJoinTitle">ยินดีต้อนรับสู่ Live Chat! 🎉</div>
+    <div class="_lcJoinTitle">ยินดีต้อนรับ! 🎉</div>
     <div class="_lcJoinSub">เลือก Avatar และตั้งชื่อเล่นก่อนเริ่มคุย</div>
     <div class="_lcAvatarGrid" id="_lcAvGrid">${AVATARS.map((a,i)=>`<button class="_lcAvOpt${i===0?' sel':''}" data-av="${a}" onclick="lcPickAv('${a}',this)">${a}</button>`).join('')}</div>
     <div class="_lcNickWrap">
@@ -310,7 +310,7 @@ const _onlineUsers = new Map(); // uid -> {nick, page, ts}
 
 function connect(){
   ch=sb.channel(CHANNEL,{
-    config:{presence:{key:myId},broadcast:{self:false}}
+    config:{presence:{key:myId},broadcast:{self:true}}
   });
 
   // ─── PRESENCE (Supabase v2 correct syntax) ───
@@ -477,7 +477,7 @@ function updateBadge(){
 function updateOnline(){
   const el=document.getElementById('_lcOnlineTxt');
   if(!el)return;
-  el.textContent='🟢 ออนไลน์ '+online+' คน';
+  el.textContent='🗑️ ข้อความถูกลบหลังเที่ยงคืน';
   // Show who's on page
   if(ch){
     const state=ch.presenceState();
