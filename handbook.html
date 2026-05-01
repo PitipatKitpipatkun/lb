@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="theme-color" content="#FAFAF7" />
+  <meta name="color-scheme" content="light">
+  <title>Handbook · งานคลินิก</title>
+
+  <script>
+    let lastTap = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 350) e.preventDefault();
+      lastTap = now;
+    }, { passive: false });
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+    document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+    document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20260501g">
+
+  <!-- Supabase JS v2 — pinned + dual CDN with fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+          onerror="this.dataset.fallbackTried=1;
+                   var s=document.createElement('script');
+                   s.src='https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+                   document.head.appendChild(s);"></script>
+  <script>
+    (function () {
+      var d = document.documentElement;
+      try {
+        var hasCachedSession = !!localStorage.getItem('sb-bxlyctricjayindvcfjo-auth-token');
+        if (hasCachedSession) d.classList.add('checking');
+        else d.classList.add('locked');
+      } catch (e) { d.classList.add('locked'); }
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="pride-bar"></div>
+
+  <div class="blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- TOP BAR --------------------------------------------------- -->
+    <header class="topbar">
+      <a class="back-btn" href="clinic.html" aria-label="กลับงานคลินิก">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <span>งานคลินิก</span>
+      </a>
+      <div class="meta">
+        <span class="online" aria-hidden="true"></span>
+        <span id="clock">--:--</span>
+      </div>
+    </header>
+
+    <!-- PAGE HERO ------------------------------------------------- -->
+    <section class="page-hero" style="--page-accent: var(--green);">
+      <p class="page-eyebrow">งานคลินิก · HANDBOOK</p>
+      <h1 class="page-title"><span class="rainbow">คู่มืออ้างอิง</span></h1>
+      <p class="page-subtitle">ตำราเฉพาะทางสำหรับใช้ค้นคว้า ณ จุดให้บริการ</p>
+    </section>
+
+    <div class="section-label">
+      <span class="lbl">เลือกเล่ม</span>
+      <span class="count">2 / 5 เล่ม</span>
+    </div>
+
+    <!-- BOOK GRID ------------------------------------------------- -->
+    <main class="grid">
+
+      <!-- Medicine - active -->
+      <a class="card c4" href="medicine.html" aria-label="Medicine">
+        <span class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v8M8.5 5.5L12 2l3.5 3.5"/>
+            <rect x="4" y="10" width="16" height="11" rx="2"/>
+            <path d="M9 15h6M12 12v6"/>
+          </svg>
+        </span>
+        <span class="card-body">
+          <span class="card-title">Medicine</span>
+          <span class="card-desc">อายุรกรรม — Nelson &amp; Couto, 6th Ed.</span>
+        </span>
+        <span class="card-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <!-- Surgery - active -->
+      <a class="card c2" href="surgery.html" aria-label="Surgery">
+        <span class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3l7 7-9 9-3-3"/><path d="M9 16L4 21"/><path d="M5 14l5 5"/>
+          </svg>
+        </span>
+        <span class="card-body">
+          <span class="card-title">Surgery</span>
+          <span class="card-desc">ศัลยกรรม — Tobias &amp; Johnston, 2nd Ed.</span>
+        </span>
+        <span class="card-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <!-- Dermatology - coming soon -->
+      <a class="card c1 coming-soon" href="#" aria-label="Dermatology">
+        <span class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <circle cx="9" cy="10" r="0.8" fill="currentColor"/>
+            <circle cx="15" cy="10" r="0.8" fill="currentColor"/>
+            <circle cx="12" cy="14" r="0.8" fill="currentColor"/>
+            <circle cx="8" cy="15" r="0.8" fill="currentColor"/>
+            <circle cx="16" cy="15" r="0.8" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="card-body">
+          <span class="card-title">Dermatology</span>
+          <span class="card-desc">โรคผิวหนัง</span>
+        </span>
+        <span class="card-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <!-- Emergency - coming soon -->
+      <a class="card c5 coming-soon" href="#" aria-label="Emergency">
+        <span class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 12l10 10 10-10L12 2z"/>
+            <path d="M12 8v4M12 16h.01"/>
+          </svg>
+        </span>
+        <span class="card-body">
+          <span class="card-title">Emergency</span>
+          <span class="card-desc">เวชศาสตร์ฉุกเฉิน &amp; ICU</span>
+        </span>
+        <span class="card-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <!-- Pharmacology - coming soon -->
+      <a class="card c6 coming-soon" href="#" aria-label="Pharmacology">
+        <span class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="2" width="12" height="20" rx="6"/>
+            <path d="M6 12h12"/>
+          </svg>
+        </span>
+        <span class="card-body">
+          <span class="card-title">Pharmacology</span>
+          <span class="card-desc">เภสัชวิทยา &amp; Drug index</span>
+        </span>
+        <span class="card-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+    </main>
+
+    <footer class="foot">
+      <div class="row">
+        <span>© alex · 2026</span>
+        <span class="with-pride">
+          <span>made with pride</span>
+          <span class="pride-mini" aria-hidden="true"></span>
+        </span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="auth.js?v=20260501g"></script>
+</body>
+</html>

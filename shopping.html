@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="theme-color" content="#FAFAF7" />
+  <meta name="color-scheme" content="light">
+  <title>รายการรอจัดซื้อ · PK</title>
+
+  <script>
+    let lastTap = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 350) e.preventDefault();
+      lastTap = now;
+    }, { passive: false });
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+    document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+    document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20260501g">
+
+  <!-- Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+          onerror="this.dataset.fallbackTried=1;
+                   var s=document.createElement('script');
+                   s.src='https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+                   document.head.appendChild(s);"></script>
+  <script>
+    (function () {
+      var d = document.documentElement;
+      try {
+        var hasCachedSession = !!localStorage.getItem('sb-bxlyctricjayindvcfjo-auth-token');
+        if (hasCachedSession) d.classList.add('checking');
+        else d.classList.add('locked');
+      } catch (e) { d.classList.add('locked'); }
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="pride-bar"></div>
+
+  <div class="blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- TOP BAR --------------------------------------------------- -->
+    <header class="topbar">
+      <a class="back-btn" href="clinic.html" aria-label="กลับ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <span>งานคลินิก</span>
+      </a>
+      <div class="meta">
+        <span class="online" aria-hidden="true"></span>
+        <span id="clock">--:--</span>
+      </div>
+    </header>
+
+    <!-- PAGE HERO ------------------------------------------------- -->
+    <section class="page-hero" style="--page-accent: var(--red);">
+      <p class="page-eyebrow">CLINIC · SHOPPING LIST</p>
+      <h1 class="page-title" style="color: var(--red);">รายการรอจัดซื้อ</h1>
+      <p class="page-subtitle">ของที่ใกล้หมด · ของที่ต้องเติม · ป้องกันการลืม 🛒</p>
+    </section>
+
+    <!-- STATS BAR ------------------------------------------------- -->
+    <section class="shop-stats" id="shopStats">
+      <div class="ss-card">
+        <span class="ss-label">รอซื้อ</span>
+        <span class="ss-value ss-pending" id="ssPending">0</span>
+      </div>
+      <div class="ss-card">
+        <span class="ss-label">ซื้อแล้ว</span>
+        <span class="ss-value ss-done" id="ssDone">0</span>
+      </div>
+      <div class="ss-card">
+        <span class="ss-label">งบประมาณ</span>
+        <span class="ss-value ss-budget" id="ssBudget">฿ 0</span>
+      </div>
+    </section>
+
+    <!-- ADD BUTTON ------------------------------------------------ -->
+    <button class="add-btn-large" type="button" id="btnAdd">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      <span>เพิ่มรายการใหม่</span>
+    </button>
+
+    <!-- FILTERS --------------------------------------------------- -->
+    <div class="shop-filters" id="shopFilters">
+      <button class="sf-btn active" data-filter="pending" type="button">รอซื้อ</button>
+      <button class="sf-btn" data-filter="done" type="button">ซื้อแล้ว</button>
+      <button class="sf-btn" data-filter="all" type="button">ทั้งหมด</button>
+      <span class="sf-divider"></span>
+      <button class="sf-cat-btn" data-cat="all" type="button">ทุกหมวด</button>
+      <button class="sf-cat-btn" data-cat="medicine" type="button">💊 ยา</button>
+      <button class="sf-cat-btn" data-cat="consumable" type="button">📦 สิ้นเปลือง</button>
+      <button class="sf-cat-btn" data-cat="equipment" type="button">🔧 อุปกรณ์</button>
+      <button class="sf-cat-btn" data-cat="other" type="button">📌 อื่นๆ</button>
+    </div>
+
+    <!-- LIST ------------------------------------------------------ -->
+    <section class="shop-section">
+      <div class="shop-list" id="shopList">
+        <div class="loading-msg">กำลังโหลด...</div>
+      </div>
+    </section>
+
+    <!-- ACTIONS BOTTOM ------------------------------------------- -->
+    <section class="shop-actions" id="shopActions">
+      <button class="btn-clear-done" type="button" id="btnClearDone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+        </svg>
+        <span>ลบรายการที่ซื้อแล้วทั้งหมด</span>
+      </button>
+    </section>
+
+    <footer class="foot">
+      <div class="row">
+        <span>© alex · 2026</span>
+        <span class="with-pride">
+          <span>made with pride</span>
+          <span class="pride-mini" aria-hidden="true"></span>
+        </span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ============================================================
+       MODAL — Add/Edit Item
+       ============================================================ -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">เพิ่มรายการใหม่</h2>
+        <button class="modal-close" type="button" id="modalClose" aria-label="ปิด">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form class="modal-form" id="itemForm">
+        <input type="hidden" id="formId" value="">
+
+        <!-- Name -->
+        <div class="form-row">
+          <label class="form-label" for="formName">ชื่อรายการ *</label>
+          <input class="form-input" type="text" id="formName" placeholder="เช่น: Ceftriaxone 1g" required>
+        </div>
+
+        <!-- Quantity + Unit -->
+        <div class="form-row form-row-split">
+          <div class="form-half">
+            <label class="form-label" for="formQty">จำนวน</label>
+            <input class="form-input" type="text" inputmode="decimal" id="formQty" placeholder="0">
+          </div>
+          <div class="form-half">
+            <label class="form-label" for="formUnit">หน่วย</label>
+            <input class="form-input" type="text" id="formUnit" placeholder="ขวด, กล่อง, ห่อ" list="unitList">
+            <datalist id="unitList">
+              <option value="ขวด"></option>
+              <option value="กล่อง"></option>
+              <option value="ห่อ"></option>
+              <option value="ชิ้น"></option>
+              <option value="แผง"></option>
+              <option value="ชุด"></option>
+              <option value="หลอด"></option>
+              <option value="กระป๋อง"></option>
+              <option value="ถุง"></option>
+              <option value="แพ็ค"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="form-row">
+          <label class="form-label">หมวดหมู่</label>
+          <div class="cat-grid cat-grid-shop" id="catGrid">
+            <button class="cat-btn" type="button" data-cat="medicine">
+              <span class="cat-emoji">💊</span><span class="cat-label">ยา</span>
+            </button>
+            <button class="cat-btn" type="button" data-cat="consumable">
+              <span class="cat-emoji">📦</span><span class="cat-label">สิ้นเปลือง</span>
+            </button>
+            <button class="cat-btn" type="button" data-cat="equipment">
+              <span class="cat-emoji">🔧</span><span class="cat-label">อุปกรณ์</span>
+            </button>
+            <button class="cat-btn" type="button" data-cat="other">
+              <span class="cat-emoji">📌</span><span class="cat-label">อื่นๆ</span>
+            </button>
+          </div>
+          <input type="hidden" id="formCategory" value="other">
+        </div>
+
+        <!-- Price -->
+        <div class="form-row">
+          <label class="form-label" for="formPrice">ราคาต่อหน่วย (฿) <span class="form-optional">— ใส่หรือไม่ใส่ก็ได้</span></label>
+          <input class="form-input" type="text" inputmode="decimal" id="formPrice" placeholder="0.00">
+        </div>
+
+        <!-- Notes -->
+        <div class="form-row">
+          <label class="form-label" for="formNotes">หมายเหตุ <span class="form-optional">(optional)</span></label>
+          <input class="form-input" type="text" id="formNotes" placeholder="เช่น: ยี่ห้อ ABC · สั่งจากร้านนั้น">
+        </div>
+
+        <!-- Buttons -->
+        <div class="form-actions">
+          <button class="btn btn-delete" type="button" id="btnDelete" style="display:none;">ลบรายการ</button>
+          <button class="btn btn-secondary" type="button" id="btnCancel">ยกเลิก</button>
+          <button class="btn btn-primary" type="submit" id="btnSave">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="auth.js?v=20260501g"></script>
+  <script src="shopping.js?v=20260501g"></script>
+</body>
+</html>

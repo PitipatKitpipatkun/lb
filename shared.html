@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="theme-color" content="#FAFAF7" />
+  <meta name="color-scheme" content="light">
+  <title>แชร์ๆ · Alex & Jojo</title>
+
+  <script>
+    let lastTap = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 350) e.preventDefault();
+      lastTap = now;
+    }, { passive: false });
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+    document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+    document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20260501g">
+
+  <!-- Supabase JS v2 (used for database only, no auth) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+          onerror="this.dataset.fallbackTried=1;
+                   var s=document.createElement('script');
+                   s.src='https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+                   document.head.appendChild(s);"></script>
+
+  <!-- Chart.js for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="pride-bar"></div>
+
+  <div class="blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- TOP BAR --------------------------------------------------- -->
+    <header class="topbar">
+      <a class="back-btn" href="index.html" aria-label="หน้าหลัก">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        <span>หน้าหลัก</span>
+      </a>
+      <div class="meta">
+        <span class="online" aria-hidden="true"></span>
+        <span id="clock">--:--</span>
+      </div>
+    </header>
+
+    <!-- PAGE HERO ------------------------------------------------- -->
+    <section class="page-hero" style="--page-accent: var(--green);">
+      <p class="page-eyebrow">SHARED · ALEX & JOJO</p>
+      <h1 class="page-title" style="color: var(--green);">แชร์ๆ</h1>
+      <p class="page-subtitle">เงินกองกลางของเรา — ออกคนละครึ่ง ใช้จ่ายร่วมกัน 💕</p>
+    </section>
+
+    <!-- BALANCE CARD -------------------------------------------- -->
+    <section class="balance-card" id="balanceCard">
+      <div class="balance-label">เงินกองกลาง</div>
+      <div class="balance-amount" id="balanceAmount">฿ 0.00</div>
+      <div class="balance-breakdown" id="balanceBreakdown">
+        <div class="bb-row">
+          <span class="bb-label">Alex เติมรวม</span>
+          <span class="bb-value" id="alexDeposit">฿ 0</span>
+        </div>
+        <div class="bb-row">
+          <span class="bb-label">Jojo เติมรวม</span>
+          <span class="bb-value" id="jojoDeposit">฿ 0</span>
+        </div>
+        <div class="bb-row bb-divider">
+          <span class="bb-label">จ่ายไปแล้ว</span>
+          <span class="bb-value bb-spent" id="totalSpent">฿ 0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK ACTIONS ------------------------------------------- -->
+    <div class="quick-actions">
+      <button class="qa-btn qa-expense" type="button" id="btnAddExpense">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span>บันทึกรายจ่าย</span>
+      </button>
+      <button class="qa-btn qa-deposit" type="button" id="btnAddDeposit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+        <span>เติมเงิน</span>
+      </button>
+    </div>
+
+    <!-- MONTH SUMMARY ------------------------------------------- -->
+    <section class="month-summary" id="monthSummary">
+      <div class="ms-header">
+        <span class="ms-title">สรุปเดือนนี้</span>
+        <span class="ms-month" id="msMonthLabel">—</span>
+      </div>
+      <div class="ms-stats">
+        <div class="ms-stat">
+          <span class="ms-stat-label">ใช้ไป</span>
+          <span class="ms-stat-value ms-spent" id="msSpent">฿ 0</span>
+        </div>
+        <div class="ms-stat">
+          <span class="ms-stat-label">เติม</span>
+          <span class="ms-stat-value ms-deposit" id="msDeposit">฿ 0</span>
+        </div>
+        <div class="ms-stat">
+          <span class="ms-stat-label">รายการ</span>
+          <span class="ms-stat-value" id="msCount">0</span>
+        </div>
+      </div>
+      <div class="ms-categories" id="msCategories">
+        <!-- Auto-rendered by shared.js -->
+      </div>
+    </section>
+
+    <!-- CHART --------------------------------------------------- -->
+    <section class="chart-section" id="chartSection">
+      <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="monthly" type="button">รายเดือน</button>
+        <button class="chart-tab" data-chart="category" type="button">หมวดหมู่</button>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="mainChart"></canvas>
+      </div>
+    </section>
+
+    <!-- TRANSACTIONS LIST --------------------------------------- -->
+    <section class="trans-section">
+      <div class="trans-header">
+        <span class="trans-title">รายการ <span class="trans-count" id="transCount">0</span></span>
+        <button class="export-btn" type="button" id="btnExport">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+          <span>Export CSV</span>
+        </button>
+      </div>
+
+      <div class="trans-filters" id="transFilters">
+        <button class="tf-btn active" data-filter="all" type="button">ทั้งหมด</button>
+        <button class="tf-btn" data-filter="month" type="button">เดือนนี้</button>
+        <button class="tf-btn" data-filter="expense" type="button">รายจ่าย</button>
+        <button class="tf-btn" data-filter="deposit" type="button">เติมเงิน</button>
+      </div>
+
+      <div class="trans-list" id="transList">
+        <div class="loading-msg">กำลังโหลด...</div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="row">
+        <span>© alex & jojo · 2026</span>
+        <span class="with-pride">
+          <span>made with pride</span>
+          <span class="pride-mini" aria-hidden="true"></span>
+        </span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ============================================================
+       PIN MODAL (gate for write actions)
+       ============================================================ -->
+  <div class="modal-backdrop" id="pinBackdrop">
+    <div class="modal pin-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2 class="modal-title">🔒 ใส่ PIN เพื่อแก้ไข</h2>
+        <button class="modal-close" type="button" id="pinClose" aria-label="ปิด">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="pin-body">
+        <p class="pin-hint">ใส่ครั้งเดียว — เครื่องนี้จะจำไว้</p>
+        <input class="pin-input" type="password" inputmode="numeric" maxlength="4" id="pinInput" autocomplete="off" placeholder="••••" pattern="[0-9]*">
+        <div class="pin-error" id="pinError"></div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" type="button" id="pinCancel">ยกเลิก</button>
+          <button class="btn btn-primary" type="button" id="pinSubmit">ยืนยัน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL — Add/Edit Transaction
+       ============================================================ -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">บันทึกรายจ่าย</h2>
+        <button class="modal-close" type="button" id="modalClose" aria-label="ปิด">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form class="modal-form" id="transForm">
+        <input type="hidden" id="formId" value="">
+        <input type="hidden" id="formType" value="expense">
+
+        <!-- Amount -->
+        <div class="form-row">
+          <label class="form-label" for="formAmount">จำนวนเงิน (฿)</label>
+          <input class="form-input form-amount" type="text" inputmode="decimal" id="formAmount" placeholder="0.00" required>
+        </div>
+
+        <!-- Date -->
+        <div class="form-row">
+          <label class="form-label" for="formDate">วันที่</label>
+          <input class="form-input" type="date" id="formDate" required>
+        </div>
+
+        <!-- Category (expense only) -->
+        <div class="form-row" id="rowCategory">
+          <label class="form-label">หมวดหมู่</label>
+          <div class="cat-grid" id="catGrid">
+            <!-- Auto-rendered -->
+          </div>
+          <input type="hidden" id="formCategory" value="">
+        </div>
+
+        <!-- Payer (expense only) -->
+        <div class="form-row" id="rowPayer">
+          <label class="form-label">ผู้จ่าย</label>
+          <div class="payer-grid">
+            <button class="payer-btn" type="button" data-payer="alex">Alex</button>
+            <button class="payer-btn" type="button" data-payer="jojo">Jojo</button>
+          </div>
+          <input type="hidden" id="formPayer" value="">
+        </div>
+
+        <!-- Depositor (deposit only) -->
+        <div class="form-row" id="rowDepositor" style="display:none;">
+          <label class="form-label">ใครเติมเงิน</label>
+          <div class="payer-grid">
+            <button class="depositor-btn" type="button" data-depositor="alex">Alex</button>
+            <button class="depositor-btn" type="button" data-depositor="jojo">Jojo</button>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-row">
+          <label class="form-label" for="formDesc">หมายเหตุ <span class="form-optional">(optional)</span></label>
+          <input class="form-input" type="text" id="formDesc" placeholder="เช่น: ข้าวเที่ยง MK">
+        </div>
+
+        <!-- Buttons -->
+        <div class="form-actions">
+          <button class="btn btn-delete" type="button" id="btnDelete" style="display:none;">ลบรายการ</button>
+          <button class="btn btn-secondary" type="button" id="btnCancel">ยกเลิก</button>
+          <button class="btn btn-primary" type="submit" id="btnSave">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="shared.js?v=20260501g"></script>
+</body>
+</html>
