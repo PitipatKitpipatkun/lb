@@ -534,6 +534,52 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
   </div>
 
+<!-- SCORES ANNOUNCEMENT -->
+  <div id="tab-scores" class="tab-view">
+    <div style="margin-bottom:18px;">
+      <div class="page-title">💯 ประกาศคะแนนรายบุคคล</div>
+      <div class="page-sub">บันทึกคะแนนสอบหรือคะแนนปฏิบัติการให้นักศึกษาแต่ละคน</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">📝 เพิ่มคะแนนใหม่</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">เลือกนักศึกษา *</label>
+            <select id="scoreStudentSel" class="search-input" onchange="loadStudentScores()"></select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">หัวข้อคะแนน *</label>
+            <input id="scoreTitle" class="search-input" placeholder="เช่น สอบกลางภาค, สอบ OSPE">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">คะแนนที่ได้ *</label>
+            <input id="scoreVal" class="search-input" placeholder="เช่น 25/30, 85%">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">ข้อเสนอแนะ (Optional)</label>
+            <input id="scoreFeedback" class="search-input" placeholder="คำแนะนำเพิ่มเติมให้นักศึกษา...">
+          </div>
+        </div>
+        <button onclick="saveStudentScore()" id="btnSaveScore" style="width:100%;padding:12px;background:var(--rose);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;">
+          💾 บันทึกและประกาศคะแนน
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">📋 ประวัติการประกาศคะแนน (ของนักศึกษาที่เลือก)</span></div>
+      <div class="card-body">
+        <div id="scoreHistoryList">
+          <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <!-- PASSWORD -->
   <div id="tab-password" class="tab-view">
     <div style="margin-bottom:18px;"><div class="page-title">🔑 เปลี่ยนรหัสผ่าน</div></div>
@@ -618,26 +664,30 @@ let students=[],comps=[],selStudent=null,decisions={},currentFilter='all',histMa
 // ส่วนควบคุม UI พื้นฐาน (เมนู, แถบข้าง, แจ้งเตือน)
 // ==========================================
 
-function switchTab(tabId) {
-  // ซ่อนทุกแท็บ และลบสถานะ active
-  document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
-
+function switchTab(tab){
+  // ซ่อนทุกแท็บและล้างสถานะ active ของเมนู
+  document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
+  
   // แสดงแท็บที่เลือก
-  const targetTab = document.getElementById('tab-' + tabId);
-  if (targetTab) targetTab.classList.add('active');
-
-  // ทำไฮไลต์เมนูที่เลือก (Sidebar)
-  const navItem = document.getElementById('ni-' + tabId);
-  if (navItem) navItem.classList.add('active');
-
-  // ทำไฮไลต์เมนูที่เลือก (Bottom Nav สำหรับมือถือ)
-  const bnItem = document.getElementById('bn-' + tabId);
-  if (bnItem) bnItem.classList.add('active');
-
-  // ปิดแถบเมนูด้านข้างเมื่อกดเลือกเมนู (สำหรับมือถือ)
-  closeSidebar();
+  document.getElementById('tab-'+tab)?.classList.add('active');
+  document.getElementById('ni-'+tab)?.classList.add('active');
+  document.getElementById('bn-'+tab)?.classList.add('active');
+  
+  // เรียกฟังก์ชันดึงข้อมูลตามหน้าต่างที่กดเข้าใช้งาน
+  if(tab==='inbox') loadInbox();
+  if(tab==='history') loadHistory();
+  if(tab==='scores') initScoresTab(); // โหลดรายชื่อนักศึกษาหน้าประกาศคะแนน
+  if(tab==='group'){
+    gSelectedIds=new Set(); gDecisions={};
+    document.getElementById('editGroupCard').style.display='none';
+    document.getElementById('gEvalSection').style.display='none';
+    renderSavedGroups();
+  }
+  if(tab==='qreval') initQRTab();
+  if(tab==='workload') initWorkload();
+  
+  closeSidebar(); // ปิดเมนูบนมือถือ
 }
 
 function openSidebar() {
@@ -1452,6 +1502,78 @@ async function deleteScore(id) {
   loadStudentScores();
 }
 
+// --- SCORE ANNOUNCEMENT TAB ---
+function initScoresTab() {
+  const sel = document.getElementById('scoreStudentSel');
+  if (sel && students.length > 0 && sel.options.length === 0) {
+    sel.innerHTML = '<option value="">-- ค้นหา / เลือกนักศึกษา --</option>' + 
+      students.map(s => `<option value="${s.id}">${s.student_code || ''} ${s.full_name}</option>`).join('');
+  }
+}
+
+async function loadStudentScores() {
+  const studentId = document.getElementById('scoreStudentSel').value;
+  const list = document.getElementById('scoreHistoryList');
+  if (!studentId) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>';
+    return;
+  }
+  list.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  
+  const { data, error } = await sb.from('score_announcements')
+    .select('*').eq('student_id', studentId).eq('teacher_id', user.profileId)
+    .order('created_at', { ascending: false });
+
+  if (error) { list.innerHTML = `<p style="color:red">${error.message}</p>`; return; }
+  if (!data.length) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">ยังไม่เคยประกาศคะแนนให้นักศึกษารายนี้</div>'; return; }
+
+  list.innerHTML = data.map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--bg);">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--slate);">${d.title}</div>
+        <div style="font-size:11px;color:var(--slate-m);margin-top:2px;">${d.feedback ? '💬 ' + d.feedback : ''}</div>
+        <div style="font-size:10px;color:var(--slate-l);margin-top:4px;">${new Date(d.created_at).toLocaleString('th-TH')}</div>
+      </div>
+      <div style="text-align:right;">
+        <span style="background:var(--rose-50);color:var(--rose);padding:4px 12px;border-radius:100px;font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;">${d.score}</span>
+        <button onclick="deleteScore('${d.id}')" style="display:block;margin-top:6px;background:none;border:none;color:var(--fail);font-size:11px;cursor:pointer;width:100%;text-align:right;text-decoration:underline;">ลบ</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function saveStudentScore() {
+  const student_id = document.getElementById('scoreStudentSel').value;
+  const title = document.getElementById('scoreTitle').value.trim();
+  const score = document.getElementById('scoreVal').value.trim();
+  const feedback = document.getElementById('scoreFeedback').value.trim();
+  
+  if (!student_id || !title || !score) { showToast('❌ กรุณากรอกข้อมูลที่มีดอกจันให้ครบ', 'err'); return; }
+  
+  const btn = document.getElementById('btnSaveScore');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  
+  const { error } = await sb.from('score_announcements').insert({
+    student_id, teacher_id: user.profileId, title, score, feedback
+  });
+  
+  btn.disabled = false; btn.textContent = '💾 บันทึกและประกาศคะแนน';
+  if (error) { showToast('❌ ' + error.message, 'err'); return; }
+  
+  showToast('✅ ประกาศคะแนนเรียบร้อย', 'ok');
+  document.getElementById('scoreTitle').value = '';
+  document.getElementById('scoreVal').value = '';
+  document.getElementById('scoreFeedback').value = '';
+  loadStudentScores();
+}
+
+async function deleteScore(id) {
+  if (!confirm('ยืนยันการลบคะแนนนี้?')) return;
+  await sb.from('score_announcements').delete().eq('id', id);
+  showToast('✅ ลบสำเร็จ', 'ok');
+  loadStudentScores();
+}
+  
 init();
 </script>
 
