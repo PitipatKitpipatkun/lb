@@ -90,7 +90,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .bn-item{
   display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:4px 12px;cursor:pointer;transition:all 0.2s;border-radius:12px;
-  min-width:60px;
+  min-width:55px;
 }
 .bn-item:active{transform:scale(0.92);}
 .bn-icon{font-size:22px;transition:transform 0.2s;}
@@ -240,8 +240,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .no-class{font-size:12px;color:var(--slate-l);text-align:center;padding:12px 0;}
 .schedule-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px;font-size:12px;color:#92400e;margin-top:12px;text-align:center;}
 
-
-/* ── Schedule ── */
+/* ── Schedule Edit ── */
 .sch-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;align-items:flex-end;justify-content:center;}
 .sch-modal.on{display:flex;}
 .sch-box{background:white;border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:90vh;display:flex;flex-direction:column;}
@@ -254,12 +253,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .sch-tab{flex:1;padding:10px 4px;border:none;background:none;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;color:var(--slate-l);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
 .sch-tab.active{color:var(--teal);border-bottom-color:var(--teal);}
 .sch-content{flex:1;overflow-y:auto;padding:14px 14px 32px;}
-/* Day cards */
 .sch-day{margin-bottom:14px;}
 .sch-day-hdr{font-family:'Prompt',sans-serif;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
 .sch-add-btn{background:rgba(255,255,255,.35);border:none;color:inherit;font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;cursor:pointer;}
 .sch-empty{font-size:12px;color:var(--slate-l);text-align:center;padding:10px 0;}
-/* Class item */
 .sch-class{background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:6px;border-left:3px solid var(--teal-d);}
 .sch-class-top{display:flex;align-items:flex-start;gap:8px;}
 .sch-time{font-size:11px;font-weight:700;color:var(--slate-m);min-width:74px;padding-top:1px;}
@@ -270,7 +267,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .sch-actions{display:flex;gap:6px;margin-top:6px;}
 .sch-btn-sm{border:none;background:var(--teal-l);color:var(--teal-d);font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;cursor:pointer;font-family:'Sarabun',sans-serif;}
 .sch-btn-del{background:#fee2e2;color:#991b1b;}
-/* Edit form */
 .sch-form{background:#f8fafc;border-radius:12px;padding:14px;margin-top:10px;}
 .sch-form-title{font-size:12px;font-weight:700;color:var(--teal-d);margin-bottom:10px;}
 .sch-input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;outline:none;margin-bottom:7px;}
@@ -278,7 +274,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .sch-textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;outline:none;resize:none;height:60px;}
 .sch-save-btn{width:100%;padding:10px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;}
 .sch-notice{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;text-align:center;margin-top:10px;}
-
 </style>
 </head>
 <body>
@@ -300,6 +295,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="nav-item active" onclick="switchTab('overview')" id="ni-overview"><span class="nav-icon">📊</span> ภาพรวม</div>
     <div class="nav-item" onclick="switchTab('skills')" id="ni-skills"><span class="nav-icon">📋</span> ทักษะ</div>
     <div class="nav-item" onclick="switchTab('report')" id="ni-report"><span class="nav-icon">🖨️</span> พิมพ์รายงาน</div>
+    <div class="nav-item" onclick="switchTab('myscores')" id="ni-myscores"><span class="nav-icon">💯</span> คะแนนของฉัน</div>
     <div class="nav-item" onclick="switchTab('qrscan')" id="ni-qrscan"><span class="nav-icon">📲</span> สแกน QR</div>
     <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
     <div style="height:1px;background:var(--border);margin:8px 12px;"></div>
@@ -385,6 +381,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       </div>
     </div>
     <div id="reportList" class="skill-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- MY SCORES -->
+  <div id="tab-myscores" class="tab-view">
+    <div style="margin-bottom:18px;">
+      <h1 style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;">💯 คะแนนของฉัน</h1>
+      <p style="font-size:13px;color:var(--slate-l);margin-top:2px;">คะแนนสอบและปฏิบัติการที่อาจารย์ประกาศ</p>
+    </div>
+    <div id="myScoresList" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    </div>
   </div>
 
   <!-- QR SCAN -->
@@ -489,9 +496,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="bn-item" onclick="switchTab('skills')" id="bn-skills">
       <span class="bn-icon">📋</span><span class="bn-label">ทักษะ</span><div class="bn-dot"></div>
     </div>
-    <div class="bn-item" onclick="openSchedule()" id="bn-schedule">
-      <span class="bn-icon">📅</span><span class="bn-label">ตารางเรียน</span><div class="bn-dot" style="opacity:0"></div>
+    <div class="bn-item" onclick="switchTab('myscores')" id="bn-myscores">
+      <span class="bn-icon">💯</span><span class="bn-label">คะแนน</span><div class="bn-dot"></div>
     </div>
+    <div class="bn-item" onclick="openSchedule()" id="bn-schedule">
+      <span class="bn-icon">📅</span><span class="bn-label">ตาราง</span><div class="bn-dot" style="opacity:0"></div>
     </div>
     <div class="bn-item" onclick="switchTab('qrscan')" id="bn-qrscan">
       <span class="bn-icon">📲</span><span class="bn-label">QR</span><div class="bn-dot"></div>
@@ -501,6 +510,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
   </div>
 </nav>
+
+<div id="toast" class="toast"></div>
 
 <script>
 const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
@@ -698,6 +709,38 @@ function filterSkills(type,f,btn){
   else renderElective(f);
 }
 
+// ─── My Scores ───
+async function loadMyScores() {
+  const el = document.getElementById('myScoresList');
+  el.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  
+  const { data, error } = await sb.from('score_announcements')
+    .select('*, teachers(full_name)')
+    .eq('student_id', user.profileId)
+    .order('created_at', { ascending: false });
+
+  if (error) { el.innerHTML = `<p style="color:red">${error.message}</p>`; return; }
+  if (!data.length) { 
+    el.innerHTML = '<div class="empty"><span class="empty-icon">📭</span><p>ยังไม่มีการประกาศคะแนน</p></div>'; 
+    return; 
+  }
+
+  el.innerHTML = data.map((d, i) => `
+    <div style="background:white;border-radius:16px;padding:16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;animation:cardIn 0.4s ${i * 0.05}s both;">
+      <div style="flex:1;">
+        <div style="font-family:'Prompt',sans-serif;font-size:15px;font-weight:700;color:var(--slate);">${d.title}</div>
+        <div style="font-size:11px;color:var(--teal);font-weight:600;margin-top:4px;">👤 อ.${d.teachers?.full_name || 'ไม่ระบุ'}</div>
+        ${d.feedback ? `<div style="font-size:12px;color:var(--slate-m);margin-top:6px;background:var(--bg);padding:6px 10px;border-radius:8px;border-left:3px solid var(--teal);">💬 ${d.feedback}</div>` : ''}
+        <div style="font-size:10px;color:var(--slate-l);margin-top:8px;">📅 ${new Date(d.created_at).toLocaleString('th-TH')}</div>
+      </div>
+      <div style="text-align:right;margin-left:12px;">
+        <div style="font-size:10px;color:var(--slate-l);font-weight:700;text-transform:uppercase;margin-bottom:2px;">คะแนนที่ได้</div>
+        <div style="background:var(--teal-50);color:var(--teal-d);padding:6px 14px;border-radius:12px;font-family:'Prompt',sans-serif;font-size:18px;font-weight:800;border:1px solid var(--teal-l);">${d.score}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
 // ─── Switch Tab ───
 function switchSkillsType(type){
   const isMand=type==='mandatory';
@@ -732,6 +775,7 @@ function switchTab(tab){
   document.getElementById('ni-'+tab)?.classList.add('active');
   document.getElementById('bn-'+tab)?.classList.add('active');
   if(tab==='qrscan')stopScanner();
+  if(tab==='myscores')loadMyScores();
 }
 
 // ─── Sidebar ───
@@ -1036,7 +1080,6 @@ function schDelete(i){
 function escHtmlSch(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escAttr(s){return String(s).replace(/"/g,'&quot;');}
 
-
 init();
 
 </script>
@@ -1054,8 +1097,7 @@ init();
   </div>
 </div>
 
-
-<!-- ── Schedule Modal ── -->
+<!-- ── Schedule Edit Modal ── -->
 <div class="sch-modal" id="schModal" onclick="if(event.target===this)closeSchedule()">
   <div class="sch-box">
     <div class="sch-hdr">
@@ -1070,7 +1112,5 @@ init();
   </div>
 </div>
 
-<script src="livechat.js">
-</script>
 </body>
 </html>
