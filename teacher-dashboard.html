@@ -859,17 +859,34 @@ async function init(){
   document.getElementById('sbName').textContent=user.fullName;
   setTimeout(checkInboxBadge,1500);
   document.getElementById('sbCode').textContent=user.teacherCode||user.username||'';
-  const[sr,cr]=await Promise.all([
-    sb.from('students').select('*,departments(name)').order('full_name'),
-    sb.from('competencies').select('*,departments(name,code)')
-  ]);
-  students=sr.data||[];
-  comps=(cr.data||[]).sort((a,b)=>{
-    const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
-    if(ca!==0)return ca;
-    return (a.name||'').localeCompare(b.name||'','th');
-  });
-  renderStudents(students);
+  
+  try {
+    const[sr,cr]=await Promise.all([
+      sb.from('students').select('*,departments(name)').order('full_name'),
+      sb.from('competencies').select('*,departments(name,code)')
+    ]);
+
+    // ดักจับ Error จาก Supabase
+    if (sr.error) throw sr.error;
+    if (cr.error) throw cr.error;
+
+    students=sr.data||[];
+    comps=(cr.data||[]).sort((a,b)=>{
+      const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
+      if(ca!==0)return ca;
+      return (a.name||'').localeCompare(b.name||'','th');
+    });
+    renderStudents(students);
+  } catch (error) {
+    console.error('Data Load Error:', error);
+    // แสดง Error ให้เห็นชัดเจนแทนที่วงกลมหมุน
+    document.getElementById('stList').innerHTML = `
+      <div class="empty" style="color:#dc2626; padding: 20px;">
+        <span class="empty-icon" style="font-size:32px;">⚠️</span>
+        <p><b>โหลดข้อมูลไม่สำเร็จ</b></p>
+        <p style="font-size:11px; margin-top:8px; color:#991b1b;">${error.message}</p>
+      </div>`;
+  }
 }
 
 function renderStudents(list){
