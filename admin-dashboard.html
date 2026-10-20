@@ -155,13 +155,15 @@ tr:hover td{background:var(--amber-50);}
 @media(max-width:768px){
   .sidebar{transform:translateX(-100%);}
   .sidebar.open{transform:translateX(0);box-shadow:0 0 40px rgba(0,0,0,0.2);}
-  .main{margin-left:0;padding:12px 14px;padding-bottom:calc(var(--nav-h) + 48px + var(--safe-b));}
+  /* ปรับ padding-bottom ให้เว้นระยะเมนูด้านล่างที่สูงขึ้น */
+  .main{margin-left:0;padding:12px 14px;padding-bottom:calc(160px + var(--safe-b));}
   .mob-header{display:flex;}
   .bottom-nav{display:block;}
   .stats-grid{grid-template-columns:1fr 1fr;}
   .stat-val{font-size:24px;}
   .search-in{width:140px;}
-  .toast{bottom:calc(var(--nav-h)+8px+var(--safe-b));}
+  /* ปรับ toast ให้อยู่สูงขึ้นหลบเมนู */
+  .toast{bottom:calc(140px + var(--safe-b));}
 }
 @media(min-width:769px){.toast{bottom:20px;right:24px;left:auto;width:320px;text-align:left;}}
 
@@ -592,7 +594,7 @@ tr:hover td{background:var(--amber-50);}
       <div class="fg"><label class="fl">ยืนยันรหัสผ่านใหม่</label><input class="fi" type="password" id="pwConfirm" placeholder="••••••"></div>
       <button class="pw-btn" id="pwBtn" onclick="changePassword()">🔑 เปลี่ยนรหัสผ่าน</button>
     </div>
-    <div style="margin-top:20px;max-width:440px;">
+    <div style="margin-top:20px;margin-bottom:40px;max-width:440px;">
       <button onclick="logout()" style="width:100%;padding:13px;background:#fee2e2;color:#dc2626;border:2px solid #fca5a5;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;">
         🚪 ออกจากระบบ
       </button>
@@ -1696,7 +1698,7 @@ async function loadDbSpace(){
     {name:'departments',   label:'ภาควิชา',   icon:'🏛️'},
     {name:'competencies',  label:'สมรรถนะ',   icon:'📋'},
     {name:'evaluations',   label:'การประเมิน', icon:'✅'},
-    {name:'activity_logs', label:'บันทึก',     icon:'📝'},
+    {name:'activity_logs', label:'บันทึก',      icon:'📝'},
   ];
 
   // Query each table individually and collect results
