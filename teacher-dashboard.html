@@ -614,7 +614,56 @@ const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
 const DEF_RUBRIC=[{score:1,label:'ทำไม่ได้'},{score:2,label:'ทำได้โดยมีผู้ช่วย'},{score:3,label:'ทำได้โดยมีผู้ดูแล'},{score:4,label:'ทำได้อิสระ'},{score:5,label:'ทำได้และสอนผู้อื่น'}];
 let user=null,sData=[],tData=[],cData=[],rbRows=[];
 let students=[],comps=[],selStudent=null,decisions={},currentFilter='all',histMap={};
+// ==========================================
+// ส่วนควบคุม UI พื้นฐาน (เมนู, แถบข้าง, แจ้งเตือน)
+// ==========================================
 
+function switchTab(tabId) {
+  // ซ่อนทุกแท็บ และลบสถานะ active
+  document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
+
+  // แสดงแท็บที่เลือก
+  const targetTab = document.getElementById('tab-' + tabId);
+  if (targetTab) targetTab.classList.add('active');
+
+  // ทำไฮไลต์เมนูที่เลือก (Sidebar)
+  const navItem = document.getElementById('ni-' + tabId);
+  if (navItem) navItem.classList.add('active');
+
+  // ทำไฮไลต์เมนูที่เลือก (Bottom Nav สำหรับมือถือ)
+  const bnItem = document.getElementById('bn-' + tabId);
+  if (bnItem) bnItem.classList.add('active');
+
+  // ปิดแถบเมนูด้านข้างเมื่อกดเลือกเมนู (สำหรับมือถือ)
+  closeSidebar();
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sbOverlay').classList.add('on');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sbOverlay').classList.remove('on');
+}
+
+function logout() {
+  if(confirm('ต้องการออกจากระบบใช่หรือไม่?')){
+    localStorage.removeItem('lb_user');
+    window.location.href = 'index.html'; // กลับไปหน้า Login
+  }
+}
+
+function showToast(msg, type = 'ok') {
+  const toast = document.getElementById('toast');
+  if(!toast) return;
+  toast.textContent = msg;
+  toast.className = 'toast ' + (type === 'ok' ? 'toast-ok' : 'toast-err') + ' on';
+  setTimeout(() => { toast.classList.remove('on'); }, 3000);
+}
 // ─── PRIVATE INBOX ───────────────────────────────────────
 async function deriveKey(teacherKey){
   const raw=new TextEncoder().encode(teacherKey+'_VetPrivate2025');
@@ -851,6 +900,8 @@ async function checkInboxBadge(){
   }catch(e){}
 }
 
+  
+  
 async function init(){
   const s=localStorage.getItem('lb_user');
   if(!s){window.location.href='index.html';return;}
