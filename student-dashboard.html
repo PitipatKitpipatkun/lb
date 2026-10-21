@@ -714,9 +714,13 @@ async function loadMyScores() {
   const el = document.getElementById('myScoresList');
   el.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
   
+  // 🌟 เพิ่มคำสั่งดึงเวลาปัจจุบัน
+  const now = new Date().toISOString();
+
   const { data, error } = await sb.from('score_announcements')
     .select('*, teachers(full_name)')
     .eq('student_id', user.profileId)
+    .lte('created_at', now) // 🌟 คำสั่งนี้จะบังคับให้ดึงเฉพาะคะแนนที่ถึงเวลาประกาศแล้วเท่านั้น
     .order('created_at', { ascending: false });
 
   if (error) { el.innerHTML = `<p style="color:red">${error.message}</p>`; return; }
@@ -740,6 +744,8 @@ async function loadMyScores() {
     </div>
   `).join('');
 }
+
+  
 
 // ─── Switch Tab ───
 function switchSkillsType(type){
