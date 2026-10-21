@@ -938,6 +938,7 @@ async function loadStudents(){
   document.getElementById('sCount').textContent=`นักศึกษา (${sData.length} คน)`;
   document.getElementById('sTbody').innerHTML=sData.length?sData.map(s=>`
     <tr>
+      <td style="text-align:center;"><input type="checkbox" class="chk-student" value="${s.id}" onchange="updateStudentDelBtn()" style="width:16px;height:16px;accent-color:var(--rose);cursor:pointer;"></td>
       <td style="font-family:monospace;font-size:13px;font-weight:700;color:var(--teal-d);">${s.student_code||'-'}</td>
       <td style="font-weight:600;">${s.full_name}</td>
       <td style="font-size:12px;color:var(--slate-m)">${s.departments?.name || 'สัตวแพทยศาสตร์'}</td>
@@ -947,7 +948,54 @@ async function loadStudents(){
         <button class="act-btn ab-del" onclick="delStudent('${s.id}')">🗑️ ลบ</button>
       </td>
     </tr>`).join(''):
-    '<tr><td colspan="5"><div class="empty"><span class="empty-icon">👨‍🎓</span><p>ยังไม่มีนักศึกษา</p></div></td></tr>';
+    '<tr><td colspan="6"><div class="empty"><span class="empty-icon">👨‍🎓</span><p>ยังไม่มีนักศึกษา</p></div></td></tr>';
+
+  // รีเซ็ตปุ่มติ๊กเลือกทั้งหมดเมื่อโหลดข้อมูลใหม่
+  const chkAll = document.getElementById('chkAllStudents');
+  if(chkAll) chkAll.checked = false;
+  updateStudentDelBtn();
+}
+
+// ระบบจัดการปุ่มติ๊กเลือกและลบทีละหลายคน
+function toggleAllStudents(cb){
+  document.querySelectorAll('.chk-student').forEach(c => c.checked = cb.checked);
+  updateStudentDelBtn();
+}
+
+function updateStudentDelBtn(){
+  const count = document.querySelectorAll('.chk-student:checked').length;
+  const btn = document.getElementById('btnDelStudents');
+  if(!btn) return;
+  btn.disabled = count === 0;
+  btn.style.opacity = count === 0 ? '0.5' : '1';
+  btn.style.cursor = count === 0 ? 'not-allowed' : 'pointer';
+  btn.textContent = count > 0 ? `🗑️ ลบที่เลือก (${count})` : '🗑️ ลบที่เลือก';
+}
+
+async function delSelectedStudents(){
+  const checked = document.querySelectorAll('.chk-student:checked');
+  if(checked.length === 0) return;
+  if(!confirm(`⚠️ ยืนยันการลบนักศึกษาที่เลือกจำนวน ${checked.length} คน?\n\nคำเตือน: ข้อมูลการประเมินของนักศึกษากลุ่มนี้อาจได้รับผลกระทบด้วย`)) return;
+  
+  const ids = Array.from(checked).map(cb => cb.value);
+  const btn = document.getElementById('btnDelStudents');
+  btn.disabled = true;
+  btn.textContent = 'กำลังลบ...';
+
+  // ลบทีละหลายรายการ
+  const { error } = await sb.from('students').delete().in('id', ids);
+  
+  if(error){
+    showToast('❌ ลบไม่สำเร็จ: ' + error.message, 'err');
+    btn.disabled = false;
+    updateStudentDelBtn();
+    return;
+  }
+  
+  showToast(`✅ ลบสำเร็จ ${ids.length} คน`, 'ok');
+  logActivity('ลบนักศึกษากลุ่ม', `ลบนักศึกษาจำนวน ${ids.length} คน`);
+  loadStudents();
+  loadOverview();
 }
   
 function openAddS(){
