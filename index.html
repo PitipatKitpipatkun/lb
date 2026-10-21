@@ -322,8 +322,8 @@ button,input,select,textarea{font-family:inherit;}
       <div class="modal-title">🎓 เข้าสู่ระบบนักศึกษา</div>
       <div class="alert" id="studentAlert"></div>
       <div class="form-group">
-        <label class="form-label" for="studentUsername">เบอร์โทรศัพท์</label>
-        <input class="form-input" id="studentUsername" type="tel" placeholder="เบอร์โทรศัพท์" inputmode="numeric" maxlength="10" autocomplete="username">
+        <label class="form-label" for="studentUsername">รหัสนักศึกษา</label>
+        <input class="form-input" id="studentUsername" type="text" placeholder="รหัสนักศึกษา" inputmode="numeric" autocomplete="username">
       </div>
       <div class="form-group">
         <label class="form-label" for="studentPassword">รหัสผ่าน</label>
@@ -406,7 +406,7 @@ async function handleLogin(role,btn){
   const username=document.getElementById(role+'Username').value.trim();
   const password=document.getElementById(role+'Password').value;
   const alertId=role+'Alert';
-  const labels={student:'เบอร์โทรศัพท์',teacher:'เบอร์โทรศัพท์หรือเลขตำแหน่ง',admin:'ชื่อผู้ใช้'};
+  const labels={student:'รหัสนักศึกษา',teacher:'เบอร์โทรศัพท์หรือเลขตำแหน่ง',admin:'ชื่อผู้ใช้'};
   if(!username){showAlert(alertId,'กรุณากรอก'+labels[role],'err');return;}
   if(!password||password.length<4){showAlert(alertId,'รหัสผ่านไม่ถูกต้อง','err');return;}
   btn.disabled=true;btn.textContent='กำลังเข้าสู่ระบบ...';
@@ -436,16 +436,19 @@ async function handleLogin(role,btn){
       }
       showAlert(alertId,'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err');
     }else if(role==='student'){
-      let{data,error}=await sb.from('students').select('*,departments(name)').eq('phone',username).eq('password',password).maybeSingle();
-      if(!data){
-        const r2=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).maybeSingle();
-        data=r2.data;error=r2.error;
+
+      
+      // ค้นหาด้วย รหัสนักศึกษา (student_code) เป็นหลัก
+      let{data,error}=await sb.from('students').select('*,departments(name)').eq('student_code',username).eq('password',password).maybeSingle();
+      
+      // Fallback: ถ้ายังไม่มี department_id ให้ใช้ข้อมูลหลักแทน
+      if(!data && !error){
+        const r2=await sb.from('students').select('*').eq('student_code',username).eq('password',password).maybeSingle();
+        if(r2.data){data=r2.data;error=null;}
       }
-      if(!data){
-        const r3=await sb.from('students').select('*').eq('phone',username).eq('password',password).maybeSingle();
-        if(r3.data){data=r3.data;error=null;}
-      }
-      if(error||!data){showAlert(alertId,'เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง','err');return;}
+      if(error||!data){showAlert(alertId,'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง','err');return;}
+
+      
       localStorage.setItem('lb_user',JSON.stringify({role:'student',fullName:data.full_name,profileId:data.id,studentCode:data.student_code,username,departmentId:data.department_id||null,departmentName:data.departments?.name||null}));
       logLogin('student',data.full_name,data.student_code||username);
       showAlert(alertId,'ยินดีต้อนรับ '+data.full_name,'ok');
