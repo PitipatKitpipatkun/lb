@@ -883,34 +883,38 @@ function setScoreMode(mode) {
 function renderScoreGrid() {
   const tbody = document.getElementById('scoreGridBody');
   if(!tbody) return;
-  const q = (document.getElementById('scoreGridSearch')?.value||'').toLowerCase();
+  const q = (document.getElementById('scoreGridSearch')?.value||'').trim().toLowerCase();
   const grpIdx = document.getElementById('scoreGridGroup')?.value;
   
+  // 1. ดึงรายชื่อมาพักไว้
   let list = [...students];
   
+  // 2. กรองข้อมูลตามกลุ่ม
   if(grpIdx !== "") {
     const g = loadSavedGroups()[grpIdx];
     if(g) list = list.filter(s => g.studentIds.includes(s.id));
   }
   
+  // 3. กรองข้อมูลตามช่องค้นหา
   if(q) {
-    list = list.filter(s => s.full_name.toLowerCase().includes(q) || (s.student_code||'').toLowerCase().includes(q));
+    list = list.filter(s => 
+      (s.full_name && s.full_name.toLowerCase().includes(q)) || 
+      (s.student_code && s.student_code.toLowerCase().includes(q))
+    );
   }
 
-  // 🌟 บังคับแปลงเป็นตัวเลขเพียวๆ เพื่อการเรียงลำดับที่ถูกต้อง 100%
+  // 4. 🌟 ส่วนสำคัญ: บังคับเรียงตามรหัสนักศึกษาแบบตายตัว (แก้ปัญหาเรียงเพี้ยน)
   list.sort((a, b) => {
-    // ใช้ .replace(/\D/g, '') เพื่อลบขีด (-) และช่องว่างทิ้งทั้งหมด
-    const numA = (a.student_code || '').replace(/\D/g, '');
-    const numB = (b.student_code || '').replace(/\D/g, '');
+    const codeA = String(a.student_code || "").trim();
+    const codeB = String(b.student_code || "").trim();
     
-    if (numA === '' && numB === '') return 0;
-    if (numA === '') return 1; // ดันคนที่ไม่มีรหัสไปไว้ล่างสุด
-    if (numB === '') return -1;
-    
-    // เปรียบเทียบเฉพาะชุดตัวเลขที่ได้
-    return numA.localeCompare(numB, 'en', { numeric: true });
+    // เรียงจากน้อยไปมาก
+    if (codeA < codeB) return -1;
+    if (codeA > codeB) return 1;
+    return 0;
   });
   
+  // 5. วาดตาราง
   tbody.innerHTML = list.map(s => {
     const draft = scoreDraftData[s.id] || {score:'', feedback:''};
     return `<tr style="border-bottom:1px solid var(--border);">
