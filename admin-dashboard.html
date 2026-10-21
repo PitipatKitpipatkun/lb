@@ -342,16 +342,25 @@ tr:hover td{background:var(--amber-50);}
     <div class="page-header">
       <div><div class="page-title">👨‍🎓 นักศึกษา</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <!-- ปุ่มลบที่เลือก (Bulk Delete) -->
+        <button class="add-btn" id="btnDelStudents" onclick="delSelectedStudents()" disabled style="background:var(--fail-bg);color:var(--fail);border:1.5px solid #fca5a5;opacity:0.5;cursor:not-allowed;">🗑️ ลบที่เลือก</button>
+        <!-- ปุ่มนำเข้า CSV -->
         <button class="add-btn" style="background:var(--teal-l);color:var(--teal-d);" onclick="openStudentCsvModal()">📄 นำเข้า CSV</button>
+        <!-- ปุ่มเพิ่ม นศ. รายคน -->
         <button class="add-btn ab-t" onclick="openAddS()">+ เพิ่มนักศึกษา</button>
       </div>
     </div>
     <div class="table-wrap">
-      <div class="table-head"><span class="table-title" id="sCount">นักศึกษา</span><input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('sTbl',this.value)"></div>
+      <div class="table-head">
+        <span class="table-title" id="sCount">นักศึกษา</span>
+        <input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('sTbl',this.value)">
+      </div>
       <div class="tbl-scroll">
         <table id="sTbl">
           <thead>
             <tr>
+              <!-- Checkbox สำหรับเลือกทั้งหมด -->
+              <th style="width:40px;text-align:center;"><input type="checkbox" id="chkAllStudents" onchange="toggleAllStudents(this)" style="width:16px;height:16px;accent-color:var(--rose);cursor:pointer;"></th>
               <th>รหัสนักศึกษา</th>
               <th>ชื่อ-นามสกุล</th>
               <th>สาขา</th>
@@ -361,24 +370,6 @@ tr:hover td{background:var(--amber-50);}
           </thead>
           <tbody id="sTbody"></tbody>
         </table>
-      </div>
-    </div>
-  </div>
-  
-  <!-- STUDENTS -->
-  <div id="tab-students" class="tab-view">
-    <div class="page-header">
-      <div><div class="page-title">👨‍🎓 นักศึกษา</div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="add-btn" style="background:var(--teal-l);color:var(--teal-d);" onclick="openStudentCsvModal()">📄 นำเข้า CSV</button>
-        <button class="add-btn ab-t" onclick="openAddS()">+ เพิ่มนักศึกษา</button>
-      </div>
-    </div>
-    <div class="table-wrap">
-      <div class="table-head"><span class="table-title" id="sCount">นักศึกษา</span><input class="search-in" placeholder="ค้นหา..." oninput="filterTbl('sTbl',this.value)"></div>
-      <div class="tbl-scroll">
-        <table id="sTbl"><thead><tr><th>ชื่อ-นามสกุล</th><th>รหัส</th><th>สาขา</th><th>จัดการ</th></tr></thead>
-        <tbody id="sTbody"></tbody></table>
       </div>
     </div>
   </div>
