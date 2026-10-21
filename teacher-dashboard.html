@@ -170,6 +170,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
 .tag-select{border:none;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:20px;}
 .ts-status-0{background:#f1f5f9;color:#64748b;} .ts-status-1{background:#fef3c7;color:#92400e;} .ts-status-2{background:#dbeafe;color:#1e40af;} .ts-status-3{background:#ede9fe;color:#5b21b6;} .ts-status-4{background:#d1fae5;color:#065f46;}
 .ts-urgent-0{background:#f1f5f9;color:#64748b;} .ts-urgent-1{background:#dcfce7;color:#166534;} .ts-urgent-2{background:#fef9c3;color:#854d0e;} .ts-urgent-3{background:#fee2e2;color:#991b1b;}
+
+/* Scrollbar for tables */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--slate-l); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--slate-m); }
 </style>
 </head>
 <body>
@@ -412,43 +418,77 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div id="histList"><div class="spinner-wrap"><div class="spinner"></div></div></div>
   </div>
 
-  <!-- SCORES ANNOUNCEMENT -->
+  <!-- SCORES ANNOUNCEMENT (UPDATED) -->
   <div id="tab-scores" class="tab-view">
     <div style="margin-bottom:18px;">
-      <div class="page-title">💯 ประกาศคะแนนรายบุคคล</div>
-      <div class="page-sub">บันทึกคะแนนสอบหรือคะแนนปฏิบัติการให้นักศึกษาแต่ละคน</div>
+      <div class="page-title">💯 ประกาศคะแนน</div>
+      <div class="page-sub">บันทึกคะแนนให้นักศึกษาแบบกลุ่ม หรืออัปโหลดไฟล์ .csv</div>
     </div>
+
     <div class="card">
-      <div class="card-head"><span class="card-title">📝 เพิ่มคะแนนใหม่</span></div>
+      <div class="card-head"><span class="card-title">📝 ประกาศคะแนนใหม่</span></div>
       <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-          <div>
-            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">เลือกนักศึกษา *</label>
-            <select id="scoreStudentSel" class="search-input" onchange="loadStudentScores()"></select>
+        <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">หัวข้อคะแนน *</label>
+        <input id="scoreBatchTitle" class="search-input" placeholder="เช่น สอบกลางภาค, คะแนนรายงานกลุ่ม" style="margin-bottom:12px;">
+
+        <!-- Mode Toggle -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button id="btnModeGrid" onclick="setScoreMode('grid')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--teal);background:var(--teal-50);color:var(--teal);font-weight:700;cursor:pointer;">✍️ เลือกจากรายชื่อ</button>
+          <button id="btnModeCSV" onclick="setScoreMode('csv')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--slate-m);font-weight:700;cursor:pointer;">📄 อัปโหลด CSV</button>
+        </div>
+
+        <!-- GRID MODE -->
+        <div id="scoreModeGrid">
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input class="search-input" id="scoreGridSearch" placeholder="ค้นหานักศึกษา..." oninput="filterScoreGrid()" style="flex:1;padding:8px 12px;">
+            <select class="search-input" id="scoreGridGroup" onchange="filterScoreGrid()" style="flex:1;padding:8px 12px;">
+              <option value="">-- ทุกกลุ่ม / ทุกคน --</option>
+            </select>
           </div>
-          <div>
-            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">หัวข้อคะแนน *</label>
-            <input id="scoreTitle" class="search-input" placeholder="เช่น สอบกลางภาค, สอบ OSPE">
+          
+          <div style="background:var(--rose-50);border:1px solid var(--rose-l);border-radius:8px;padding:10px;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:700;color:var(--rose-d);">ตั้งค่าให้คนที่เลือก:</span>
+            <input id="scoreBulkVal" class="search-input" placeholder="คะแนน" style="width:80px;padding:6px;min-height:0;">
+            <input id="scoreBulkFb" class="search-input" placeholder="ข้อเสนอแนะ" style="flex:1;min-width:120px;padding:6px;min-height:0;">
+            <button onclick="applyBulkScore()" style="background:var(--rose);color:white;border:none;padding:6px 12px;border-radius:6px;font-weight:700;cursor:pointer;font-family:'Sarabun';">นำไปใช้</button>
+          </div>
+
+          <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead style="background:var(--bg);position:sticky;top:0;z-index:2;">
+                <tr>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:center;width:40px;"><input type="checkbox" onchange="toggleAllScoreGrid(this)"></th>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:left;">รหัส/ชื่อ</th>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:left;width:80px;">คะแนน</th>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:left;width:120px;">ข้อเสนอแนะ</th>
+                </tr>
+              </thead>
+              <tbody id="scoreGridBody"></tbody>
+            </table>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;">
-          <div>
-            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">คะแนนที่ได้ *</label>
-            <input id="scoreVal" class="search-input" placeholder="เช่น 25/30, 85%">
+
+        <!-- CSV MODE -->
+        <div id="scoreModeCSV" style="display:none;">
+          <div style="padding:14px;border:2px dashed var(--border);border-radius:10px;text-align:center;background:var(--bg);margin-bottom:12px;">
+            <p style="font-size:12px;color:var(--slate-m);margin-bottom:8px;">ไฟล์ .csv ควรมีคอลัมน์ดังนี้ (ไม่มี Header):<br><b>รหัสนักศึกษา, คะแนน, ข้อเสนอแนะ(ถ้ามี)</b></p>
+            <input type="file" id="scoreCsvFile" accept=".csv" onchange="handleScoreCSV(this)">
           </div>
-          <div>
-            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">ข้อเสนอแนะ (Optional)</label>
-            <input id="scoreFeedback" class="search-input" placeholder="คำแนะนำเพิ่มเติมให้นักศึกษา...">
-          </div>
+          <div id="scoreCsvPreview" style="max-height:250px;overflow-y:auto;font-size:12px;"></div>
         </div>
-        <button onclick="saveStudentScore()" id="btnSaveScore" style="width:100%;padding:12px;background:var(--rose);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;">
-          💾 บันทึกและประกาศคะแนน
+
+        <button onclick="saveBatchScores()" id="btnSaveBatchScore" style="width:100%;padding:12px;background:var(--rose);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:14px;">
+          💾 บันทึกและประกาศคะแนน (<span id="scoreReadyCount">0</span> คน)
         </button>
       </div>
     </div>
+
     <div class="card">
-      <div class="card-head"><span class="card-title">📋 ประวัติการประกาศคะแนน (ของนักศึกษาที่เลือก)</span></div>
+      <div class="card-head">
+        <span class="card-title">📋 ดูประวัติคะแนนของนักศึกษา</span>
+      </div>
       <div class="card-body">
+        <select id="scoreHistorySel" class="search-input" onchange="loadStudentScoresHist()" style="margin-bottom:12px;"></select>
         <div id="scoreHistoryList">
           <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>
         </div>
@@ -646,7 +686,7 @@ async function checkInboxBadge(){
 }
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 async function deleteMsg(id){if(!confirm('ลบข้อความนี้?'))return;await sb.from('private_messages').delete().eq('id',id);loadInbox();}
-function printInbox(){window.print();} // Simplified print for tokens
+function printInbox(){window.print();}
 
 // ===== EVALUATE (INDIVIDUAL) =====
 function renderStudents(list){
@@ -779,21 +819,171 @@ async function loadHistory(){
   el.innerHTML=data.map(e=>`<div class="hist-item"><div class="hist-icon ${e.status==='pass'?'hi-pass':'hi-fail'}">${e.status==='pass'?'✅':'❌'}</div><div style="flex:1"><div class="hist-skill">${e.competencies?.name||'-'}</div><div class="hist-student">${e.students?.full_name||'-'}</div></div></div>`).join('');
 }
 
-// ===== SCORES ANNOUNCEMENT =====
+// ===== SCORES ANNOUNCEMENT (UPDATED) =====
+let scoreDraftData = {};
+let csvScoreData = [];
+let currentScoreMode = 'grid';
+
 function initScoresTab() {
-  const sel = document.getElementById('scoreStudentSel');
-  if (sel && students.length > 0 && sel.options.length === 0) {
-    sel.innerHTML = '<option value="">-- ค้นหา / เลือกนักศึกษา --</option>' + 
-      students.map(s => `<option value="${s.id}">${s.student_code || ''} ${s.full_name}</option>`).join('');
+  const groups = loadSavedGroups();
+  const grpSel = document.getElementById('scoreGridGroup');
+  if(grpSel && groups.length > 0 && grpSel.options.length === 1) {
+    grpSel.innerHTML = '<option value="">-- ทุกกลุ่ม / ทุกคน --</option>' + 
+      groups.map((g,i) => `<option value="${i}">${g.name} (${g.studentIds.length} คน)</option>`).join('');
   }
+  const histSel = document.getElementById('scoreHistorySel');
+  if(histSel && histSel.options.length === 0 && students.length > 0) {
+    histSel.innerHTML = '<option value="">-- เลือกนักศึกษา --</option>' + 
+      students.map(s => `<option value="${s.id}">${s.student_code||''} ${s.full_name}</option>`).join('');
+  }
+  renderScoreGrid();
 }
-async function loadStudentScores() {
-  const studentId = document.getElementById('scoreStudentSel').value;
-  const list = document.getElementById('scoreHistoryList');
-  if (!studentId) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>';
-    return;
+
+function setScoreMode(mode) {
+  currentScoreMode = mode;
+  document.getElementById('scoreModeGrid').style.display = mode==='grid'?'block':'none';
+  document.getElementById('scoreModeCSV').style.display = mode==='csv'?'block':'none';
+  document.getElementById('btnModeGrid').style.background = mode==='grid'?'var(--teal-50)':'var(--bg)';
+  document.getElementById('btnModeGrid').style.borderColor = mode==='grid'?'var(--teal)':'var(--border)';
+  document.getElementById('btnModeCSV').style.background = mode==='csv'?'var(--teal-50)':'var(--bg)';
+  document.getElementById('btnModeCSV').style.borderColor = mode==='csv'?'var(--teal)':'var(--border)';
+  updateScoreReadyCount();
+}
+
+function renderScoreGrid() {
+  const tbody = document.getElementById('scoreGridBody');
+  if(!tbody) return;
+  const q = (document.getElementById('scoreGridSearch')?.value||'').toLowerCase();
+  const grpIdx = document.getElementById('scoreGridGroup')?.value;
+  
+  let list = students;
+  if(grpIdx !== "") {
+    const g = loadSavedGroups()[grpIdx];
+    if(g) list = list.filter(s => g.studentIds.includes(s.id));
   }
+  if(q) {
+    list = list.filter(s => s.full_name.toLowerCase().includes(q) || (s.student_code||'').toLowerCase().includes(q));
+  }
+  
+  tbody.innerHTML = list.map(s => {
+    const draft = scoreDraftData[s.id] || {score:'', feedback:''};
+    return `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:6px;text-align:center;"><input type="checkbox" class="sc-chk" value="${s.id}"></td>
+        <td style="padding:6px;font-size:12px;"><b>${s.student_code||'-'}</b><br>${s.full_name}</td>
+        <td style="padding:6px;"><input type="text" class="search-input" style="width:100%;padding:6px;min-height:0;font-size:12px;" value="${draft.score}" oninput="updateScoreDraft('${s.id}', 'score', this.value)"></td>
+        <td style="padding:6px;"><input type="text" class="search-input" style="width:100%;padding:6px;min-height:0;font-size:12px;" value="${draft.feedback}" oninput="updateScoreDraft('${s.id}', 'feedback', this.value)"></td>
+      </tr>`;
+  }).join('');
+  updateScoreReadyCount();
+}
+
+function filterScoreGrid() { renderScoreGrid(); }
+function toggleAllScoreGrid(cb) { document.querySelectorAll('.sc-chk').forEach(c => c.checked = cb.checked); }
+
+function updateScoreDraft(sid, field, val) {
+  if(!scoreDraftData[sid]) scoreDraftData[sid] = {score:'', feedback:''};
+  scoreDraftData[sid][field] = val;
+  updateScoreReadyCount();
+}
+
+function applyBulkScore() {
+  const score = document.getElementById('scoreBulkVal').value.trim();
+  const fb = document.getElementById('scoreBulkFb').value.trim();
+  const checked = document.querySelectorAll('.sc-chk:checked');
+  if(checked.length === 0) { showToast('กรุณาเลือกนักศึกษาในตาราง', 'err'); return; }
+  checked.forEach(cb => {
+    const sid = cb.value;
+    if(!scoreDraftData[sid]) scoreDraftData[sid] = {score:'', feedback:''};
+    if(score !== '') scoreDraftData[sid].score = score;
+    if(fb !== '') scoreDraftData[sid].feedback = fb;
+  });
+  renderScoreGrid();
+  showToast('นำไปใช้กับ '+checked.length+' คนเรียบร้อย', 'ok');
+}
+
+async function handleScoreCSV(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const text = await file.text();
+  const lines = text.split('\n');
+  
+  csvScoreData = [];
+  for(let line of lines) {
+    if(!line.trim()) continue;
+    const parts = line.split(',');
+    const code = (parts[0]||'').trim();
+    const score = (parts[1]||'').trim();
+    const fb = (parts[2]||'').trim();
+    
+    if(!code || !score) continue;
+    const st = students.find(s => s.student_code === code);
+    if(st) {
+       csvScoreData.push({student_id: st.id, student_code: st.student_code, full_name: st.full_name, score: score, feedback: fb, valid: true});
+    } else {
+       csvScoreData.push({student_code: code, full_name: 'ไม่พบในระบบ', score: score, feedback: fb, valid: false});
+    }
+  }
+  
+  const preview = document.getElementById('scoreCsvPreview');
+  preview.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead style="background:var(--bg);">
+      <tr><th style="padding:6px;border:1px solid var(--border);">รหัส</th><th style="padding:6px;border:1px solid var(--border);">ชื่อ</th><th style="padding:6px;border:1px solid var(--border);">คะแนน</th></tr>
+    </thead>
+    <tbody>
+      ${csvScoreData.map(d => `<tr style="background:${d.valid?'white':'var(--fail-bg)'}">
+        <td style="padding:6px;border:1px solid var(--border);">${d.student_code}</td>
+        <td style="padding:6px;border:1px solid var(--border);color:${d.valid?'inherit':'var(--fail)'}">${d.full_name}</td>
+        <td style="padding:6px;border:1px solid var(--border);">${d.score}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+  updateScoreReadyCount();
+}
+
+function updateScoreReadyCount() {
+   let count = 0;
+   if(currentScoreMode === 'grid') count = Object.values(scoreDraftData).filter(d => d.score.trim() !== '').length;
+   else count = csvScoreData.filter(d => d.valid).length;
+   document.getElementById('scoreReadyCount').textContent = count;
+}
+
+async function saveBatchScores() {
+  const title = document.getElementById('scoreBatchTitle').value.trim();
+  if(!title) { showToast('กรุณาระบุหัวข้อคะแนน', 'err'); return; }
+  
+  let toSave = [];
+  if(currentScoreMode === 'grid') {
+    for(const [sid, d] of Object.entries(scoreDraftData)) {
+       if(d.score.trim() !== '') {
+         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null });
+       }
+    }
+  } else {
+    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null }));
+  }
+  
+  if(toSave.length === 0) { showToast('ไม่มีข้อมูลคะแนนที่สมบูรณ์ให้บันทึก', 'err'); return; }
+  const btn = document.getElementById('btnSaveBatchScore');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  
+  const { error } = await sb.from('score_announcements').insert(toSave);
+  btn.disabled = false; btn.textContent = `💾 บันทึกและประกาศคะแนน (${toSave.length} คน)`;
+  
+  if(error) { showToast('❌ ' + error.message, 'err'); return; }
+  showToast(`✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
+  
+  document.getElementById('scoreBatchTitle').value = '';
+  scoreDraftData = {}; csvScoreData = [];
+  document.getElementById('scoreCsvFile').value = '';
+  document.getElementById('scoreCsvPreview').innerHTML = '';
+  if(currentScoreMode === 'grid') renderScoreGrid(); else updateScoreReadyCount();
+  loadStudentScoresHist();
+}
+
+async function loadStudentScoresHist() {
+  const studentId = document.getElementById('scoreHistorySel').value;
+  const list = document.getElementById('scoreHistoryList');
+  if (!studentId) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>'; return; }
   list.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
   const { data, error } = await sb.from('score_announcements').select('*').eq('student_id', studentId).eq('teacher_id', user.profileId).order('created_at', { ascending: false });
   if (error) { list.innerHTML = `<p style="color:red">${error.message}</p>`; return; }
@@ -803,28 +993,1126 @@ async function loadStudentScores() {
       <div style="text-align:right;"><span style="background:var(--rose-50);color:var(--rose);padding:4px 12px;border-radius:100px;font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;">${d.score}</span><button onclick="deleteScore('${d.id}')" style="display:block;margin-top:6px;background:none;border:none;color:var(--fail);font-size:11px;cursor:pointer;width:100%;text-align:right;text-decoration:underline;">ลบ</button></div>
     </div>`).join('');
 }
-async function saveStudentScore() {
-  const student_id = document.getElementById('scoreStudentSel').value;
-  const title = document.getElementById('scoreTitle').value.trim();
-  const score = document.getElementById('scoreVal').value.trim();
-  const feedback = document.getElementById('scoreFeedback').value.trim();
-  if (!student_id || !title || !score) { showToast('❌ กรุณากรอกข้อมูลที่มีดอกจันให้ครบ', 'err'); return; }
-  const btn = document.getElementById('btnSaveScore');
+async function deleteScore(id) {
+  if (!confirm('ยืนยันการลบคะแนนนี้?')) return;
+  await sb.from('score_announcements').delete().eq('id', id);
+  showToast('✅ ลบสำเร็จ', 'ok');
+  loadStudentScoresHist();
+}
+
+// ===== QR EVALUATION =====
+let activeQRToken=null,activeQRCompId=null,activeQRCompIds=[],qrPollTimer=null;let qrSelectedIds=new Set();
+async function initQRTab(){
+  document.getElementById('qrCompList').innerHTML=comps.map(c=>`<label style="display:flex;gap:10px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;"><input type="checkbox" onchange="toggleQRComp('${c.id}',this)"> ${c.name}</label>`).join('');
+  const{data}=await sb.from('qr_tokens').select('*,competencies(name)').eq('teacher_id',user.profileId).eq('is_active',true).order('created_at',{ascending:false});
+  if(data?.length) document.getElementById('activeQRs').innerHTML=data.map(t=>`<div style="padding:10px;border:1px solid var(--teal);border-radius:8px;margin-bottom:8px;"><button onclick="showActiveQR('${t.id}','${t.token}','${t.competency_id}')" style="padding:5px 10px;background:var(--teal);color:white;border:none;border-radius:6px;cursor:pointer;">ดู QR นี้</button></div>`).join('');
+}
+function filterQRComps(){const q=document.getElementById('qrCompSearch').value.toLowerCase();document.getElementById('qrCompList').innerHTML=comps.filter(c=>c.name.toLowerCase().includes(q)).map(c=>`<label style="display:flex;gap:10px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;"><input type="checkbox" onchange="toggleQRComp('${c.id}',this)" ${qrSelectedIds.has(c.id)?'checked':''}> ${c.name}</label>`).join('');}
+function toggleQRComp(id,cb){if(cb.checked)qrSelectedIds.add(id);else qrSelectedIds.delete(id); document.getElementById('createQRBtn').disabled=qrSelectedIds.size===0; document.getElementById('createQRBtn').style.opacity=qrSelectedIds.size>0?'1':'0.5';}
+function selectAllQRComps(){comps.forEach(c=>qrSelectedIds.add(c.id));filterQRComps();toggleQRComp('null',{checked:true});}
+function clearAllQRComps(){qrSelectedIds.clear();filterQRComps();toggleQRComp('null',{checked:false});}
+async function createQR(){
+  if(qrSelectedIds.size===0)return;
+  const ids=[...qrSelectedIds];
+  const{data}=await sb.from('qr_tokens').insert({teacher_id:user.profileId,competency_id:ids[0],competency_ids:ids}).select().single();
+  showActiveQR(data.id,data.token,ids); qrSelectedIds.clear(); initQRTab();
+}
+function showActiveQR(tokenId,token,compIds){
+  activeQRToken=tokenId;
+  if(typeof compIds==='string'){try{compIds=JSON.parse(compIds);}catch{compIds=[compIds];}}
+  activeQRCompIds=Array.isArray(compIds)?compIds:[compIds];
+  const url=window.location.origin+window.location.pathname.replace('teacher-dashboard.html','')+'qr-eval.html?token='+token;
+  document.getElementById('qrDisplay').style.display='block';
+  document.getElementById('qrCodeDiv').innerHTML=`<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" width="180">`;
+  document.getElementById('qrUrlText').textContent=url;
+  clearInterval(qrPollTimer); qrPollTimer=setInterval(refreshQueue,5000); refreshQueue();
+}
+async function refreshQueue(){
+  if(!activeQRToken)return;
+  const{data}=await sb.from('qr_queue').select('*,students(full_name)').eq('token_id',activeQRToken).eq('status','waiting');
+  document.getElementById('queueCount').textContent=(data?.length||0);
+  document.getElementById('queueList').innerHTML=(data||[]).map(q=>`<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;display:flex;justify-content:space-between;"><label><input type="checkbox" id="qchk-${q.student_id}" data-sid="${q.student_id}" data-qid="${q.id}" onchange="updateQueueBatchBar()"> ${q.students?.full_name}</label> <button onclick="evalFromQueue('${q.student_id}','${q.id}')">ประเมิน</button></div>`).join('');
+  updateQueueBatchBar();
+}
+function updateQueueBatchBar(){const count=document.querySelectorAll('[id^=qchk-]:checked').length; document.getElementById('queueBatchBar').style.display=count>0?'flex':'none'; document.getElementById('batchEvalBtn').disabled=count===0;}
+async function batchEvalFromQueue(){
+  const checked=[...document.querySelectorAll('[id^=qchk-]:checked')]; if(!checked.length)return;
+  gSelectedIds=new Set(checked.map(cb=>cb.getAttribute('data-sid'))); gDecisions={};
+  for(const cb of checked) await sb.from('qr_queue').update({status:'evaluated'}).eq('id',cb.getAttribute('data-qid'));
+  switchTab('group'); document.getElementById('gEvalSection').style.display='block'; renderGComps();
+}
+async function evalFromQueue(sid,qid){await sb.from('qr_queue').update({status:'evaluated'}).eq('id',qid); switchTab('evaluate'); selectStudent(sid);}
+async function deactivateQR(){if(activeQRToken)await sb.from('qr_tokens').update({is_active:false}).eq('id',activeQRToken); document.getElementById('qrDisplay').style.display='none'; clearInterval(qrPollTimer);}
+
+// ===== GROUP EVALUATION =====
+let gSelectedIds=new Set(),gDecisions={};
+function groupStorageKey(){return 'lb_groups_'+user.profileId;}
+function loadSavedGroups(){return JSON.parse(localStorage.getItem(groupStorageKey())||'[]');}
+function saveSavedGroups(g){localStorage.setItem(groupStorageKey(),JSON.stringify(g));}
+function initGroup(){gSelectedIds=new Set();gDecisions={};document.getElementById('editGroupCard').style.display='none';document.getElementById('gEvalSection').style.display='none';renderSavedGroups();}
+function renderSavedGroups(){
+  const groups=loadSavedGroups();
+  document.getElementById('savedGroupsList').innerHTML=groups.map((g,i)=>`<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;"><div><b>${g.name}</b> (${g.studentIds.length} คน)</div><div><button onclick="startGroupEval(${i})">ประเมิน</button></div></div>`).join('');
+}
+function openNewGroup(){document.getElementById('editGroupCard').style.display='block'; gSelectedIds=new Set(); document.getElementById('groupName').value=''; renderGroupStudents(students);}
+function cancelEditGroup(){document.getElementById('editGroupCard').style.display='none';}
+function filterGroupStudents(){const q=document.getElementById('gStSearch').value.toLowerCase();renderGroupStudents(students.filter(s=>s.full_name.toLowerCase().includes(q)));}
+function renderGroupStudents(list){document.getElementById('gStList').innerHTML=list.map(s=>`<label style="display:flex;gap:8px;padding:6px;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;"><input type="checkbox" ${gSelectedIds.has(s.id)?'checked':''} onchange="if(this.checked)gSelectedIds.add('${s.id}');else gSelectedIds.delete('${s.id}');"> ${s.full_name}</label>`).join('');}
+function selectAllStudents(){students.forEach(s=>gSelectedIds.add(s.id));filterGroupStudents();}
+function clearAllStudents(){gSelectedIds.clear();filterGroupStudents();}
+function saveGroupLocal(){const name=document.getElementById('groupName').value.trim();if(!name||gSelectedIds.size===0)return;const g=loadSavedGroups();g.push({name,studentIds:[...gSelectedIds]});saveSavedGroups(g);cancelEditGroup();renderSavedGroups();showToast('บันทึกกลุ่มสำเร็จ');}
+function startGroupEval(idx){const g=loadSavedGroups()[idx]; gSelectedIds=new Set(g.studentIds); gDecisions={}; document.getElementById('gEvalSection').style.display='block'; renderGComps();}
+function renderGComps(){
+  document.getElementById('gCompList').innerHTML=comps.map(c=>`<div class="comp-card"><div class="comp-head"><div class="comp-name">${c.name}</div></div><div class="comp-body"><div class="rubric-scale">${(c.rubric_criteria||DEF_RUBRIC).map(r=>`<button class="rubric-btn" onclick="gDecisions['${c.id}']={...gDecisions['${c.id}'],rubric_score:${r.score}};this.parentNode.querySelectorAll('button').forEach(b=>b.style.background='');this.style.background='var(--rose-l)';updateGBar()">${r.score}</button>`).join('')}</div><div class="eval-actions"><button class="eval-btn btn-pass" onclick="gDecisions['${c.id}']={...gDecisions['${c.id}'],status:'pass'};updateGBar()">✅ ผ่าน</button><button class="eval-btn btn-fail" onclick="gDecisions['${c.id}']={...gDecisions['${c.id}'],status:'fail'};updateGBar()">❌ ไม่ผ่าน</button></div></div></div>`).join('');
+}
+function updateGBar(){const done=Object.values(gDecisions).filter(d=>d.status).length; document.getElementById('gSubmitBtn').disabled=done===0;}
+async function submitGroupEval(){
+  const rows=[]; const now=new Date().toISOString();
+  for(const sid of gSelectedIds)for(const[cid,d]of Object.entries(gDecisions))if(d.status)rows.push({student_id:sid,competency_id:cid,teacher_id:user.profileId,status:d.status,rubric_score:d.rubric_score||null,evaluated_at:now});
+  if(!rows.length)return;
+  await sb.from('evaluations').upsert(rows,{onConflict:'student_id,competency_id'});
+  showToast('บันทึกกลุ่มเรียบร้อย'); document.getElementById('gEvalSection').style.display='none';
+}
+
+// ===== WORKLOAD =====
+let wlData={}; let wlEvidence={};
+const WL_KPIS=[{id:'s1',label:'ภาระงานที่ 1',title:'การสอน',kpis:[{id:'1.1',name:'ภาระงานสอน',weight:10},{id:'1.2',name:'แผนการสอน',weight:5}]}];
+function initWorkload(){
+  try{wlEvidence=JSON.parse(localStorage.getItem('lb_wl_evidence_'+user.profileId)||'{}');}catch{}
+  try{wlData=JSON.parse(localStorage.getItem('lb_workload_'+user.profileId)||'{}');}catch{}
+  document.getElementById('wlSections').innerHTML=WL_KPIS.map(s=>`<div class="wl-section"><div class="wl-sec-head"><b>${s.label}: ${s.title}</b></div><div class="wl-sec-body">${s.kpis.map(k=>`<div style="padding:10px;border:1px solid #e2e8f0;margin-bottom:8px;border-radius:8px;">${k.id} ${k.name} (W:${k.weight}) <br><input type="number" placeholder="ระดับที่ได้ (1-5)" value="${wlData[k.id]?.level||''}" oninput="if(!wlData['${k.id}'])wlData['${k.id}']={};wlData['${k.id}'].level=this.value"></div>`).join('')}</div></div>`).join('');
+  renderMiscSection();
+}
+function saveWorkload(){localStorage.setItem('lb_workload_'+user.profileId,JSON.stringify(wlData)); showToast('บันทึกภาระงานแล้ว');}
+function clearWorkload(){localStorage.removeItem('lb_workload_'+user.profileId); initWorkload();}
+function renderMiscSection(){document.getElementById('wlMiscImgs').innerHTML=(wlEvidence['_misc']||[]).map((img,i)=>`<div style="position:relative;width:60px;"><img src="${img.img}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;"><button onclick="(wlEvidence['_misc']||[]).splice(${i},1);localStorage.setItem('lb_wl_evidence_'+user.profileId,JSON.stringify(wlEvidence));renderMiscSection()" style="position:absolute;top:0;right:0;background:red;color:white;border:none;border-radius:50%;">✕</button></div>`).join('');}
+function handleEvidenceUpload(id,inp){
+  const f=inp.files[0];if(!f)return; const r=new FileReader();
+  r.onload=e=>{if(!wlEvidence[id])wlEvidence[id]=[];wlEvidence[id].push({img:e.target.result,name:'หลักฐาน'});localStorage.setItem('lb_wl_evidence_'+user.profileId,JSON.stringify(wlEvidence));renderMiscSection();}; r.readAsDataURL(f);
+}
+function exportWorkloadZip(){showToast('Export จำเป็นต้องใช้ JSZip บนบราวเซอร์');}
+
+// ===== PASSWORD =====
+async function changePassword(){
+  const cur=document.getElementById('tPwCurrent').value; const nw=document.getElementById('tPwNew').value; const cf=document.getElementById('tPwConfirm').value;
+  if(nw!==cf){alert('รหัสไม่ตรงกัน');return;}
+  const{data}=await sb.from('teachers').select('id').eq('id',user.profileId).eq('password',cur).single();
+  if(!data){alert('รหัสปัจจุบันผิด');return;}
+  await sb.from('teachers').update({password:nw}).eq('id',user.profileId);
+  alert('เปลี่ยนรหัสสำเร็จ'); ['tPwCurrent','tPwNew','tPwConfirm'].forEach(id=>document.getElementById(id).value='');
+}
+
+init();
+</script>
+
+<!-- ===== DEBUG BAR ===== -->
+<style>
+#_dbgBar{position:fixed;bottom:80px;left:8px;right:8px;z-index:9999;background:rgba(15,23,42,0.95);color:#4ade80;padding:8px 12px;border-radius:12px;font-family:monospace;font-size:11px;max-height:200px;overflow-y:auto;display:none;}
+#_dbgToggle{position:fixed;bottom:calc(var(--nav-h,64px) + env(safe-area-inset-bottom,0px) + 8px);right:8px;z-index:10000;width:32px;height:32px;border-radius:50%;background:rgba(15,23,42,0.8);color:#4ade80;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+</style>
+<div id="_dbgBar"></div>
+<button id="_dbgToggle" onclick="document.getElementById('_dbgBar').style.display=document.getElementById('_dbgBar').style.display==='none'?'block':'none'">🐛</button>
+</body>
+</html><!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Log Book — อาจารย์</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rose:#e11d48;--rose-d:#9f1239;--rose-l:#ffe4e6;--rose-50:#fff1f2;
+  --teal:#0d9488;--teal-l:#ccfbf1;
+  --slate:#1e293b;--slate-m:#475569;--slate-l:#94a3b8;
+  --border:#e2e8f0;--bg:#f8fafc;--white:#fff;
+  --pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;
+  --nav-h:64px;--sidebar:260px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);overflow-x:hidden;}
+.sidebar{width:var(--sidebar);background:white;border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
+.sb-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.sb-logo-img{width:42px;height:42px;border-radius:10px;object-fit:contain;background:var(--rose-50);padding:4px;border:1px solid var(--rose-l);flex-shrink:0;}
+.sb-logo-txt h2{font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--rose);}
+.sb-logo-txt p{font-size:10px;color:var(--slate-l);line-height:1.4;}
+.sb-user{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--rose-50);}
+.sb-user-row{display:flex;align-items:center;gap:10px;}
+.sb-av{width:38px;height:38px;background:linear-gradient(135deg,var(--rose),#f43f5e);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;}
+.sb-name{font-size:13px;font-weight:600;}
+.sb-code{font-size:11px;color:var(--slate-l);}
+.sb-badge{display:inline-block;background:var(--rose-l);color:var(--rose-d);font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-top:4px;}
+.sb-nav{flex:1;padding:10px 0;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:13px;font-weight:500;color:var(--slate-m);cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;}
+.nav-item:hover{background:var(--rose-50);color:var(--rose);}
+.nav-item.active{background:var(--rose-50);color:var(--rose);border-left-color:var(--rose);font-weight:700;}
+.nav-icon{font-size:18px;width:22px;text-align:center;}
+.sb-foot{padding:14px 16px;border-top:1px solid var(--border);}
+.logout-btn{width:100%;padding:10px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--slate-m);cursor:pointer;transition:all 0.2s;}
+.logout-btn:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626;}
+.main{margin-left:var(--sidebar);flex:1;padding:24px 28px;min-height:100vh;}
+.tab-view{display:none;animation:fadeUp 0.3s ease both;}
+.tab-view.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.mob-header{display:none;position:sticky;top:0;z-index:50;background:white;border-bottom:1px solid var(--border);padding:12px 16px;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.mob-hamburger{font-size:22px;cursor:pointer;padding:4px;border-radius:8px;}
+.mob-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--rose);flex:1;}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:90;backdrop-filter:blur(2px);}
+.sb-overlay.on{display:block;animation:fadeIn 0.2s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:white;border-top:1px solid var(--border);padding:8px 0;padding-bottom:calc(8px + var(--safe-b));box-shadow:0 -4px 20px rgba(0,0,0,0.06);}
+.bn-items{display:flex;justify-content:space-around;}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 8px;cursor:pointer;transition:all 0.2s;border-radius:10px;min-width:52px;flex:1;}
+.bn-item:active{transform:scale(0.92);}
+.bn-icon{font-size:22px;transition:transform 0.2s;}
+.bn-label{font-size:10px;font-weight:600;color:var(--slate-l);}
+.bn-item.active .bn-icon{transform:scale(1.15);}
+.bn-item.active .bn-label{color:var(--rose);}
+.bn-dot{width:5px;height:5px;border-radius:50%;background:var(--rose);margin-top:2px;opacity:0;transition:opacity 0.2s;}
+.bn-item.active .bn-dot{opacity:1;}
+.page-title{font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--slate-l);}
+.card{background:white;border-radius:18px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px;animation:fadeUp 0.3s ease both;}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:14px;font-weight:700;}
+.card-body{padding:16px 18px;}
+.search-input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;transition:all 0.2s;outline:none;-webkit-appearance:none;}
+.search-input:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(225,29,72,0.08);}
+.student-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+.st-card{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--bg);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all 0.2s;}
+.st-card:hover{border-color:var(--rose);background:var(--rose-50);}
+.st-card:active{transform:scale(0.98);}
+.st-card.selected{border-color:var(--rose);background:var(--rose-50);box-shadow:0 0 0 3px rgba(225,29,72,0.1);}
+.st-av{width:40px;height:40px;background:linear-gradient(135deg,var(--rose),#f43f5e);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;}
+.st-name{font-size:13px;font-weight:600;}
+.st-code{font-size:11px;color:var(--slate-l);}
+.st-check{color:var(--rose);font-size:20px;margin-left:auto;}
+.comp-card{background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:10px;animation:fadeUp 0.3s ease both;}
+.comp-card.passed{background:var(--pass-bg);border-color:#86efac;cursor:pointer;transition:all 0.2s;}
+.comp-card.passed:hover{border-color:var(--pass);box-shadow:0 2px 8px rgba(22,163,74,0.12);}
+.comp-card.passed .comp-body{display:none;}
+.comp-card.passed.expanded .comp-body{display:block;}
+.comp-card.passed .comp-head::after{content:'▸';font-size:16px;color:var(--pass);margin-left:auto;transition:transform 0.2s;}
+.comp-card.passed.expanded .comp-head::after{transform:rotate(90deg);}
+.filter-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--bg);border-radius:12px;border:1px solid var(--border);}
+.filter-chip{padding:5px 12px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:white;color:var(--slate-m);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.filter-chip:active{transform:scale(0.95);}
+.filter-chip.active{background:var(--rose);border-color:var(--rose);color:white;}
+.sort-select{padding:5px 10px;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px solid var(--border);background:white;color:var(--slate-m);cursor:pointer;outline:none;}
+.comp-head{padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
+.comp-name{font-size:15px;font-weight:700;flex:1;line-height:1.4;}
+.comp-type{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;flex-shrink:0;}
+.t-m{background:#ede9fe;color:#5b21b6;}.t-e{background:#e0f2fe;color:#0369a1;}
+.comp-body{padding:0 16px 14px;}
+.rubric-lbl{font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:8px;}
+.rubric-scale{display:flex;gap:6px;flex-wrap:wrap;}
+.rubric-btn{flex:1;min-width:64px;padding:10px 6px;text-align:center;border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;transition:all 0.2s;background:var(--bg);}
+.rubric-btn:hover{border-color:var(--rose);background:var(--rose-50);}
+.rubric-btn:active{transform:scale(0.95);}
+.rubric-btn.selected{border-color:var(--rose);background:var(--rose-l);}
+.rubric-num{font-family:'Prompt',sans-serif;font-size:20px;font-weight:700;margin-bottom:2px;}
+.rubric-desc{color:var(--slate-m);font-size:10px;line-height:1.3;}
+.eval-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.meta-lbl{font-size:11px;font-weight:700;color:var(--slate-l);display:block;margin-bottom:4px;}
+.meta-input{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:12px;transition:all 0.2s;outline:none;-webkit-appearance:none;}
+.meta-input:focus{border-color:var(--rose);}
+.eval-actions{display:flex;gap:8px;margin-top:10px;}
+.eval-btn{flex:1;padding:12px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.eval-btn:active{transform:scale(0.97);}
+.btn-pass{background:var(--pass-bg);color:var(--pass);border:2px solid #86efac;}
+.btn-pass.confirmed{background:var(--pass);color:white;}
+.btn-fail{background:var(--fail-bg);color:var(--fail);border:2px solid #fca5a5;}
+.btn-fail.confirmed{background:var(--fail);color:white;}
+.prev-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;margin-bottom:8px;}
+.prev-pass{background:var(--pass-bg);color:var(--pass);}.prev-fail{background:var(--fail-bg);color:var(--fail);}
+.submit-bar{position:sticky;bottom:0;background:white;border-top:1px solid var(--border);padding:14px 18px;display:flex;gap:10px;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,0.06);border-radius:0 0 18px 18px;margin-top:16px;}
+.submit-info{flex:1;font-size:12px;color:var(--slate-m);}
+.submit-main{padding:12px 22px;background:var(--rose);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.submit-main:hover{background:var(--rose-d);}
+.submit-main:active{transform:scale(0.97);}
+.submit-main:disabled{opacity:0.4;cursor:not-allowed;}
+.hist-item{background:white;border-radius:14px;padding:14px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;animation:fadeUp 0.3s ease both;}
+.hist-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.hi-pass{background:var(--pass-bg);}.hi-fail{background:var(--fail-bg);}
+.hist-skill{font-size:13px;font-weight:600;}
+.hist-student{font-size:12px;color:var(--slate-m);margin-top:2px;}
+.hist-meta{font-size:11px;color:var(--slate-l);margin-top:3px;}
+.empty{text-align:center;padding:48px 20px;color:var(--slate-l);}
+.empty-icon{font-size:48px;margin-bottom:12px;display:block;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.spinner-wrap{text-align:center;padding:36px;}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--rose-l);border-top-color:var(--rose);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:calc(var(--nav-h)+12px+var(--safe-b));right:16px;left:16px;padding:14px 18px;border-radius:14px;font-size:14px;font-weight:600;z-index:999;opacity:0;transform:translateY(16px);transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.toast.on{opacity:1;transform:translateY(0);}
+.toast-ok{background:#dcfce7;color:#166534;}.toast-err{background:#fee2e2;color:#991b1b;}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);box-shadow:0 0 40px rgba(0,0,0,0.2);}
+  .main{margin-left:0;padding:12px 14px;padding-bottom:calc(var(--nav-h) + 48px + var(--safe-b));}
+  .mob-header{display:flex;}
+  .bottom-nav{display:block;}
+  .eval-meta{grid-template-columns:1fr;}
+  .toast{bottom:calc(var(--nav-h)+8px+var(--safe-b));}
+  .submit-bar{position:sticky;bottom:calc(var(--nav-h) + var(--safe-b));border-radius:0 0 18px 18px;z-index:10;}
+}
+@media(min-width:769px){.toast{bottom:20px;right:24px;left:auto;width:320px;text-align:left;}}
+
+/* ===== WORKLOAD TAB CSS ===== */
+.wl-section{background:white;border:1px solid var(--border);border-radius:16px;margin-bottom:10px;overflow:hidden;}
+.wl-sec-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;user-select:none;transition:background 0.15s;}
+.wl-sec-head:hover{background:var(--bg);}
+.wl-sec-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.wl-sec-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--slate-m);}
+.wl-sec-arrow{font-size:14px;transition:transform 0.2s;color:var(--slate-l);}
+.wl-sec-body{padding:0 14px 14px;border-top:1px solid var(--border);}
+.wl-kpi{padding:12px;border-radius:10px;background:var(--bg);margin-top:10px;border:1px solid var(--border);}
+.wl-kpi-name{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--slate);}
+.wl-kpi-name small{font-weight:400;color:var(--slate-l);font-size:11px;display:block;margin-top:2px;}
+.wl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.wl-field label{font-size:11px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;}
+.wl-field input,.wl-field select,.wl-field textarea{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;background:white;outline:none;}
+.wl-field input:focus,.wl-field select:focus{border-color:var(--teal);}
+.wl-level-btns{display:flex;gap:4px;flex-wrap:wrap;}
+.wl-level-btn{padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;background:white;color:var(--slate-m);}
+.wl-level-btn.sel{background:var(--rose);border-color:var(--rose);color:white;}
+.wl-score-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;background:var(--teal-50);border-radius:8px;font-size:12px;}
+
+.msg-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.tag-select{border:none;border-radius:100px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:20px;}
+.ts-status-0{background:#f1f5f9;color:#64748b;} .ts-status-1{background:#fef3c7;color:#92400e;} .ts-status-2{background:#dbeafe;color:#1e40af;} .ts-status-3{background:#ede9fe;color:#5b21b6;} .ts-status-4{background:#d1fae5;color:#065f46;}
+.ts-urgent-0{background:#f1f5f9;color:#64748b;} .ts-urgent-1{background:#dcfce7;color:#166534;} .ts-urgent-2{background:#fef9c3;color:#854d0e;} .ts-urgent-3{background:#fee2e2;color:#991b1b;}
+
+/* Scrollbar for tables */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--slate-l); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--slate-m); }
+</style>
+</head>
+<body>
+<div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <img class="sb-logo-img" src="fac.png" alt="Logo" onerror="this.outerHTML='<div style=width:42px;height:42px;background:var(--rose-50);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;>🏥</div>'">
+    <div class="sb-logo-txt"><h2>Log Book</h2><p>คณะสัตวแพทยศาสตร์<br>มทร.ตะวันออก</p></div>
+  </div>
+  <div class="sb-user">
+    <div class="sb-user-row"><div class="sb-av">👩‍🏫</div><div><div class="sb-name" id="sbName">—</div><div class="sb-code" id="sbCode"></div></div></div>
+    <div class="sb-badge">อาจารย์</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-item active" onclick="switchTab('evaluate')" id="ni-evaluate"><span class="nav-icon">✍️</span> ประเมินรายบุคคล</div>
+    <div class="nav-item" onclick="switchTab('qreval')" id="ni-qreval"><span class="nav-icon">📲</span> QR ประเมิน</div>
+    <div class="nav-item" onclick="switchTab('group')" id="ni-group"><span class="nav-icon">👥</span> ประเมินเป็นกลุ่ม</div>
+    <div class="nav-item" onclick="switchTab('history')" id="ni-history"><span class="nav-icon">📋</span> ประวัติ</div>
+    <div class="nav-item" onclick="switchTab('workload')" id="ni-workload"><span class="nav-icon">📊</span> ภาระงาน</div>
+    <div class="nav-item" onclick="switchTab('scores')" id="ni-scores"><span class="nav-icon">💯</span> ประกาศคะแนน</div>
+    <div class="nav-item" onclick="switchTab('password')" id="ni-password"><span class="nav-icon">🔑</span> เปลี่ยนรหัสผ่าน</div>
+      <div style="height:1px;background:var(--border);margin:8px 12px;"></div>
+    <div class="nav-item" onclick="switchTab('inbox')" id="ni-inbox">
+      <span class="nav-icon">🔐</span> ข้อความส่วนตัว
+      <span id="inboxBadge" style="display:none;background:#e11d48;color:white;font-size:10px;font-weight:800;padding:1px 6px;border-radius:100px;margin-left:4px;">!</span>
+    </div>
+  </nav>
+  <div class="sb-foot"><button class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</button></div>
+</aside>
+
+<div class="mob-header">
+  <span class="mob-hamburger" onclick="openSidebar()">☰</span>
+  <span class="mob-title">Log Book — อาจารย์</span>
+  <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--rose),#f43f5e);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">👩‍🏫</div>
+</div>
+
+<main class="main">
+  <!-- EVALUATE -->
+  <div id="tab-evaluate" class="tab-view active">
+    <div style="margin-bottom:18px;">
+      <div class="page-title">✍️ ประเมินทักษะ</div>
+      <div class="page-sub">เลือกนักศึกษา แล้วประเมินด้วย Rubric</div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">👨‍🎓 ขั้นตอนที่ 1 — เลือกนักศึกษา</span>
+        <span id="selBadge" style="font-size:12px;color:var(--rose);font-weight:700;display:none;"></span>
+        <button id="printStudentBtn" onclick="printStudentReport()" style="display:none;padding:6px 12px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">📄 พิมพ์รายงาน</button>
+      </div>
+      <div class="card-body">
+        <input class="search-input" id="stSearch" placeholder="ค้นหาชื่อหรือรหัสนักศึกษา..." oninput="filterStudents()" style="margin-bottom:12px;">
+        <div id="stList" class="student-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+    <div id="evalSection" style="display:none;">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 ขั้นตอนที่ 2 — ประเมินทักษะ</span></div>
+        <div class="card-body">
+          <div class="filter-toolbar">
+            <span style="font-size:12px;font-weight:700;color:var(--slate-m);align-self:center;">แสดง:</span>
+            <button class="filter-chip active" onclick="setFilter('all',this)">ทั้งหมด</button>
+            <button class="filter-chip" onclick="setFilter('pending',this)">⏳ ยังไม่ประเมิน</button>
+            <button class="filter-chip" onclick="setFilter('fail',this)">❌ ไม่ผ่าน</button>
+            <button class="filter-chip" onclick="setFilter('pass',this)">✅ ผ่านแล้ว</button>
+            <select class="sort-select" onchange="setSort(this.value)" id="sortSelect">
+              <option value="alpha">เรียงตัวอักษร</option>
+              <option value="category">เรียงตามหมวดหมู่</option>
+              <option value="type">เรียงตามประเภท</option>
+              <option value="status">เรียงตามสถานะ</option>
+            </select>
+          </div>
+          <div id="compList"></div>
+          <div class="submit-bar">
+            <div class="submit-info" id="submitInfo">เลือกผลสำหรับแต่ละทักษะ</div>
+            <button class="submit-main" id="submitBtn" onclick="submitAll()" disabled>💾 บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR EVALUATION -->
+  <div id="tab-qreval" class="tab-view">
+    <div style="margin-bottom:18px;">
+      <div class="page-title">📲 QR ประเมิน</div>
+      <div class="page-sub">สร้าง QR ให้นักศึกษา scan เพื่อรอรับการประเมิน</div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">เลือกทักษะและสร้าง QR</span>
+        <span id="qrSelCount" style="font-size:12px;color:var(--rose);font-weight:700;"></span>
+      </div>
+      <div class="card-body">
+        <input class="search-input" id="qrCompSearch" placeholder="🔍 ค้นหาทักษะ..." oninput="filterQRComps()" style="margin-bottom:10px;">
+        <div id="qrCompList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-bottom:14px;"></div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button onclick="selectAllQRComps()" style="flex:1;padding:7px;background:var(--teal-l);color:var(--teal);border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">เลือกทั้งหมด</button>
+          <button onclick="clearAllQRComps()" style="flex:1;padding:7px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ล้างทั้งหมด</button>
+        </div>
+        <button onclick="createQR()" id="createQRBtn" disabled style="width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;opacity:0.5;">
+          📲 สร้าง QR Code
+        </button>
+      </div>
+    </div>
+    <div id="activeQRs"></div>
+    <div id="qrDisplay" style="display:none;background:white;border-radius:18px;border:1px solid var(--border);padding:20px;margin-top:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:14px;font-weight:700;" id="qrCompName"></div>
+        <button onclick="deactivateQR()" style="padding:5px 12px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">❌ ปิด QR</button>
+      </div>
+      <div id="qrSkillBadges" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;"></div>
+      <div style="text-align:center;margin-bottom:16px;">
+        <div id="qrCodeDiv" style="display:inline-block;padding:12px;background:white;border-radius:12px;border:2px solid var(--border);"></div>
+        <div style="font-size:11px;color:var(--slate-l);margin-top:8px;" id="qrUrlText"></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">
+        👨‍🎓 นักศึกษาที่รอประเมิน (<span id="queueCount">0</span> คน)
+        <button onclick="refreshQueue()" style="margin-left:8px;padding:4px 10px;background:var(--teal-l);color:var(--teal);border:none;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">🔄</button>
+      </div>
+      <div id="queueBatchBar" style="display:none;align-items:center;justify-content:space-between;background:var(--rose-50);border:1.5px solid var(--rose-l);border-radius:11px;padding:10px 13px;margin-bottom:10px;gap:10px;flex-wrap:wrap;">
+        <span id="queueBatchCount" style="font-size:13px;font-weight:700;color:var(--rose-d);flex:1;">เลือกนักศึกษาเพื่อประเมินกลุ่ม</span>
+        <button id="batchEvalBtn" onclick="batchEvalFromQueue()" disabled style="padding:8px 14px;background:var(--rose);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;opacity:0.5;">👥 ประเมินกลุ่ม</button>
+      </div>
+      <div id="queueList" style="display:flex;flex-direction:column;gap:7px;"></div>
+    </div>
+  </div>
+
+  <!-- GROUP EVALUATION -->
+  <div id="tab-group" class="tab-view">
+    <div style="margin-bottom:18px;">
+      <div class="page-title">👥 ประเมินเป็นกลุ่ม</div>
+      <div class="page-sub">กลุ่มบันทึกเฉพาะในอุปกรณ์นี้ ไม่กระทบอาจารย์ท่านอื่น</div>
+    </div>
+    <div class="card" id="savedGroupsCard">
+      <div class="card-head">
+        <span class="card-title">📁 กลุ่มที่บันทึกไว้</span>
+        <button onclick="openNewGroup()" style="padding:6px 14px;background:var(--rose);color:white;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">+ สร้างกลุ่มใหม่</button>
+      </div>
+      <div class="card-body">
+        <div id="savedGroupsList"></div>
+      </div>
+    </div>
+    <div class="card" id="editGroupCard" style="display:none;">
+      <div class="card-head">
+        <span class="card-title" id="editGroupTitle">สร้างกลุ่มใหม่</span>
+        <button onclick="cancelEditGroup()" style="padding:5px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">✕ ยกเลิก</button>
+      </div>
+      <div class="card-body">
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ชื่อกลุ่ม *</label>
+          <input class="search-input" id="groupName" placeholder="เช่น กลุ่ม A..." style="margin-bottom:0;">
+        </div>
+        <input class="search-input" id="gStSearch" placeholder="ค้นหานักศึกษา..." oninput="filterGroupStudents()" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:12px;color:var(--slate-m);font-weight:600;" id="gSelCount">ยังไม่ได้เลือก</span>
+          <div style="display:flex;gap:7px;">
+            <button onclick="selectAllStudents()" style="padding:5px 12px;background:var(--teal-l);color:var(--teal);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">เลือกทั้งหมด</button>
+            <button onclick="clearAllStudents()" style="padding:5px 12px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">ล้าง</button>
+          </div>
+        </div>
+        <div id="gStList" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;margin-bottom:12px;"></div>
+        <button onclick="saveGroupLocal()" id="saveGroupBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+          💾 บันทึกกลุ่ม
+        </button>
+      </div>
+    </div>
+    <div id="gEvalSection" style="display:none;">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">📋 ประเมินทักษะ</span>
+          <span id="gGroupLabel" style="font-size:12px;color:var(--rose);font-weight:700;"></span>
+        </div>
+        <div class="card-body">
+          <div id="gCompList"></div>
+          <div class="submit-bar">
+            <div class="submit-info" id="gSubmitInfo">เลือกผลสำหรับแต่ละทักษะ</div>
+            <button class="submit-main" id="gSubmitBtn" onclick="submitGroupEval()" disabled>💾 บันทึกทั้งกลุ่ม</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKLOAD -->
+  <div id="tab-workload" class="tab-view">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+      <div>
+        <div class="page-title">📊 ภาระงาน</div>
+        <div class="page-sub">แบบข้อตกลงการประเมินผลสัมฤทธิ์ของงาน (70%)</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="saveWorkload()" style="padding:9px 16px;background:linear-gradient(135deg,var(--teal),#0f766e);color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">💾 บันทึก</button>
+        <button onclick="exportWorkloadZip()" id="exportWLBtn" style="padding:9px 16px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">📦 Export ZIP</button>
+        <button onclick="clearWorkload()" style="padding:9px 14px;background:var(--fail-bg);color:var(--fail);border:1.5px solid #fca5a5;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🗑️ ล้าง</button>
+      </div>
+    </div>
+    <div id="wlSaveStatus" style="display:none;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-head"><span class="card-title">📝 ข้อมูลทั่วไป</span></div>
+      <div class="card-body">
+        <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:8px;">รอบการประเมิน</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;">
+            <input type="radio" name="wlPeriod" value="1" id="wlPeriod1">รอบที่ 1 (1 มิ.ย. – 30 พ.ย.)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;">
+            <input type="radio" name="wlPeriod" value="2" id="wlPeriod2">รอบที่ 2 (1 ธ.ค. – 31 พ.ค.)
+          </label>
+        </div>
+      </div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--slate-l);margin-bottom:3px;">น้ำหนักรวมที่กำหนด</div><div id="wlTotalWeight" style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--slate);">0%</div></div>
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--slate-l);margin-bottom:3px;">คะแนนถ่วงน้ำหนักรวม</div><div id="wlTotalScore" style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--teal);">0.00</div></div>
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--slate-l);margin-bottom:3px;">คะแนนส่วน 70%</div><div id="wlFinalScore" style="font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--rose);">0.00</div></div>
+    </div>
+    <div id="wlSections"></div>
+    <div class="wl-section" style="border:2px dashed #cbd5e1;background:white;">
+      <div class="wl-sec-head" onclick="toggleWLSection('misc')">
+        <div class="wl-sec-title"><span>📁</span><div><div>ภาระงานอื่น ๆ (พักไว้ก่อน)</div><div style="font-size:11px;font-weight:400;color:var(--slate-l);">อัปโหลดภาพหลักฐาน Event</div></div></div>
+        <div class="wl-sec-meta"><span id="wlMiscCount" style="background:#f1f5f9;color:var(--slate-m);padding:3px 9px;border-radius:100px;font-size:12px;font-weight:700;">0 รายการ</span><span class="wl-sec-arrow" id="wl-arr-misc">▸</span></div>
+      </div>
+      <div class="wl-sec-body" id="wl-body-misc" style="display:none;">
+        <div id="wlMiscImgs" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;"></div>
+        <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--teal-50);border:1.5px dashed var(--teal-l);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--teal);">
+          📷 เพิ่มหลักฐาน / Event ใหม่
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="handleEvidenceUpload('_misc',this)">
+        </label>
+      </div>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="tab-view">
+    <div style="margin-bottom:18px;">
+      <div class="page-title">📋 ประวัติการประเมิน</div>
+      <div class="page-sub">รายการที่ประเมินไปแล้ว</div>
+    </div>
+    <div id="histList"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- SCORES ANNOUNCEMENT (UPDATED) -->
+  <div id="tab-scores" class="tab-view">
+    <div style="margin-bottom:18px;">
+      <div class="page-title">💯 ประกาศคะแนน</div>
+      <div class="page-sub">บันทึกคะแนนให้นักศึกษาแบบกลุ่ม หรืออัปโหลดไฟล์ .csv</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">📝 ประกาศคะแนนใหม่</span></div>
+      <div class="card-body">
+        <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">หัวข้อคะแนน *</label>
+        <input id="scoreBatchTitle" class="search-input" placeholder="เช่น สอบกลางภาค, คะแนนรายงานกลุ่ม" style="margin-bottom:12px;">
+
+        <!-- Mode Toggle -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button id="btnModeGrid" onclick="setScoreMode('grid')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--teal);background:var(--teal-50);color:var(--teal);font-weight:700;cursor:pointer;">✍️ เลือกจากรายชื่อ</button>
+          <button id="btnModeCSV" onclick="setScoreMode('csv')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--slate-m);font-weight:700;cursor:pointer;">📄 อัปโหลด CSV</button>
+        </div>
+
+        <!-- GRID MODE -->
+        <div id="scoreModeGrid">
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input class="search-input" id="scoreGridSearch" placeholder="ค้นหานักศึกษา..." oninput="filterScoreGrid()" style="flex:1;padding:8px 12px;">
+            <select class="search-input" id="scoreGridGroup" onchange="filterScoreGrid()" style="flex:1;padding:8px 12px;">
+              <option value="">-- ทุกกลุ่ม / ทุกคน --</option>
+            </select>
+          </div>
+          
+          <div style="background:var(--rose-50);border:1px solid var(--rose-l);border-radius:8px;padding:10px;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:700;color:var(--rose-d);">ตั้งค่าให้คนที่เลือก:</span>
+            <input id="scoreBulkVal" class="search-input" placeholder="คะแนน" style="width:80px;padding:6px;min-height:0;">
+            <input id="scoreBulkFb" class="search-input" placeholder="ข้อเสนอแนะ" style="flex:1;min-width:120px;padding:6px;min-height:0;">
+            <button onclick="applyBulkScore()" style="background:var(--rose);color:white;border:none;padding:6px 12px;border-radius:6px;font-weight:700;cursor:pointer;font-family:'Sarabun';">นำไปใช้</button>
+          </div>
+
+          <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead style="background:var(--bg);position:sticky;top:0;z-index:2;">
+                <tr>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:center;width:40px;"><input type="checkbox" onchange="toggleAllScoreGrid(this)"></th>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:left;">รหัส/ชื่อ</th>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:left;width:80px;">คะแนน</th>
+                  <th style="padding:8px;border-bottom:1px solid var(--border);text-align:left;width:120px;">ข้อเสนอแนะ</th>
+                </tr>
+              </thead>
+              <tbody id="scoreGridBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CSV MODE -->
+        <div id="scoreModeCSV" style="display:none;">
+          <div style="padding:14px;border:2px dashed var(--border);border-radius:10px;text-align:center;background:var(--bg);margin-bottom:12px;">
+            <p style="font-size:12px;color:var(--slate-m);margin-bottom:8px;">ไฟล์ .csv ควรมีคอลัมน์ดังนี้ (ไม่มี Header):<br><b>รหัสนักศึกษา, คะแนน, ข้อเสนอแนะ(ถ้ามี)</b></p>
+            <input type="file" id="scoreCsvFile" accept=".csv" onchange="handleScoreCSV(this)">
+          </div>
+          <div id="scoreCsvPreview" style="max-height:250px;overflow-y:auto;font-size:12px;"></div>
+        </div>
+
+        <button onclick="saveBatchScores()" id="btnSaveBatchScore" style="width:100%;padding:12px;background:var(--rose);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:14px;">
+          💾 บันทึกและประกาศคะแนน (<span id="scoreReadyCount">0</span> คน)
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">📋 ดูประวัติคะแนนของนักศึกษา</span>
+      </div>
+      <div class="card-body">
+        <select id="scoreHistorySel" class="search-input" onchange="loadStudentScoresHist()" style="margin-bottom:12px;"></select>
+        <div id="scoreHistoryList">
+          <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSWORD -->
+  <div id="tab-password" class="tab-view">
+    <div style="margin-bottom:18px;"><div class="page-title">🔑 เปลี่ยนรหัสผ่าน</div></div>
+    <div style="background:white;border-radius:18px;border:1px solid var(--border);padding:22px;max-width:440px;">
+      <div id="tPwAlert" style="display:none;padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;"></div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">รหัสผ่านปัจจุบัน</label>
+        <input class="search-input" type="password" id="tPwCurrent" placeholder="••••••" maxlength="6" inputmode="numeric" style="margin-bottom:0;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">รหัสผ่านใหม่ (6 หลัก)</label>
+        <input class="search-input" type="password" id="tPwNew" placeholder="••••••" maxlength="6" inputmode="numeric" style="margin-bottom:0;">
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--slate-m);margin-bottom:6px;">ยืนยันรหัสผ่านใหม่</label>
+        <input class="search-input" type="password" id="tPwConfirm" placeholder="••••••" maxlength="6" inputmode="numeric" style="margin-bottom:0;">
+      </div>
+      <button id="tPwBtn" onclick="changePassword()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),#f43f5e);color:white;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">
+        🔑 เปลี่ยนรหัสผ่าน
+      </button>
+      <button onclick="logout()" style="width:100%;margin-top:12px;padding:12px;background:#fee2e2;color:#dc2626;border:2px solid #fca5a5;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+        🚪 ออกจากระบบ
+      </button>
+    </div>
+  </div>
+
+  <!-- PRIVATE INBOX -->
+  <div class="tab-view" id="tab-inbox" style="padding-bottom:calc(var(--nav-h,64px) + 48px + env(safe-area-inset-bottom,0px));">
+    <div style="margin-bottom:14px;">
+      <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--teal-d);">🔐 ข้อความส่วนตัว</div>
+      <div style="font-size:12px;color:var(--slate-l);margin-top:2px;">ข้อความเข้ารหัส AES — เฉพาะคุณเท่านั้นที่อ่านได้</div>
+    </div>
+    <div id="inboxContent">
+      <div style="text-align:center;padding:24px;color:var(--slate-l);">
+        <div style="font-size:40px;margin-bottom:8px;">🔐</div>
+        <div style="font-size:13px;">กำลังโหลดข้อความ...</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <div class="bn-items">
+    <div class="bn-item active" onclick="switchTab('evaluate')" id="bn-evaluate"><span class="bn-icon">✍️</span><span class="bn-label">รายบุคคล</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="switchTab('qreval')" id="bn-qreval"><span class="bn-icon">📲</span><span class="bn-label">QR</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="switchTab('group')" id="bn-group"><span class="bn-icon">👥</span><span class="bn-label">กลุ่ม</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="switchTab('workload')" id="bn-workload"><span class="bn-icon">📊</span><span class="bn-label">ภาระงาน</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="switchTab('history')" id="bn-history"><span class="bn-icon">📋</span><span class="bn-label">ประวัติ</span><div class="bn-dot"></div></div>
+    <div class="bn-item" onclick="switchTab('scores')" id="bn-scores"><span class="bn-icon">💯</span><span class="bn-label">คะแนน</span><div class="bn-dot"></div></div>
+  </div>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+  <script>
+const SB_URL='https://mxnsngomamxtvlbzrqqd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnNuZ29tYW14dHZsYnpycXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMxOTgsImV4cCI6MjA5MjUyOTE5OH0.ZeriQ41qG2GCtjRB4Ios6ecCvMmVoCbAc-ydgcgXMNg';
+const{createClient}=window.supabase;const sb=createClient(SB_URL,SB_KEY);
+const DEF_RUBRIC=[{score:1,label:'ทำไม่ได้'},{score:2,label:'ทำได้โดยมีผู้ช่วย'},{score:3,label:'ทำได้โดยมีผู้ดูแล'},{score:4,label:'ทำได้อิสระ'},{score:5,label:'ทำได้และสอนผู้อื่น'}];
+let user=null,students=[],comps=[],selStudent=null,decisions={},currentFilter='all',histMap={};
+
+// ===== CORE NAVIGATION & UI =====
+function switchTab(tab){
+  document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+tab)?.classList.add('active');
+  if(tab==='inbox') loadInbox();
+  document.getElementById('ni-'+tab)?.classList.add('active');
+  document.getElementById('bn-'+tab)?.classList.add('active');
+  if(tab==='history')loadHistory();
+  if(tab==='scores')initScoresTab();
+  if(tab==='group'){gSelectedIds=new Set();gDecisions={};document.getElementById('editGroupCard').style.display='none';document.getElementById('gEvalSection').style.display='none';renderSavedGroups();}
+  if(tab==='qreval')initQRTab();
+  if(tab==='workload')initWorkload();
+  closeSidebar();
+}
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('on');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('on');}
+function showToast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='toast on toast-'+type;setTimeout(()=>el.classList.remove('on'),3500);}
+async function logout(){await sb.auth.signOut();localStorage.removeItem('lb_user');window.location.href='index.html';}
+
+async function init(){
+  const s=localStorage.getItem('lb_user');
+  if(!s){window.location.href='index.html';return;}
+  user=JSON.parse(s);
+  if(user.role!=='teacher'){window.location.href='index.html';return;}
+  document.getElementById('sbName').textContent=user.fullName;
+  setTimeout(checkInboxBadge,1500);
+  document.getElementById('sbCode').textContent=user.teacherCode||user.username||'';
+  try{
+    const[sr,cr]=await Promise.all([
+      sb.from('students').select('*,departments(name)').order('full_name'),
+      sb.from('competencies').select('*,departments(name,code)')
+    ]);
+    if(sr.error)throw sr.error; if(cr.error)throw cr.error;
+    students=sr.data||[];
+    comps=(cr.data||[]).sort((a,b)=>{
+      const ca=(a.category||'zzz').localeCompare(b.category||'zzz','th');
+      if(ca!==0)return ca;
+      return (a.name||'').localeCompare(b.name||'','th');
+    });
+    renderStudents(students);
+  }catch(error){
+    document.getElementById('stList').innerHTML=`<div class="empty" style="color:#dc2626;"><span class="empty-icon">⚠️</span><p><b>โหลดข้อมูลไม่สำเร็จ</b></p><p style="font-size:11px;">${error.message}</p></div>`;
+  }
+}
+
+// ===== PRIVATE INBOX =====
+async function deriveKey(teacherKey){
+  const raw=new TextEncoder().encode(teacherKey+'_VetPrivate2025');
+  const hash=await crypto.subtle.digest('SHA-256',raw);
+  return crypto.subtle.importKey('raw',hash,{name:'AES-GCM'},false,['encrypt','decrypt']);
+}
+async function decryptMsg(payload,teacherKey){
+  try{
+    const{iv,data}=JSON.parse(payload);
+    const fromB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+    const key=await deriveKey(teacherKey);
+    const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB64(iv)},key,fromB64(data));
+    return new TextDecoder().decode(dec);
+  }catch(e){return '🔒 ไม่สามารถถอดรหัสได้ (ส่งถึงคนอื่น)';}
+}
+async function loadInbox(){
+  const el=document.getElementById('inboxContent');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:16px;color:var(--slate-l);font-size:13px;">⏳ กำลังโหลด...</div>';
+  const myKey=(user.teacherCode||user.username||'').trim();
+  const myName=(user.fullName||'').trim();
+  try{
+    const [r1, r2] = await Promise.all([
+      sb.from('private_messages').select('*').eq('recipient_id', myKey).order('created_at',{ascending:false}).limit(50),
+      sb.from('private_messages').select('*').eq('recipient_name', myName).order('created_at',{ascending:false}).limit(50)
+    ]);
+    if(r1.error&&r2.error)throw r1.error;
+    const seen=new Set();
+    const data=[...(r1.data||[]), ...(r2.data||[])].filter(m=>{if(seen.has(m.id))return false; seen.add(m.id); return true;}).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if(data.length===0){
+      el.innerHTML=`<div style="text-align:center;padding:32px;color:var(--slate-l);"><div style="font-size:40px;margin-bottom:8px;">📭</div><div style="font-size:13px;">ไม่มีข้อความส่วนตัว</div></div>`;
+      return;
+    }
+    const typeIcon={suggest:'💡',complain:'📢',other:'💬'};
+    const msgs=await Promise.all(data.map(async m=>{
+      let text='';try{text=await decryptMsg(m.encrypted_content,myKey)||'🔒 ถอดรหัสไม่ได้';}catch(e){text='🔒 ถอดรหัสไม่ได้';}return{...m,text};
+    }));
+    const unread=msgs.filter(m=>!m.read_at).length;
+    const badge=document.getElementById('inboxBadge');
+    if(badge){badge.style.display=unread>0?'':'none'; if(unread>0) badge.textContent=unread;}
+    el.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <span style="font-size:12px;color:var(--slate-l);">${msgs.length} ข้อความ${unread>0?' · <b>'+unread+' ใหม่</b>':''}</span>
+      <div style="display:flex;gap:6px;">
+        <button onclick="printInbox()" style="background:#f1f5f9;border:none;color:var(--slate-m);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">🖨️ พิมพ์</button>
+        <button onclick="markAllRead()" style="background:var(--teal-l);border:none;color:var(--teal-d);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">✓ อ่านทั้งหมด</button>
+      </div></div>` + msgs.map(m=>`<div class="pmsg-item" data-type="${m.type||''}" data-sender="${(m.sender_name||'').replace(/"/g,'')}" data-dept="${(m.dept||'').replace(/"/g,'')}" data-date="${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}" data-id="${m.id}" data-text="${m.text.startsWith('🔒')?'(ถอดรหัสไม่ได้)':m.text.replace(/"/g,'').replace(/\n/g,' ')}" style="background:white;border-radius:14px;border:1.5px solid ${m.read_at?'var(--border)':'#0d9488'};padding:14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">${typeIcon[m.type]||'💬'}</span><div><div style="font-size:13px;font-weight:700;">${escHtml(m.sender_name||'ไม่ระบุ')}</div><div style="font-size:11px;color:var(--slate-l);">${new Date(m.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>
+          ${m.read_at?'<span style="font-size:10px;color:var(--slate-l);">อ่านแล้ว</span>':'<span style="background:#0d9488;color:white;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;">ใหม่</span>'}
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:10px;font-size:13px;">${escHtml(m.text)}</div>
+        <div style="text-align:right;margin-top:8px;"><button onclick="deleteMsg('${m.id}')" style="background:none;border:none;color:#dc2626;font-size:11px;cursor:pointer;">🗑️ ลบ</button></div>
+      </div>`).join('');
+    const unreadIds=data.filter(m=>!m.read_at).map(m=>m.id);
+    if(unreadIds.length>0)await sb.from('private_messages').update({read_at:new Date().toISOString()}).in('id',unreadIds);
+  }catch(e){el.innerHTML=`<div style="color:#dc2626;font-size:13px;">❌ Error: ${escHtml(e.message)}</div>`;}
+}
+async function markAllRead(){
+  if(!user)return;
+  const myKey=(user.teacherCode||user.username||'').trim();
+  const myName=(user.fullName||'').trim();
+  await Promise.all([
+    sb.from('private_messages').update({read_at:new Date().toISOString()}).eq('recipient_id',myKey).is('read_at',null),
+    sb.from('private_messages').update({read_at:new Date().toISOString()}).eq('recipient_name',myName).is('read_at',null)
+  ]);
+  loadInbox();
+}
+async function checkInboxBadge(){
+  if(!user)return;
+  try{
+    const myKey=(user.teacherCode||user.username||'').trim();
+    const myName=(user.fullName||'').trim();
+    const [r1,r2]=await Promise.all([
+      sb.from('private_messages').select('id').eq('recipient_id',myKey).is('read_at',null),
+      sb.from('private_messages').select('id').eq('recipient_name',myName).is('read_at',null)
+    ]);
+    const ids=new Set([...(r1.data||[]).map(m=>m.id),...(r2.data||[]).map(m=>m.id)]);
+    const badge=document.getElementById('inboxBadge');
+    if(badge&&ids.size>0){badge.textContent=ids.size;badge.style.display='';}
+  }catch(e){}
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function deleteMsg(id){if(!confirm('ลบข้อความนี้?'))return;await sb.from('private_messages').delete().eq('id',id);loadInbox();}
+function printInbox(){window.print();}
+
+// ===== EVALUATE (INDIVIDUAL) =====
+function renderStudents(list){
+  const el=document.getElementById('stList');
+  el.innerHTML=list.length?list.map(s=>`<div class="st-card ${selStudent?.id===s.id?'selected':''}" onclick="selectStudent('${s.id}')"><div class="st-av">🎓</div><div><div class="st-name">${s.full_name}</div><div class="st-code">${s.student_code||''}</div></div>${selStudent?.id===s.id?'<span class="st-check">✓</span>':''}</div>`).join(''):'<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบนักศึกษา</p></div>';
+}
+function filterStudents(){const q=document.getElementById('stSearch').value.toLowerCase();renderStudents(students.filter(s=>s.full_name.toLowerCase().includes(q)||(s.student_code||'').toLowerCase().includes(q)));}
+async function selectStudent(id,qrCompId,qrCompIds){
+  selStudent=students.find(s=>s.id===id);decisions={};filterStudents();
+  document.getElementById('selBadge').textContent='✓ '+selStudent.full_name;
+  document.getElementById('selBadge').style.display='inline';
+  document.getElementById('printStudentBtn').style.display='inline';
+  document.getElementById('evalSection').style.display='block';
+  document.getElementById('evalSection').scrollIntoView({behavior:'smooth',block:'start'});
+  await renderComps(qrCompId||null,qrCompIds||null);
+}
+function buildHistoryHTML(hist){
+  if(!hist||hist.length<=1)return '';
+  return '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--slate-m);margin-bottom:5px;">📊 ประวัติ '+hist.length+' ครั้ง</div>'+hist.map(h=>{
+    const bg=h.status==='pass'?'var(--pass-bg)':'var(--fail-bg)';
+    const dt=h.evaluated_at?new Date(h.evaluated_at).toLocaleDateString('th-TH',{month:'short',day:'numeric'}):'';
+    return `<div style="font-size:11px;padding:5px 9px;background:${bg};border-radius:7px;margin-bottom:4px;">${h.status==='pass'?'✅':'❌'} R:${h.rubric_score||'-'} | อ.${h.teachers?.full_name||''}${dt?' | '+dt:''}${h.feedback?' | 💬 '+h.feedback:''}</div>`;
+  }).join('')+'</div>';
+}
+async function renderComps(qrCompId,qrCompIds){
+  const el=document.getElementById('compList');
+  el.innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+  const[evalRes,histRes]=await Promise.all([
+    sb.from('evaluations').select('*,teachers(full_name,teacher_code)').eq('student_id',selStudent.id),
+    sb.from('evaluation_history').select('*,teachers(full_name)').eq('student_id',selStudent.id).order('evaluated_at',{ascending:false})
+  ]);
+  const eMap={};(evalRes.data||[]).forEach(e=>{eMap[e.competency_id]=e;});
+  const histMapLocal={};(histRes.data||[]).forEach(h=>{if(!histMapLocal[h.competency_id])histMapLocal[h.competency_id]=[];histMapLocal[h.competency_id].push(h);});
+  histMap=histMapLocal;
+  const stuDeptId=selStudent?.department_id||null;
+  const availComps=comps.filter(c=>!c.department_id||c.department_id===stuDeptId);
+  let sorted=[...availComps];
+  const sortVal=document.getElementById('sortSelect')?.value||'alpha';
+  if(sortVal==='category')sorted.sort((a,b)=>(a.category||'zzz').localeCompare(b.category||'zzz','th')||(a.name||'').localeCompare(b.name||'','th'));
+  else if(sortVal==='type')sorted.sort((a,b)=>a.type!==b.type?(a.type==='mandatory'?-1:1):(a.name||'').localeCompare(b.name||'','th'));
+  else if(sortVal==='status')sorted.sort((a,b)=>{const ord={pending:0,fail:1,pass:2};return ord[eMap[a.id]?.status||'pending']-ord[eMap[b.id]?.status||'pending']||(a.name||'').localeCompare(b.name||'','th');});
+  else sorted.sort((a,b)=>(a.name||'').localeCompare(b.name||'','th'));
+
+  let filtered=sorted.filter(c=>{
+    const st=eMap[c.id]?.status||'pending';
+    if(currentFilter==='pending')return st==='pending';
+    if(currentFilter==='fail')return st==='fail';
+    if(currentFilter==='pass')return st==='pass';
+    return true;
+  });
+  const qrIds=qrCompIds&&qrCompIds.length?qrCompIds:(qrCompId?[qrCompId]:null);
+  if(qrIds&&qrIds.length){
+    filtered=filtered.filter(c=>qrIds.includes(c.id));
+    if(!filtered.length) filtered=sorted.filter(c=>qrIds.includes(c.id));
+  }
+  if(!filtered.length){el.innerHTML='<div class="empty"><span class="empty-icon">🔍</span><p>ไม่พบทักษะ</p></div>';updateBar();return;}
+  el.innerHTML=filtered.map((comp,i)=>{
+    const prev=eMap[comp.id]; const rubric=comp.rubric_criteria||DEF_RUBRIC;
+    const isPassed=prev?.status==='pass';
+    const evalDate=prev?new Date(prev.evaluated_at).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'}):'';
+    const histHTML=buildHistoryHTML(histMap[comp.id]||[]);
+    const rb=rubric.map(r=>`<button class="rubric-btn" onclick="event.stopPropagation();pickRubric('${comp.id}',${r.score},this)"><div class="rubric-num">${r.score}</div><div class="rubric-desc">${r.label}</div></button>`).join('');
+    
+    if(isPassed){
+      const evalCount=histMap[comp.id]?.length||1;
+      return `<div class="comp-card passed" id="cc-${comp.id}" onclick="toggleCard('${comp.id}')">
+        <div class="comp-head"><div style="width:32px;height:32px;background:var(--pass-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;">✅</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;">${comp.name}</div><div style="font-size:11px;color:var(--pass);">ผ่านแล้ว (กดดูรายละเอียด)</div></div></div>
+        <div class="comp-body" onclick="event.stopPropagation()">
+          <div style="background:var(--pass-bg);border-radius:10px;padding:10px;margin-bottom:10px;"><div style="font-size:12px;font-weight:700;color:var(--pass);">✅ ผ่านแล้ว — ประเมินโดย ${evalCount} ท่าน</div>${prev.avg_rubric_score&&evalCount>1?`<div style="font-size:11px;">📊 คะแนนเฉลี่ย: ${prev.avg_rubric_score}/5</div>`:''}</div>
+          <div class="rubric-lbl">📊 ให้คะแนน Rubric ของท่าน</div><div class="rubric-scale">${rb}</div>
+          <div class="eval-meta"><div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-${comp.id}" oninput="updateMeta('${comp.id}')"></div><div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-${comp.id}" oninput="updateMeta('${comp.id}')"></div></div>
+          <textarea id="fb2-${comp.id}" placeholder="Feedback..." oninput="updateMeta('${comp.id}')" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid #e2e8f0;outline:none;font-family:Sarabun;"></textarea>
+          <div class="eval-actions"><button class="eval-btn btn-pass" id="pb-${comp.id}" onclick="setStatus('${comp.id}','pass',this)">✅ ผ่าน</button><button class="eval-btn btn-fail" id="fb-${comp.id}" onclick="setStatus('${comp.id}','fail',this)">❌ ไม่ผ่าน</button></div>
+        </div></div>`;
+    }
+    const prevSec=prev?`<div style="background:var(--fail-bg);border-radius:10px;padding:8px;margin-bottom:10px;"><span class="prev-badge prev-fail">❌ ไม่ผ่าน</span></div>`:'';
+    return `<div class="comp-card" id="cc-${comp.id}">
+      <div class="comp-head"><div style="flex:1"><div class="comp-name">${comp.name}</div></div><span class="comp-type ${comp.type==='mandatory'?'t-m':'t-e'}">${comp.type==='mandatory'?'⭐':'📝'}</span></div>
+      <div class="comp-body">${prevSec}${histHTML}
+        <div class="rubric-lbl">📊 Rubric</div><div class="rubric-scale">${rb}</div>
+        <div class="eval-meta"><div><label class="meta-lbl">📍 สถานที่</label><input class="meta-input" id="loc-${comp.id}" oninput="updateMeta('${comp.id}')"></div><div><label class="meta-lbl">📝 หมายเหตุ</label><input class="meta-input" id="note-${comp.id}" oninput="updateMeta('${comp.id}')"></div></div>
+        <textarea id="fb2-${comp.id}" placeholder="Feedback..." oninput="updateMeta('${comp.id}')" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid #e2e8f0;outline:none;font-family:Sarabun;"></textarea>
+        <div class="eval-actions"><button class="eval-btn btn-pass" id="pb-${comp.id}" onclick="setStatus('${comp.id}','pass',this)">✅ ผ่าน</button><button class="eval-btn btn-fail" id="fb-${comp.id}" onclick="setStatus('${comp.id}','fail',this)">❌ ไม่ผ่าน</button></div>
+      </div></div>`;
+  }).join('')+'<div style="height:80px;"></div>';
+  updateBar();
+}
+function toggleCard(id){document.getElementById('cc-'+id).classList.toggle('expanded');}
+function setFilter(f,btn){currentFilter=f;document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderComps();}
+function setSort(){renderComps();}
+function pickRubric(id,score,btn){btn.closest('.rubric-scale').querySelectorAll('.rubric-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');if(!decisions[id])decisions[id]={};decisions[id].rubric_score=score;updateBar();}
+function setStatus(id,status,btn){if(!decisions[id])decisions[id]={};decisions[id].status=status;document.getElementById('pb-'+id).classList.remove('confirmed');document.getElementById('fb-'+id).classList.remove('confirmed');btn.classList.add('confirmed');updateBar();}
+function updateMeta(id){if(!decisions[id])decisions[id]={};decisions[id].location=document.getElementById('loc-'+id)?.value;decisions[id].notes=document.getElementById('note-'+id)?.value;decisions[id].feedback=document.getElementById('fb2-'+id)?.value;}
+function updateBar(){const done=Object.values(decisions).filter(d=>d.status).length;document.getElementById('submitInfo').textContent=`ประเมินแล้ว ${done}/${comps.length} ทักษะ`;document.getElementById('submitBtn').disabled=done===0;}
+
+async function submitAll(){
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  const now=new Date().toISOString();
+  const toSubmit=Object.entries(decisions).filter(([,d])=>d.status);
+  if(!toSubmit.length){showToast('ไม่มีการประเมิน','err');btn.disabled=false;btn.textContent='💾 บันทึก';return;}
+  const histRows=toSubmit.map(([cid,d])=>({student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,status:d.status,rubric_score:d.rubric_score||null,location:d.location||null,notes:d.notes||null,feedback:d.feedback||null,evaluated_at:now}));
+  const{error:histErr}=await sb.from('evaluation_history').insert(histRows);
+  if(histErr){showToast('❌ '+histErr.message,'err');btn.disabled=false;btn.textContent='💾 บันทึก';return;}
+  const compIds=toSubmit.map(([cid])=>cid);
+  const{data:allHist}=await sb.from('evaluation_history').select('competency_id,rubric_score,status').eq('student_id',selStudent.id).in('competency_id',compIds);
+  const upsertRows=toSubmit.map(([cid,d])=>{
+    const hist=(allHist||[]).filter(h=>h.competency_id===cid);
+    const validScores=hist.filter(h=>h.rubric_score!=null).map(h=>h.rubric_score);
+    const rawAvg=validScores.length?validScores.reduce((a,b)=>a+b,0)/validScores.length:d.rubric_score||null;
+    const avgScore=rawAvg!=null?Math.round(rawAvg*10)/10:null;
+    const passCount=hist.filter(h=>h.status==='pass').length;
+    const finalStatus=hist.length>0?(passCount/hist.length>=0.5?'pass':'fail'):d.status;
+    return{student_id:selStudent.id,competency_id:cid,teacher_id:user.profileId,status:finalStatus,rubric_score:avgScore,avg_rubric_score:avgScore,eval_count:hist.length||1,location:d.location||null,notes:d.notes||null,feedback:d.feedback||null,evaluated_at:now};
+  });
+  const{error:upsertErr}=await sb.from('evaluations').upsert(upsertRows,{onConflict:'student_id,competency_id'});
+  if(upsertErr){showToast('❌ '+upsertErr.message,'err');btn.disabled=false;btn.textContent='💾 บันทึก';return;}
+  showToast('✅ บันทึกสำเร็จ '+toSubmit.length+' ทักษะ','ok');
+  sb.from('activity_logs').insert({user_role:'teacher',user_name:user.fullName,user_code:user.teacherCode,action:'ประเมินทักษะ',details:`ประเมิน ${selStudent.full_name} ${toSubmit.length} รายการ`}).then(()=>{});
+  decisions={};await renderComps();loadHistory();
+  btn.disabled=false;btn.textContent='💾 บันทึก';
+}
+function printStudentReport(){window.print();}
+
+async function loadHistory(){
+  const el=document.getElementById('histList');
+  const{data}=await sb.from('evaluations').select('*,students(full_name,student_code),competencies(name,type)').eq('teacher_id',user.profileId).order('evaluated_at',{ascending:false}).limit(30);
+  if(!data?.length){el.innerHTML='<div class="empty"><p>ยังไม่มีประวัติ</p></div>';return;}
+  el.innerHTML=data.map(e=>`<div class="hist-item"><div class="hist-icon ${e.status==='pass'?'hi-pass':'hi-fail'}">${e.status==='pass'?'✅':'❌'}</div><div style="flex:1"><div class="hist-skill">${e.competencies?.name||'-'}</div><div class="hist-student">${e.students?.full_name||'-'}</div></div></div>`).join('');
+}
+
+// ===== SCORES ANNOUNCEMENT (UPDATED) =====
+let scoreDraftData = {};
+let csvScoreData = [];
+let currentScoreMode = 'grid';
+
+function initScoresTab() {
+  const groups = loadSavedGroups();
+  const grpSel = document.getElementById('scoreGridGroup');
+  if(grpSel && groups.length > 0 && grpSel.options.length === 1) {
+    grpSel.innerHTML = '<option value="">-- ทุกกลุ่ม / ทุกคน --</option>' + 
+      groups.map((g,i) => `<option value="${i}">${g.name} (${g.studentIds.length} คน)</option>`).join('');
+  }
+  const histSel = document.getElementById('scoreHistorySel');
+  if(histSel && histSel.options.length === 0 && students.length > 0) {
+    histSel.innerHTML = '<option value="">-- เลือกนักศึกษา --</option>' + 
+      students.map(s => `<option value="${s.id}">${s.student_code||''} ${s.full_name}</option>`).join('');
+  }
+  renderScoreGrid();
+}
+
+function setScoreMode(mode) {
+  currentScoreMode = mode;
+  document.getElementById('scoreModeGrid').style.display = mode==='grid'?'block':'none';
+  document.getElementById('scoreModeCSV').style.display = mode==='csv'?'block':'none';
+  document.getElementById('btnModeGrid').style.background = mode==='grid'?'var(--teal-50)':'var(--bg)';
+  document.getElementById('btnModeGrid').style.borderColor = mode==='grid'?'var(--teal)':'var(--border)';
+  document.getElementById('btnModeCSV').style.background = mode==='csv'?'var(--teal-50)':'var(--bg)';
+  document.getElementById('btnModeCSV').style.borderColor = mode==='csv'?'var(--teal)':'var(--border)';
+  updateScoreReadyCount();
+}
+
+function renderScoreGrid() {
+  const tbody = document.getElementById('scoreGridBody');
+  if(!tbody) return;
+  const q = (document.getElementById('scoreGridSearch')?.value||'').toLowerCase();
+  const grpIdx = document.getElementById('scoreGridGroup')?.value;
+  
+  let list = students;
+  if(grpIdx !== "") {
+    const g = loadSavedGroups()[grpIdx];
+    if(g) list = list.filter(s => g.studentIds.includes(s.id));
+  }
+  if(q) {
+    list = list.filter(s => s.full_name.toLowerCase().includes(q) || (s.student_code||'').toLowerCase().includes(q));
+  }
+  
+  tbody.innerHTML = list.map(s => {
+    const draft = scoreDraftData[s.id] || {score:'', feedback:''};
+    return `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:6px;text-align:center;"><input type="checkbox" class="sc-chk" value="${s.id}"></td>
+        <td style="padding:6px;font-size:12px;"><b>${s.student_code||'-'}</b><br>${s.full_name}</td>
+        <td style="padding:6px;"><input type="text" class="search-input" style="width:100%;padding:6px;min-height:0;font-size:12px;" value="${draft.score}" oninput="updateScoreDraft('${s.id}', 'score', this.value)"></td>
+        <td style="padding:6px;"><input type="text" class="search-input" style="width:100%;padding:6px;min-height:0;font-size:12px;" value="${draft.feedback}" oninput="updateScoreDraft('${s.id}', 'feedback', this.value)"></td>
+      </tr>`;
+  }).join('');
+  updateScoreReadyCount();
+}
+
+function filterScoreGrid() { renderScoreGrid(); }
+function toggleAllScoreGrid(cb) { document.querySelectorAll('.sc-chk').forEach(c => c.checked = cb.checked); }
+
+function updateScoreDraft(sid, field, val) {
+  if(!scoreDraftData[sid]) scoreDraftData[sid] = {score:'', feedback:''};
+  scoreDraftData[sid][field] = val;
+  updateScoreReadyCount();
+}
+
+function applyBulkScore() {
+  const score = document.getElementById('scoreBulkVal').value.trim();
+  const fb = document.getElementById('scoreBulkFb').value.trim();
+  const checked = document.querySelectorAll('.sc-chk:checked');
+  if(checked.length === 0) { showToast('กรุณาเลือกนักศึกษาในตาราง', 'err'); return; }
+  checked.forEach(cb => {
+    const sid = cb.value;
+    if(!scoreDraftData[sid]) scoreDraftData[sid] = {score:'', feedback:''};
+    if(score !== '') scoreDraftData[sid].score = score;
+    if(fb !== '') scoreDraftData[sid].feedback = fb;
+  });
+  renderScoreGrid();
+  showToast('นำไปใช้กับ '+checked.length+' คนเรียบร้อย', 'ok');
+}
+
+async function handleScoreCSV(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const text = await file.text();
+  const lines = text.split('\n');
+  
+  csvScoreData = [];
+  for(let line of lines) {
+    if(!line.trim()) continue;
+    const parts = line.split(',');
+    const code = (parts[0]||'').trim();
+    const score = (parts[1]||'').trim();
+    const fb = (parts[2]||'').trim();
+    
+    if(!code || !score) continue;
+    const st = students.find(s => s.student_code === code);
+    if(st) {
+       csvScoreData.push({student_id: st.id, student_code: st.student_code, full_name: st.full_name, score: score, feedback: fb, valid: true});
+    } else {
+       csvScoreData.push({student_code: code, full_name: 'ไม่พบในระบบ', score: score, feedback: fb, valid: false});
+    }
+  }
+  
+  const preview = document.getElementById('scoreCsvPreview');
+  preview.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead style="background:var(--bg);">
+      <tr><th style="padding:6px;border:1px solid var(--border);">รหัส</th><th style="padding:6px;border:1px solid var(--border);">ชื่อ</th><th style="padding:6px;border:1px solid var(--border);">คะแนน</th></tr>
+    </thead>
+    <tbody>
+      ${csvScoreData.map(d => `<tr style="background:${d.valid?'white':'var(--fail-bg)'}">
+        <td style="padding:6px;border:1px solid var(--border);">${d.student_code}</td>
+        <td style="padding:6px;border:1px solid var(--border);color:${d.valid?'inherit':'var(--fail)'}">${d.full_name}</td>
+        <td style="padding:6px;border:1px solid var(--border);">${d.score}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+  updateScoreReadyCount();
+}
+
+function updateScoreReadyCount() {
+   let count = 0;
+   if(currentScoreMode === 'grid') count = Object.values(scoreDraftData).filter(d => d.score.trim() !== '').length;
+   else count = csvScoreData.filter(d => d.valid).length;
+   document.getElementById('scoreReadyCount').textContent = count;
+}
+
+async function saveBatchScores() {
+  const title = document.getElementById('scoreBatchTitle').value.trim();
+  if(!title) { showToast('กรุณาระบุหัวข้อคะแนน', 'err'); return; }
+  
+  let toSave = [];
+  if(currentScoreMode === 'grid') {
+    for(const [sid, d] of Object.entries(scoreDraftData)) {
+       if(d.score.trim() !== '') {
+         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null });
+       }
+    }
+  } else {
+    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null }));
+  }
+  
+  if(toSave.length === 0) { showToast('ไม่มีข้อมูลคะแนนที่สมบูรณ์ให้บันทึก', 'err'); return; }
+  const btn = document.getElementById('btnSaveBatchScore');
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
-  const { error } = await sb.from('score_announcements').insert({student_id, teacher_id: user.profileId, title, score, feedback});
-  btn.disabled = false; btn.textContent = '💾 บันทึกและประกาศคะแนน';
-  if (error) { showToast('❌ ' + error.message, 'err'); return; }
-  showToast('✅ ประกาศคะแนนเรียบร้อย', 'ok');
-  document.getElementById('scoreTitle').value = '';
-  document.getElementById('scoreVal').value = '';
-  document.getElementById('scoreFeedback').value = '';
-  loadStudentScores();
+  
+  const { error } = await sb.from('score_announcements').insert(toSave);
+  btn.disabled = false; btn.textContent = `💾 บันทึกและประกาศคะแนน (${toSave.length} คน)`;
+  
+  if(error) { showToast('❌ ' + error.message, 'err'); return; }
+  showToast(`✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
+  
+  document.getElementById('scoreBatchTitle').value = '';
+  scoreDraftData = {}; csvScoreData = [];
+  document.getElementById('scoreCsvFile').value = '';
+  document.getElementById('scoreCsvPreview').innerHTML = '';
+  if(currentScoreMode === 'grid') renderScoreGrid(); else updateScoreReadyCount();
+  loadStudentScoresHist();
+}
+
+async function loadStudentScoresHist() {
+  const studentId = document.getElementById('scoreHistorySel').value;
+  const list = document.getElementById('scoreHistoryList');
+  if (!studentId) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>'; return; }
+  list.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  const { data, error } = await sb.from('score_announcements').select('*').eq('student_id', studentId).eq('teacher_id', user.profileId).order('created_at', { ascending: false });
+  if (error) { list.innerHTML = `<p style="color:red">${error.message}</p>`; return; }
+  if (!data.length) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">ยังไม่เคยประกาศคะแนนให้นักศึกษารายนี้</div>'; return; }
+  list.innerHTML = data.map(d => `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--bg);">
+      <div><div style="font-size:13px;font-weight:700;color:var(--slate);">${d.title}</div><div style="font-size:11px;color:var(--slate-m);margin-top:2px;">${d.feedback ? '💬 ' + d.feedback : ''}</div><div style="font-size:10px;color:var(--slate-l);margin-top:4px;">${new Date(d.created_at).toLocaleString('th-TH')}</div></div>
+      <div style="text-align:right;"><span style="background:var(--rose-50);color:var(--rose);padding:4px 12px;border-radius:100px;font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;">${d.score}</span><button onclick="deleteScore('${d.id}')" style="display:block;margin-top:6px;background:none;border:none;color:var(--fail);font-size:11px;cursor:pointer;width:100%;text-align:right;text-decoration:underline;">ลบ</button></div>
+    </div>`).join('');
 }
 async function deleteScore(id) {
   if (!confirm('ยืนยันการลบคะแนนนี้?')) return;
   await sb.from('score_announcements').delete().eq('id', id);
   showToast('✅ ลบสำเร็จ', 'ok');
-  loadStudentScores();
+  loadStudentScoresHist();
 }
 
 // ===== QR EVALUATION =====
