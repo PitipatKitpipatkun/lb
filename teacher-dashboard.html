@@ -1056,10 +1056,51 @@ function groupStorageKey(){return 'lb_groups_'+user.profileId;}
 function loadSavedGroups(){return JSON.parse(localStorage.getItem(groupStorageKey())||'[]');}
 function saveSavedGroups(g){localStorage.setItem(groupStorageKey(),JSON.stringify(g));}
 function initGroup(){gSelectedIds=new Set();gDecisions={};document.getElementById('editGroupCard').style.display='none';document.getElementById('gEvalSection').style.display='none';renderSavedGroups();}
+
 function renderSavedGroups(){
   const groups=loadSavedGroups();
-  document.getElementById('savedGroupsList').innerHTML=groups.map((g,i)=>`<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;"><div><b>${g.name}</b> (${g.studentIds.length} คน)</div><div><button onclick="startGroupEval(${i})">ประเมิน</button></div></div>`).join('');
+  if(!groups.length){
+    document.getElementById('savedGroupsList').innerHTML='<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:13px;">ยังไม่มีกลุ่ม กด + สร้างกลุ่มใหม่</div>';
+    return;
+  }
+  document.getElementById('savedGroupsList').innerHTML=groups.map((g,i)=>`
+    <div style="padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--slate);">${g.name}</div>
+        <div style="font-size:11px;color:var(--slate-l);margin-top:2px;">จำนวน ${g.studentIds.length} คน</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="startGroupEval(${i})" style="padding:6px 12px;background:var(--rose);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">✍️ ประเมิน</button>
+        <button onclick="deleteGroupLocal(${i})" style="padding:6px 10px;background:var(--fail-bg);color:var(--fail);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🗑️ ลบ</button>
+      </div>
+    </div>`).join('');
 }
+
+function deleteGroupLocal(idx){
+  const groups=loadSavedGroups();
+  if(!confirm(`ยืนยันการลบกลุ่ม "${groups[idx].name}" ใช่หรือไม่?`)) return;
+  
+  groups.splice(idx, 1);
+  saveSavedGroups(groups);
+  renderSavedGroups();
+  showToast('✅ ลบกลุ่มสำเร็จ', 'ok');
+  
+  // อัปเดต Dropdown รายชื่อกลุ่มในหน้า "ประกาศคะแนน" ให้เป็นปัจจุบัน
+  const grpSel = document.getElementById('scoreGridGroup');
+  if(grpSel) {
+    grpSel.innerHTML = '<option value="">-- ทุกกลุ่ม / ทุกคน --</option>' + 
+      groups.map((g,i) => `<option value="${i}">${g.name} (${g.studentIds.length} คน)</option>`).join('');
+  }
+  
+  // ถ้ากำลังเลือกกลุ่มนี้อยู่ในหน้าคะแนน ให้รีเซ็ตตาราง
+  if(document.getElementById('scoreGridGroup')?.value === String(idx)) {
+    document.getElementById('scoreGridGroup').value = "";
+    filterScoreGrid();
+  }
+}
+
+
+    
 function openNewGroup(){document.getElementById('editGroupCard').style.display='block'; gSelectedIds=new Set(); document.getElementById('groupName').value=''; renderGroupStudents(students);}
 function cancelEditGroup(){document.getElementById('editGroupCard').style.display='none';}
 function filterGroupStudents(){const q=document.getElementById('gStSearch').value.toLowerCase();renderGroupStudents(students.filter(s=>s.full_name.toLowerCase().includes(q)));}
