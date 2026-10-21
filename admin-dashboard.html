@@ -933,8 +933,16 @@ async function loadLogs(){
 }
 
 async function loadStudents(){
-  const{data}=await sb.from('students').select('*,departments(name)').order('full_name');
+  const{data}=await sb.from('students').select('*,departments(name)');
   sData=data||[];
+  
+  // เรียงลำดับตามรหัสนักศึกษา (จากน้อยไปมาก)
+  sData.sort((a,b) => {
+    const codeA = a.student_code || '';
+    const codeB = b.student_code || '';
+    return codeA.localeCompare(codeB, 'th', { numeric: true });
+  });
+
   document.getElementById('sCount').textContent=`นักศึกษา (${sData.length} คน)`;
   document.getElementById('sTbody').innerHTML=sData.length?sData.map(s=>`
     <tr>
@@ -955,6 +963,8 @@ async function loadStudents(){
   if(chkAll) chkAll.checked = false;
   updateStudentDelBtn();
 }
+
+  
 
 // ระบบจัดการปุ่มติ๊กเลือกและลบทีละหลายคน
 function toggleAllStudents(cb){
@@ -1054,8 +1064,16 @@ async function delStudent(id){
 }
 
 async function loadTeachers(){
-  const{data}=await sb.from('teachers').select('*,departments(name)').order('full_name');
+  const{data}=await sb.from('teachers').select('*,departments(name)');
   tData=data||[];
+
+  // เรียงลำดับตามชื่ออาจารย์ (ก - ฮ)
+  tData.sort((a,b) => {
+    const nameA = a.full_name || '';
+    const nameB = b.full_name || '';
+    return nameA.localeCompare(nameB, 'th');
+  });
+
   document.getElementById('tCount').textContent=`อาจารย์ (${tData.length} คน)`;
   document.getElementById('tTbody').innerHTML=tData.length?tData.map(t=>`
     <tr><td>${t.full_name}</td><td style="font-family:monospace;font-size:12px">${t.teacher_code||'-'}</td>
@@ -1069,8 +1087,10 @@ async function loadTeachers(){
       <button class="act-btn ab-edit" onclick="openEditT('${t.id}')">✏️ แก้ไข</button>
       <button class="act-btn ab-del" onclick="delTeacher('${t.id}')">🗑️ ลบ</button>
     </td></tr>`).join(''):
-    '<tr><td colspan="3"><div class="empty"><span class="empty-icon">👩‍🏫</span><p>ยังไม่มีอาจารย์</p></div></td></tr>';
+    '<tr><td colspan="5"><div class="empty"><span class="empty-icon">👩‍🏫</span><p>ยังไม่มีอาจารย์</p></div></td></tr>';
 }
+
+  
 function openAddT(){
   document.getElementById('tmTitle').textContent='เพิ่มอาจารย์';
   ['t_id','t_name','t_code','t_pw'].forEach(id=>document.getElementById(id).value='');
