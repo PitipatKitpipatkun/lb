@@ -496,6 +496,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     </div>
   </div>
 
+
+
+  
   <!-- PASSWORD -->
   <div id="tab-password" class="tab-view">
     <div style="margin-bottom:18px;"><div class="page-title">🔑 เปลี่ยนรหัสผ่าน</div></div>
@@ -819,21 +822,22 @@ async function loadHistory(){
   el.innerHTML=data.map(e=>`<div class="hist-item"><div class="hist-icon ${e.status==='pass'?'hi-pass':'hi-fail'}">${e.status==='pass'?'✅':'❌'}</div><div style="flex:1"><div class="hist-skill">${e.competencies?.name||'-'}</div><div class="hist-student">${e.students?.full_name||'-'}</div></div></div>`).join('');
 }
 
-// ===== SCORES ANNOUNCEMENT (UPDATED) =====
+
+    // ===== SCORES ANNOUNCEMENT (UPDATED) =====
 let scoreDraftData = {};
 let csvScoreData = [];
 let currentScoreMode = 'grid';
 
 function initScoresTab() {
-  const groups = loadSavedGroups();
+  const groups = loadSavedGroups(); // โหลดรายชื่อกลุ่มจากฟังก์ชันที่มีอยู่แล้ว
   const grpSel = document.getElementById('scoreGridGroup');
-  if(grpSel && groups.length > 0 && grpSel.options.length === 1) {
+  if(grpSel) {
     grpSel.innerHTML = '<option value="">-- ทุกกลุ่ม / ทุกคน --</option>' + 
       groups.map((g,i) => `<option value="${i}">${g.name} (${g.studentIds.length} คน)</option>`).join('');
   }
   const histSel = document.getElementById('scoreHistorySel');
   if(histSel && histSel.options.length === 0 && students.length > 0) {
-    histSel.innerHTML = '<option value="">-- เลือกนักศึกษา --</option>' + 
+    histSel.innerHTML = '<option value="">-- เลือกนักศึกษาเพื่อดูประวัติ --</option>' + 
       students.map(s => `<option value="${s.id}">${s.student_code||''} ${s.full_name}</option>`).join('');
   }
   renderScoreGrid();
@@ -977,7 +981,9 @@ async function saveBatchScores() {
   document.getElementById('scoreCsvFile').value = '';
   document.getElementById('scoreCsvPreview').innerHTML = '';
   if(currentScoreMode === 'grid') renderScoreGrid(); else updateScoreReadyCount();
-  loadStudentScoresHist();
+  
+  const histSel = document.getElementById('scoreHistorySel');
+  if(histSel.value) loadStudentScoresHist();
 }
 
 async function loadStudentScoresHist() {
@@ -999,7 +1005,7 @@ async function deleteScore(id) {
   showToast('✅ ลบสำเร็จ', 'ok');
   loadStudentScoresHist();
 }
-
+    
 // ===== QR EVALUATION =====
 let activeQRToken=null,activeQRCompId=null,activeQRCompIds=[],qrPollTimer=null;let qrSelectedIds=new Set();
 async function initQRTab(){
