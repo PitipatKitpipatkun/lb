@@ -615,7 +615,7 @@ async function init(){
   document.getElementById('sbCode').textContent=user.teacherCode||user.username||'';
   try{
     const[sr,cr]=await Promise.all([
-      sb.from('students').select('*,departments(name)').order('full_name'),
+      sb.from('students').select('*,departments(name)').order('student_code'),
       sb.from('competencies').select('*,departments(name,code)')
     ]);
     if(sr.error)throw sr.error; if(cr.error)throw cr.error;
