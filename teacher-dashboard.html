@@ -886,19 +886,23 @@ function renderScoreGrid() {
   const q = (document.getElementById('scoreGridSearch')?.value||'').toLowerCase();
   const grpIdx = document.getElementById('scoreGridGroup')?.value;
   
+  // ใช้ [...students] เพื่อสร้างตัวก็อปปี้ ป้องกันไม่ให้กระทบข้อมูลหลัก
   let list = [...students];
   
   if(grpIdx !== "") {
     const g = loadSavedGroups()[grpIdx];
     if(g) list = list.filter(s => g.studentIds.includes(s.id));
   }
+  
   if(q) {
     list = list.filter(s => s.full_name.toLowerCase().includes(q) || (s.student_code||'').toLowerCase().includes(q));
   }
 
+  // 🌟 ส่วนที่เพิ่มเข้ามา: จัดเรียงข้อมูลตาม "รหัสนักศึกษา" (จากน้อยไปมาก) เสมอ
   list.sort((a, b) => {
     const codeA = a.student_code || '';
     const codeB = b.student_code || '';
+    // ใช้ numeric: true เพื่อให้การเรียงลำดับตัวเลขมีความถูกต้องแม่นยำ
     return codeA.localeCompare(codeB, 'th', { numeric: true }); 
   });
   
