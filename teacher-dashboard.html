@@ -865,13 +865,16 @@ function setScoreMode(mode) {
   updateScoreReadyCount();
 }
 
+
 function renderScoreGrid() {
   const tbody = document.getElementById('scoreGridBody');
   if(!tbody) return;
   const q = (document.getElementById('scoreGridSearch')?.value||'').toLowerCase();
   const grpIdx = document.getElementById('scoreGridGroup')?.value;
   
-  let list = students;
+  // ใช้ [...students] เพื่อสร้างตัวสำรองข้อมูล จะได้ไม่กระทบการเรียงลำดับในหน้าอื่น
+  let list = [...students];
+  
   if(grpIdx !== "") {
     const g = loadSavedGroups()[grpIdx];
     if(g) list = list.filter(s => g.studentIds.includes(s.id));
@@ -879,6 +882,14 @@ function renderScoreGrid() {
   if(q) {
     list = list.filter(s => s.full_name.toLowerCase().includes(q) || (s.student_code||'').toLowerCase().includes(q));
   }
+
+  // 🌟 ส่วนที่เพิ่มเข้ามา: จัดเรียงข้อมูลตาม "รหัสนักศึกษา" จากน้อยไปมาก
+  list.sort((a, b) => {
+    const codeA = a.student_code || '';
+    const codeB = b.student_code || '';
+    // ใช้ numeric: true เพื่อให้เรียงตัวเลขได้อย่างถูกต้อง
+    return codeA.localeCompare(codeB, 'th', { numeric: true }); 
+  });
   
   tbody.innerHTML = list.map(s => {
     const draft = scoreDraftData[s.id] || {score:'', feedback:''};
@@ -891,6 +902,7 @@ function renderScoreGrid() {
   }).join('');
   updateScoreReadyCount();
 }
+    
 
 function filterScoreGrid() { renderScoreGrid(); }
 function toggleAllScoreGrid(cb) { document.querySelectorAll('.sc-chk').forEach(c => c.checked = cb.checked); }
