@@ -998,16 +998,34 @@ function updateScoreReadyCount() {
 async function saveBatchScores() {
   const title = document.getElementById('scoreBatchTitle').value.trim();
   if(!title) { showToast('กรุณาระบุหัวข้อคะแนน', 'err'); return; }
+
+  const pubDateStr = document.getElementById('scorePublishDate') ? document.getElementById('scorePublishDate').value : '';
+  
+  let createdAt;
+  let confirmMsg = '';
+
+  // เช็คว่าอ่านค่าเวลาได้สำเร็จหรือไม่ และสร้างข้อความยืนยัน
+  if (pubDateStr) {
+     createdAt = new Date(pubDateStr).toISOString();
+     const localTime = new Date(pubDateStr).toLocaleString('th-TH');
+     confirmMsg = `ยืนยันการตั้งเวลาประกาศคะแนนล่วงหน้าในวันที่:\n👉 ${localTime} ใช่หรือไม่?`;
+  } else {
+     createdAt = new Date().toISOString();
+     confirmMsg = `⚠️ คุณยังไม่ได้ตั้งเวลา หรือกรอกวันที่/เวลาไม่ครบ\nระบบจะทำการ 👉 "ประกาศคะแนนทันที" 👈\n\nยืนยันใช่หรือไม่?`;
+  }
+
+  // ถ้ายกเลิก ให้หยุดการทำงานทันที
+  if(!confirm(confirmMsg)) return; 
   
   let toSave = [];
   if(currentScoreMode === 'grid') {
     for(const [sid, d] of Object.entries(scoreDraftData)) {
        if(d.score.trim() !== '') {
-         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null });
+         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null, created_at: createdAt });
        }
     }
   } else {
-    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null }));
+    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null, created_at: createdAt }));
   }
   
   if(toSave.length === 0) { showToast('ไม่มีข้อมูลคะแนนที่สมบูรณ์ให้บันทึก', 'err'); return; }
@@ -1018,12 +1036,13 @@ async function saveBatchScores() {
   btn.disabled = false; btn.textContent = `💾 บันทึกและประกาศคะแนน (${toSave.length} คน)`;
   
   if(error) { showToast('❌ ' + error.message, 'err'); return; }
-  showToast(`✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
+  showToast(pubDateStr ? `✅ บันทึกและตั้งเวลาประกาศเรียบร้อย (${toSave.length} คน)` : `✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
   
   document.getElementById('scoreBatchTitle').value = '';
+  if(document.getElementById('scorePublishDate')) document.getElementById('scorePublishDate').value = '';
   scoreDraftData = {}; csvScoreData = [];
-  document.getElementById('scoreCsvFile').value = '';
-  document.getElementById('scoreCsvPreview').innerHTML = '';
+  if(document.getElementById('scoreCsvFile')) document.getElementById('scoreCsvFile').value = '';
+  if(document.getElementById('scoreCsvPreview')) document.getElementById('scoreCsvPreview').innerHTML = '';
   if(currentScoreMode === 'grid') renderScoreGrid(); else updateScoreReadyCount();
   
   updateScoreHistoryDropdown();
