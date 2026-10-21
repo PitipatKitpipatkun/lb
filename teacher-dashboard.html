@@ -852,10 +852,6 @@ async function loadHistory(){
 let scoreDraftData = {};
 let csvScoreData = [];
 let currentScoreMode = 'grid';
-
-let scoreDraftData = {};
-let csvScoreData = [];
-let currentScoreMode = 'grid';
 let currentScoreHistData = []; // เก็บข้อมูลประวัติคะแนนที่โหลดมาปัจจุบัน
 
 function initScoresTab() {
@@ -1280,7 +1276,16 @@ function deleteGroupLocal(idx){
     
 function openNewGroup(){document.getElementById('editGroupCard').style.display='block'; gSelectedIds=new Set(); document.getElementById('groupName').value=''; renderGroupStudents(students);}
 function cancelEditGroup(){document.getElementById('editGroupCard').style.display='none';}
-function filterGroupStudents(){const q=document.getElementById('gStSearch').value.toLowerCase();renderGroupStudents(students.filter(s=>s.full_name.toLowerCase().includes(q)));}
+
+function filterGroupStudents(){
+  const q=document.getElementById('gStSearch').value.trim().toLowerCase();
+  renderGroupStudents(students.filter(s=>
+    (s.full_name && s.full_name.toLowerCase().includes(q)) || 
+    (s.student_code && s.student_code.toLowerCase().includes(q))
+  ));
+}    
+
+    
 function renderGroupStudents(list){document.getElementById('gStList').innerHTML=list.map(s=>`<label style="display:flex;gap:8px;padding:6px;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;"><input type="checkbox" ${gSelectedIds.has(s.id)?'checked':''} onchange="if(this.checked)gSelectedIds.add('${s.id}');else gSelectedIds.delete('${s.id}');"> ${s.full_name}</label>`).join('');}
 function selectAllStudents(){students.forEach(s=>gSelectedIds.add(s.id));filterGroupStudents();}
 function clearAllStudents(){gSelectedIds.clear();filterGroupStudents();}
