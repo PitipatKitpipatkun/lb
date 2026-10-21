@@ -428,9 +428,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
     <div class="card">
       <div class="card-head"><span class="card-title">📝 ประกาศคะแนนใหม่</span></div>
       <div class="card-body">
-        <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">หัวข้อคะแนน *</label>
-        <input id="scoreBatchTitle" class="search-input" placeholder="เช่น สอบกลางภาค, คะแนนรายงานกลุ่ม" style="margin-bottom:12px;">
 
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">หัวข้อคะแนน *</label>
+            <input id="scoreBatchTitle" class="search-input" placeholder="เช่น สอบกลางภาค, คะแนนรายงานกลุ่ม" style="margin-bottom:0;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--slate-m);display:block;margin-bottom:4px;">ตั้งเวลาประกาศ (เว้นว่าง = ทันที)</label>
+            <input id="scorePublishDate" type="datetime-local" class="search-input" style="margin-bottom:0;">
+          </div>
+        </div>
+
+
+        
         <!-- Mode Toggle -->
         <div style="display:flex;gap:8px;margin-bottom:12px;">
           <button id="btnModeGrid" onclick="setScoreMode('grid')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--teal);background:var(--teal-50);color:var(--teal);font-weight:700;cursor:pointer;">✍️ เลือกจากรายชื่อ</button>
@@ -955,15 +966,21 @@ async function saveBatchScores() {
   const title = document.getElementById('scoreBatchTitle').value.trim();
   if(!title) { showToast('กรุณาระบุหัวข้อคะแนน', 'err'); return; }
   
+  // ดึงค่าเวลาที่อาจารย์ตั้งไว้ ถ้าไม่ได้ตั้งให้ใช้เวลาปัจจุบัน
+  const pubDateStr = document.getElementById('scorePublishDate').value;
+  const createdAt = pubDateStr ? new Date(pubDateStr).toISOString() : new Date().toISOString();
+  
   let toSave = [];
   if(currentScoreMode === 'grid') {
     for(const [sid, d] of Object.entries(scoreDraftData)) {
        if(d.score.trim() !== '') {
-         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null });
+         // แทรก created_at เข้าไปในข้อมูลที่กำลังจะเซฟ
+         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null, created_at: createdAt });
        }
     }
   } else {
-    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null }));
+    // โหมด CSV ก็แทรก created_at เข้าไปเช่นกัน
+    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null, created_at: createdAt }));
   }
   
   if(toSave.length === 0) { showToast('ไม่มีข้อมูลคะแนนที่สมบูรณ์ให้บันทึก', 'err'); return; }
@@ -974,17 +991,19 @@ async function saveBatchScores() {
   btn.disabled = false; btn.textContent = `💾 บันทึกและประกาศคะแนน (${toSave.length} คน)`;
   
   if(error) { showToast('❌ ' + error.message, 'err'); return; }
-  showToast(`✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
+  showToast(pubDateStr ? `✅ บันทึกและตั้งเวลาประกาศเรียบร้อย (${toSave.length} คน)` : `✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
   
   document.getElementById('scoreBatchTitle').value = '';
+  document.getElementById('scorePublishDate').value = ''; // เคลียร์ช่องเวลา
   scoreDraftData = {}; csvScoreData = [];
   document.getElementById('scoreCsvFile').value = '';
   document.getElementById('scoreCsvPreview').innerHTML = '';
   if(currentScoreMode === 'grid') renderScoreGrid(); else updateScoreReadyCount();
   
   const histSel = document.getElementById('scoreHistorySel');
-  if(histSel.value) loadStudentScoresHist();
+  if(histSel && histSel.value) loadStudentScoresHist();
 }
+    
 
 async function loadStudentScoresHist() {
   const studentId = document.getElementById('scoreHistorySel').value;
