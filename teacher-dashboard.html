@@ -880,14 +880,12 @@ function setScoreMode(mode) {
   updateScoreReadyCount();
 }
 
-
 function renderScoreGrid() {
   const tbody = document.getElementById('scoreGridBody');
   if(!tbody) return;
   const q = (document.getElementById('scoreGridSearch')?.value||'').toLowerCase();
   const grpIdx = document.getElementById('scoreGridGroup')?.value;
   
-  // ใช้ [...students] เพื่อสร้างตัวก็อปปี้
   let list = [...students];
   
   if(grpIdx !== "") {
@@ -899,13 +897,18 @@ function renderScoreGrid() {
     list = list.filter(s => s.full_name.toLowerCase().includes(q) || (s.student_code||'').toLowerCase().includes(q));
   }
 
-  // 🌟 แก้ไข: บังคับเรียงลำดับรหัสแบบข้อความมาตรฐาน (ตัดปัญหาเครื่องหมายขีด -)
+  // 🌟 บังคับแปลงเป็นตัวเลขเพียวๆ เพื่อการเรียงลำดับที่ถูกต้อง 100%
   list.sort((a, b) => {
-    const codeA = String(a.student_code || '');
-    const codeB = String(b.student_code || '');
-    if (codeA < codeB) return -1;
-    if (codeA > codeB) return 1;
-    return 0;
+    // ใช้ .replace(/\D/g, '') เพื่อลบขีด (-) และช่องว่างทิ้งทั้งหมด
+    const numA = (a.student_code || '').replace(/\D/g, '');
+    const numB = (b.student_code || '').replace(/\D/g, '');
+    
+    if (numA === '' && numB === '') return 0;
+    if (numA === '') return 1; // ดันคนที่ไม่มีรหัสไปไว้ล่างสุด
+    if (numB === '') return -1;
+    
+    // เปรียบเทียบเฉพาะชุดตัวเลขที่ได้
+    return numA.localeCompare(numB, 'en', { numeric: true });
   });
   
   tbody.innerHTML = list.map(s => {
@@ -919,6 +922,7 @@ function renderScoreGrid() {
   }).join('');
   updateScoreReadyCount();
 }
+
     
 
 function filterScoreGrid() { renderScoreGrid(); }
