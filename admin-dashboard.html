@@ -212,7 +212,10 @@ tr:hover td{background:var(--amber-50);}
       <input type="hidden" id="s_id">
       <div class="fg"><label class="fl">ชื่อ-นามสกุล *</label><input class="fi" id="s_name" placeholder="นายสมชาย ใจดี"></div>
       <div class="fg"><label class="fl">รหัสนักศึกษา *</label><input class="fi" id="s_code" placeholder="64010001"></div>
-      <div class="fg"><label class="fl">เบอร์โทรศัพท์ * (ใช้เข้าสู่ระบบ)</label><input class="fi" id="s_phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0812345678"><p class="fhint">นักศึกษาจะใช้เบอร์นี้เข้าระบบ</p></div>
+      
+      <!-- แก้ไขช่องเบอร์โทรศัพท์ ให้เป็น (ไม่บังคับ) และลบข้อความ fhint ออก -->
+      <div class="fg"><label class="fl">เบอร์โทรศัพท์ (ไม่บังคับ)</label><input class="fi" id="s_phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0812345678"></div>
+      
       <div class="fg"><label class="fl">สาขาวิชา</label><select class="fs" id="s_dept"><option value="">— ไม่ระบุ —</option></select></div>
       <div class="fg"><label class="fl" id="s_pwGrpLabel">รหัสผ่าน 6 หลัก *</label><input class="fi" type="password" id="s_pw" placeholder="••••••" maxlength="6" inputmode="numeric"><p class="fhint">ตัวเลข 6 หลัก</p></div>
     </div>
@@ -1027,6 +1030,7 @@ function openEditS(id){
   document.getElementById('s_dept').value=s.department_id||'';
   openM('studentModal');
 }
+
 async function saveStudent(){
   const btn=document.getElementById('sBtn');
   const editId=document.getElementById('s_id').value;
@@ -1034,27 +1038,37 @@ async function saveStudent(){
   const code=document.getElementById('s_code').value.trim();
   const pw=document.getElementById('s_pw').value;
   const phone=document.getElementById('s_phone')?.value.trim()||'';
+  
   if(!name||!code){showToast('❌ กรุณากรอกชื่อและรหัสนักศึกษา','err');return;}
-  if(!editId&&!phone){showToast('❌ กรุณากรอกเบอร์โทรศัพท์','err');return;}
+  
+  // ลบเงื่อนไขการบังคับกรอกเบอร์โทรศัพท์ออกไปแล้ว
   if(!editId&&(!pw||pw.length<6)){showToast('❌ รหัสผ่านต้องมี 6 ตัว','err');return;}
+  
   btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  
   if(editId){
     const deptId=document.getElementById('s_dept').value||null;
-    const phone=document.getElementById('s_phone')?.value.trim()||'';
     const payload={full_name:name,student_code:code,student_id:code,department_id:deptId};
     if(phone) payload.phone=phone;
     if(pw&&pw.length>=6)payload.password=pw;
+    
     const{error}=await sb.from('students').update(payload).eq('id',editId);
+    
     if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ แก้ไขสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('แก้ไขนักศึกษา',`${name} (${code})`);}
   }else{
     const deptId=document.getElementById('s_dept').value||null;
     const{error}=await sb.from('students').insert({full_name:name,student_code:code,student_id:code,phone:phone,email:code+'@student.lb',password:pw,department_id:deptId});
+    
     if(error){showToast('❌ '+(error.code==='23505'?'รหัสนักศึกษานี้มีอยู่แล้ว':error.message),'err');}
     else{showToast('✅ เพิ่มนักศึกษาสำเร็จ','ok');closeM('studentModal');loadStudents();loadOverview();logActivity('เพิ่มนักศึกษา',`${name} (${code})`);}
   }
   btn.disabled=false;btn.textContent='💾 บันทึก';
 }
+  
+
+
+  
 async function delStudent(id){
   const s=sData.find(x=>x.id===id);
   if(!confirm(`ยืนยันการลบ ${s?.full_name||''}?`))return;
