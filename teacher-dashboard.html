@@ -494,18 +494,32 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--slate);ov
       </div>
     </div>
 
-    <div class="card">
+<div class="card">
       <div class="card-head">
-        <span class="card-title">📋 ดูประวัติคะแนนของนักศึกษา</span>
+        <span class="card-title">📋 ดูประวัติและพิมพ์รายงานคะแนน</span>
       </div>
       <div class="card-body">
-        <select id="scoreHistorySel" class="search-input" onchange="loadStudentScoresHist()" style="margin-bottom:12px;"></select>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <select id="scoreHistoryMode" class="search-input" onchange="updateScoreHistoryDropdown()" style="flex:1;min-width:140px;">
+            <option value="student">ดูตามรายชื่อนักศึกษา</option>
+            <option value="title">ดูตามหัวข้อ (พิมพ์รายงานได้)</option>
+          </select>
+          <select id="scoreHistorySel" class="search-input" onchange="loadScoreHistoryData()" style="flex:2;min-width:180px;">
+            <option value="">-- เลือก --</option>
+          </select>
+        </div>
+        
+        <!-- แถบปุ่ม Export จะโชว์เมื่อเลือกดูตามหัวข้อ -->
+        <div id="scoreExportBar" style="display:none;gap:8px;margin-bottom:12px;">
+          <button onclick="exportScoreCSV()" style="flex:1;padding:8px;background:var(--teal-l);color:var(--teal-d);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">📊 Export CSV</button>
+          <button onclick="printScorePDF()" style="flex:1;padding:8px;background:var(--rose-l);color:var(--rose-d);border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">📄 พิมพ์ PDF</button>
+        </div>
+
         <div id="scoreHistoryList">
-          <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>
+          <div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกข้อมูลเพื่อดูประวัติ</div>
         </div>
       </div>
     </div>
-  </div>
 
 
 
@@ -839,18 +853,19 @@ let scoreDraftData = {};
 let csvScoreData = [];
 let currentScoreMode = 'grid';
 
+let scoreDraftData = {};
+let csvScoreData = [];
+let currentScoreMode = 'grid';
+let currentScoreHistData = []; // เก็บข้อมูลประวัติคะแนนที่โหลดมาปัจจุบัน
+
 function initScoresTab() {
-  const groups = loadSavedGroups(); // โหลดรายชื่อกลุ่มจากฟังก์ชันที่มีอยู่แล้ว
+  const groups = loadSavedGroups();
   const grpSel = document.getElementById('scoreGridGroup');
   if(grpSel) {
     grpSel.innerHTML = '<option value="">-- ทุกกลุ่ม / ทุกคน --</option>' + 
       groups.map((g,i) => `<option value="${i}">${g.name} (${g.studentIds.length} คน)</option>`).join('');
   }
-  const histSel = document.getElementById('scoreHistorySel');
-  if(histSel && histSel.options.length === 0 && students.length > 0) {
-    histSel.innerHTML = '<option value="">-- เลือกนักศึกษาเพื่อดูประวัติ --</option>' + 
-      students.map(s => `<option value="${s.id}">${s.student_code||''} ${s.full_name}</option>`).join('');
-  }
+  updateScoreHistoryDropdown();
   renderScoreGrid();
 }
 
@@ -865,14 +880,12 @@ function setScoreMode(mode) {
   updateScoreReadyCount();
 }
 
-
 function renderScoreGrid() {
   const tbody = document.getElementById('scoreGridBody');
   if(!tbody) return;
   const q = (document.getElementById('scoreGridSearch')?.value||'').toLowerCase();
   const grpIdx = document.getElementById('scoreGridGroup')?.value;
   
-  // ใช้ [...students] เพื่อสร้างตัวสำรองข้อมูล จะได้ไม่กระทบการเรียงลำดับในหน้าอื่น
   let list = [...students];
   
   if(grpIdx !== "") {
@@ -883,11 +896,9 @@ function renderScoreGrid() {
     list = list.filter(s => s.full_name.toLowerCase().includes(q) || (s.student_code||'').toLowerCase().includes(q));
   }
 
-  // 🌟 ส่วนที่เพิ่มเข้ามา: จัดเรียงข้อมูลตาม "รหัสนักศึกษา" จากน้อยไปมาก
   list.sort((a, b) => {
     const codeA = a.student_code || '';
     const codeB = b.student_code || '';
-    // ใช้ numeric: true เพื่อให้เรียงตัวเลขได้อย่างถูกต้อง
     return codeA.localeCompare(codeB, 'th', { numeric: true }); 
   });
   
@@ -902,7 +913,6 @@ function renderScoreGrid() {
   }).join('');
   updateScoreReadyCount();
 }
-    
 
 function filterScoreGrid() { renderScoreGrid(); }
 function toggleAllScoreGrid(cb) { document.querySelectorAll('.sc-chk').forEach(c => c.checked = cb.checked); }
@@ -932,7 +942,7 @@ async function handleScoreCSV(input) {
   const file = input.files[0];
   if(!file) return;
   const text = await file.text();
-  const lines = text.split('\n');
+  const lines = text.replace(/\r/g, '').split('\n');
   
   csvScoreData = [];
   for(let line of lines) {
@@ -978,21 +988,15 @@ async function saveBatchScores() {
   const title = document.getElementById('scoreBatchTitle').value.trim();
   if(!title) { showToast('กรุณาระบุหัวข้อคะแนน', 'err'); return; }
   
-  // ดึงค่าเวลาที่อาจารย์ตั้งไว้ ถ้าไม่ได้ตั้งให้ใช้เวลาปัจจุบัน
-  const pubDateStr = document.getElementById('scorePublishDate').value;
-  const createdAt = pubDateStr ? new Date(pubDateStr).toISOString() : new Date().toISOString();
-  
   let toSave = [];
   if(currentScoreMode === 'grid') {
     for(const [sid, d] of Object.entries(scoreDraftData)) {
        if(d.score.trim() !== '') {
-         // แทรก created_at เข้าไปในข้อมูลที่กำลังจะเซฟ
-         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null, created_at: createdAt });
+         toSave.push({ student_id: sid, teacher_id: user.profileId, title: title, score: d.score.trim(), feedback: d.feedback.trim() || null });
        }
     }
   } else {
-    // โหมด CSV ก็แทรก created_at เข้าไปเช่นกัน
-    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null, created_at: createdAt }));
+    toSave = csvScoreData.filter(d => d.valid).map(d => ({ student_id: d.student_id, teacher_id: user.profileId, title: title, score: d.score, feedback: d.feedback || null }));
   }
   
   if(toSave.length === 0) { showToast('ไม่มีข้อมูลคะแนนที่สมบูรณ์ให้บันทึก', 'err'); return; }
@@ -1003,38 +1007,165 @@ async function saveBatchScores() {
   btn.disabled = false; btn.textContent = `💾 บันทึกและประกาศคะแนน (${toSave.length} คน)`;
   
   if(error) { showToast('❌ ' + error.message, 'err'); return; }
-  showToast(pubDateStr ? `✅ บันทึกและตั้งเวลาประกาศเรียบร้อย (${toSave.length} คน)` : `✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
+  showToast(`✅ ประกาศคะแนนเรียบร้อย (${toSave.length} คน)`, 'ok');
   
   document.getElementById('scoreBatchTitle').value = '';
-  document.getElementById('scorePublishDate').value = ''; // เคลียร์ช่องเวลา
   scoreDraftData = {}; csvScoreData = [];
   document.getElementById('scoreCsvFile').value = '';
   document.getElementById('scoreCsvPreview').innerHTML = '';
   if(currentScoreMode === 'grid') renderScoreGrid(); else updateScoreReadyCount();
   
-  const histSel = document.getElementById('scoreHistorySel');
-  if(histSel && histSel.value) loadStudentScoresHist();
+  updateScoreHistoryDropdown();
 }
-    
 
-async function loadStudentScoresHist() {
-  const studentId = document.getElementById('scoreHistorySel').value;
+async function updateScoreHistoryDropdown() {
+  const mode = document.getElementById('scoreHistoryMode').value;
+  const sel = document.getElementById('scoreHistorySel');
+  sel.innerHTML = '<option value="">-- กำลังโหลด... --</option>';
+  
+  if(mode === 'student') {
+    if(students.length > 0) {
+      sel.innerHTML = '<option value="">-- เลือกนักศึกษา --</option>' + 
+        students.map(s => `<option value="${s.id}">${s.student_code||''} ${s.full_name}</option>`).join('');
+    }
+  } else {
+    const { data, error } = await sb.from('score_announcements').select('title').eq('teacher_id', user.profileId);
+    if(!error && data && data.length > 0) {
+      const titles = [...new Set(data.map(d => d.title))];
+      sel.innerHTML = '<option value="">-- เลือกหัวข้อคะแนน --</option>' + 
+        titles.map(t => `<option value="${t}">${t}</option>`).join('');
+    } else {
+      sel.innerHTML = '<option value="">-- ไม่มีประวัติคะแนน --</option>';
+    }
+  }
+  document.getElementById('scoreHistoryList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกข้อมูลเพื่อดูประวัติ</div>';
+  document.getElementById('scoreExportBar').style.display = 'none';
+  currentScoreHistData = [];
+}
+
+async function loadScoreHistoryData() {
+  const mode = document.getElementById('scoreHistoryMode').value;
+  const val = document.getElementById('scoreHistorySel').value;
   const list = document.getElementById('scoreHistoryList');
-  if (!studentId) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกนักศึกษาเพื่อดูประวัติ</div>'; return; }
+  const exportBar = document.getElementById('scoreExportBar');
+  
+  if (!val) { 
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">กรุณาเลือกข้อมูลเพื่อดูประวัติ</div>'; 
+    exportBar.style.display = 'none';
+    currentScoreHistData = [];
+    return; 
+  }
+  
   list.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
-  const { data, error } = await sb.from('score_announcements').select('*').eq('student_id', studentId).eq('teacher_id', user.profileId).order('created_at', { ascending: false });
+  exportBar.style.display = 'none';
+  
+  let query = sb.from('score_announcements')
+    .select('*, students(full_name, student_code)')
+    .eq('teacher_id', user.profileId)
+    .order('created_at', { ascending: false });
+    
+  if(mode === 'student') query = query.eq('student_id', val);
+  else query = query.eq('title', val);
+  
+  const { data, error } = await query;
   if (error) { list.innerHTML = `<p style="color:red">${error.message}</p>`; return; }
-  if (!data.length) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">ยังไม่เคยประกาศคะแนนให้นักศึกษารายนี้</div>'; return; }
-  list.innerHTML = data.map(d => `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--bg);">
+  if (!data.length) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--slate-l);font-size:12px;">ไม่พบประวัติคะแนน</div>'; return; }
+  
+  currentScoreHistData = data; 
+  if(mode === 'title') exportBar.style.display = 'flex'; // โชว์ปุ่มพิมพ์เฉพาะดูตามหัวข้อ
+  
+  if(mode === 'student') {
+    list.innerHTML = data.map(d => `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--bg);">
       <div><div style="font-size:13px;font-weight:700;color:var(--slate);">${d.title}</div><div style="font-size:11px;color:var(--slate-m);margin-top:2px;">${d.feedback ? '💬 ' + d.feedback : ''}</div><div style="font-size:10px;color:var(--slate-l);margin-top:4px;">${new Date(d.created_at).toLocaleString('th-TH')}</div></div>
       <div style="text-align:right;"><span style="background:var(--rose-50);color:var(--rose);padding:4px 12px;border-radius:100px;font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;">${d.score}</span><button onclick="deleteScore('${d.id}')" style="display:block;margin-top:6px;background:none;border:none;color:var(--fail);font-size:11px;cursor:pointer;width:100%;text-align:right;text-decoration:underline;">ลบ</button></div>
     </div>`).join('');
+  } else {
+    // เรียงตามรหัสนักศึกษาก่อนแสดง
+    data.sort((a,b) => (a.students?.student_code||'').localeCompare(b.students?.student_code||'', 'th', {numeric:true}));
+    list.innerHTML = data.map(d => `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--bg);">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--teal-d);font-family:monospace;">${d.students?.student_code||'-'}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--slate);">${d.students?.full_name||'ไม่ทราบชื่อ'}</div>
+        ${d.feedback ? `<div style="font-size:11px;color:var(--slate-m);margin-top:2px;">💬 ${d.feedback}</div>` : ''}
+      </div>
+      <div style="text-align:right;">
+        <span style="background:var(--rose-50);color:var(--rose);padding:4px 12px;border-radius:100px;font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;">${d.score}</span>
+        <button onclick="deleteScore('${d.id}')" style="display:block;margin-top:6px;background:none;border:none;color:var(--fail);font-size:11px;cursor:pointer;width:100%;text-align:right;text-decoration:underline;">ลบ</button>
+      </div>
+    </div>`).join('');
+  }
 }
+
 async function deleteScore(id) {
   if (!confirm('ยืนยันการลบคะแนนนี้?')) return;
   await sb.from('score_announcements').delete().eq('id', id);
   showToast('✅ ลบสำเร็จ', 'ok');
-  loadStudentScoresHist();
+  loadScoreHistoryData();
+}
+
+function exportScoreCSV() {
+  if(!currentScoreHistData.length) return;
+  const title = document.getElementById('scoreHistorySel').value;
+  const headers = ['รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'คะแนน', 'ข้อเสนอแนะ', 'เวลาบันทึก'];
+  const rows = currentScoreHistData.map(d => [
+    `"${d.students?.student_code || ''}"`,
+    `"${d.students?.full_name || ''}"`,
+    `"${d.score || ''}"`,
+    `"${d.feedback || ''}"`,
+    `"${new Date(d.created_at).toLocaleString('th-TH')}"`
+  ]);
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `คะแนน_${title}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function printScorePDF() {
+  if(!currentScoreHistData.length) return;
+  const title = document.getElementById('scoreHistorySel').value;
+  const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+  
+  const rows = currentScoreHistData.map((d, i) => `
+    <tr>
+      <td style="text-align:center;">${i+1}</td>
+      <td style="font-family:monospace;">${d.students?.student_code || '-'}</td>
+      <td>${d.students?.full_name || '-'}</td>
+      <td style="text-align:center;font-weight:700;">${d.score || '-'}</td>
+      <td>${d.feedback || '-'}</td>
+    </tr>
+  `).join('');
+  
+  const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
+  <title>รายงานคะแนน - ${title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4; margin: 15mm; }
+    body { font-family: 'Sarabun', sans-serif; font-size: 13px; color: #1e293b; background: white; }
+    h1 { font-family: 'Prompt', sans-serif; font-size: 20px; color: #e11d48; margin-bottom: 4px; text-align: center; }
+    .sub { text-align: center; color: #64748b; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #ffe4e6; color: #9f1239; padding: 10px; border: 1px solid #fda4af; text-align: left; }
+    td { padding: 8px 10px; border: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #fff1f2; }
+    @media print { button { display: none !important; } }
+  </style></head><body>
+  <div style="text-align:right; margin-bottom:10px;"><button onclick="window.print()" style="padding:8px 16px; background:#e11d48; color:white; border:none; border-radius:8px; cursor:pointer; font-family:'Sarabun'; font-weight:700;">🖨️ พิมพ์ / บันทึก PDF</button></div>
+  <h1>📊 สรุปคะแนน: ${title}</h1>
+  <div class="sub">อาจารย์ผู้ประเมิน: ${user.fullName} | วันที่พิมพ์: ${today} | จำนวน: ${currentScoreHistData.length} คน</div>
+  <table>
+    <thead><tr><th style="width:40px;text-align:center;">ลำดับ</th><th style="width:100px;">รหัสนักศึกษา</th><th>ชื่อ-นามสกุล</th><th style="width:80px;text-align:center;">คะแนน</th><th>ข้อเสนอแนะ</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div style="margin-top:30px;text-align:right;">ลงชื่อ.......................................................... อาจารย์ผู้สอน</div>
+  </body></html>`;
+  
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
 }
     
 // ===== QR EVALUATION =====
